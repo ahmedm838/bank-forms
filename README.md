@@ -1,7 +1,7 @@
-# ABK Transfer Request
+# Bank Forms
 
-Fills the Al Ahli Bank of Kuwait – Egypt *Transfer / Bank Draft Application* and
-prints the typed values straight into the original PDF. Arabic and English both work.
+Pick a bank, pick a form, fill it, and print the typed values straight into the
+bank's own PDF. Arabic and English both work.
 
 The output is the bank's own vector PDF with text drawn on top — not a scan or a
 screenshot — so it stays crisp at any size and the branch receives the real form.
@@ -14,6 +14,24 @@ Open the live page, or double-click `ABK-Transfer-Request.html` for the offline
 single-file version (same app, everything embedded, no internet needed).
 
 The page asks for a password, remembered for the rest of the browser session.
+
+## Which forms exist
+
+| Bank | Forms |
+|---|---|
+| **ABK** — Al Ahli Bank of Kuwait – Egypt | Bank Transfer · Cheque EGP · Cheque USD · Cheque EUR |
+| CIB, NBE, QNB, NBK | none yet — the blank PDFs are needed |
+
+All four ABK entries are the same *Transfer / Bank Draft Application* PDF, because
+that one form covers both jobs: a cheque (شيك مصرفي) is the form with **Bank Draft**
+ticked and the currency set. The three cheque entries open it with those two already
+filled and locked, so the only difference between them is the currency.
+
+### Adding a form
+
+1. Put the blank PDF in `assets/`, and a page-1 render in `assets/` for the preview.
+2. Work out the field boxes from the PDF's table grid and add them to `FIELDS`.
+3. Add a preset in `form-presets.js` and list it under its bank in `hub.js`.
 
 > **The password is a doormat, not a lock.** This is a static site: everything it
 > holds is sent to the browser, and this repository is public, so the check is
@@ -76,7 +94,10 @@ machine only. Nothing is uploaded, and no transfer data leaves the page.
 
 | | |
 |---|---|
-| `index.html`, `styles.css`, `app.js` | the app |
+| `index.html`, `hub.js` | the landing page: bank, then form |
+| `form.html`, `app.js`, `styles.css` | the form filler |
+| `form-presets.js` | what each form id on the hub means |
+| `gate.js` | the password gate, shared by both pages |
 | `assets/transfer-request.pdf` | the blank form |
 | `assets/preview.png` | page 1 rendered, for the live preview |
 | `assets/IBMPlexSansArabic-Regular.ttf` | the stamping font (OFL, see `assets/IBMPlexSansArabic-OFL.txt`) |

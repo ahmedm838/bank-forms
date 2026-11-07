@@ -14,7 +14,7 @@ const b64  = p => read(p).toString('base64');
 
 const OUT = 'ABK-Transfer-Request.html';
 
-let html = text('index.html');
+let html = text('form.html');
 const css = text('styles.css')
   .replace("url('assets/IBMPlexSansArabic-Regular.ttf') format('truetype')",
            `url(data:font/ttf;base64,${b64('assets/IBMPlexSansArabic-Regular.ttf')}) format('truetype')`);
@@ -36,7 +36,11 @@ html = html
   .replace('<script src="vendor/pdf-lib.min.js"></script>',      () => `<script>${text('vendor/pdf-lib.min.js')}</script>`)
   .replace('<script src="vendor/fontkit.umd.min.js"></script>',  () => `<script>${text('vendor/fontkit.umd.min.js')}</script>`)
   .replace('<script src="vendor/bidi.min.js"></script>',         () => `<script>${text('vendor/bidi.min.js')}</script>`)
-  .replace('<script src="app.js"></script>',                     () => `<script>${app}</script>`);
+  .replace('<script src="gate.js"></script>',                    () => `<script>${text('gate.js')}</script>`)
+  .replace('<script src="form-presets.js"></script>',            () => `<script>${text('form-presets.js')}</script>`)
+  .replace('<script src="app.js"></script>',                     () => `<script>${app}</script>`)
+  // the offline file is one page, so there is no hub to go back to
+  .replace(/<a class="back"[\s\S]*?<\/a>\s*/, '');
 
 fs.writeFileSync(path.join(root, OUT), html);
 console.log('built', OUT, (Buffer.byteLength(html)/1048576).toFixed(2) + ' MB');

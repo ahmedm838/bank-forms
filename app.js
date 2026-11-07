@@ -671,6 +671,7 @@ function clearAll(){
   document.querySelectorAll('.opts').forEach(n=>n.classList.remove('bad'));
   errorsEl.hidden = true;
   setToday();
+  applyPreset(currentPreset());   // a cheque keeps its draft type and currency
   render();
 }
 
@@ -689,39 +690,34 @@ function flash(msg){
 }
 function busy(on){ document.body.classList.toggle('busy', on); }
 
-/* ---------- password gate ----------
-   This only keeps casual visitors out. The page is static, so everything it holds
-   ships to the browser; on a public repository the check below is readable by
-   anyone. Treat it as a doormat, not a lock — put nothing secret in this page. */
-const PASS_SHA256 = '2e9c5b012b951567952ba1bb5b1820fbaf99316c44fcfeb4dcfcc252a517feb5';
-const GATE_KEY = 'abk-transfer-gate';
+/* ---------- preset for the form chosen on the hub ---------- */
+function applyPreset(preset){
+  document.getElementById('formTitle').textContent = preset.title;
+  document.getElementById('formSub').textContent = preset.bank + '  ·  fills the original form';
+  document.title = preset.title + ' — Bank Forms';
 
-async function sha256Hex(s){
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
-  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
-}
-
-function openGate(){
-  document.getElementById('gate').classList.add('done');
-  try{ sessionStorage.setItem(GATE_KEY, PASS_SHA256); }catch(e){}
-}
-
-async function setupGate(){
-  const gate = document.getElementById('gate');
-  let remembered = null;
-  try{ remembered = sessionStorage.getItem(GATE_KEY); }catch(e){}
-  if(remembered === PASS_SHA256){ gate.classList.add('done'); return; }
-
-  const form = document.getElementById('gateForm');
-  const pass = document.getElementById('gatePass');
-  const msg  = document.getElementById('gateMsg');
-  pass.focus();
-  form.addEventListener('submit', async e => {
-    e.preventDefault();
-    msg.textContent = '';
-    if(await sha256Hex(pass.value) === PASS_SHA256) openGate();
-    else { msg.textContent = 'That password is not right.'; pass.select(); }
-  });
+  for(const [id, v] of Object.entries(preset.set || {})){
+    state.values[id] = v;
+    const n = document.getElementById('in-'+id);
+    if(n) n.value = v;
+  }
+  for(const [id, v] of Object.entries(preset.check || {})){
+    state.checks[id] = v;
+    const n = document.getElementById(id+'-'+v);
+    if(n) n.checked = true;
+  }
+  for(const id of preset.lock || []){
+    const field = document.getElementById('in-'+id);
+    if(field){
+      field.disabled = true;
+      field.closest('.row').classList.add('locked');
+    }
+    const group = document.getElementById('opts-'+id);
+    if(group){
+      group.querySelectorAll('input').forEach(n => { n.disabled = true; });
+      group.closest('.row').classList.add('locked');
+    }
+  }
 }
 
 /* ---------- boot ---------- */
@@ -741,6 +737,7 @@ async function boot(){
   FIELDS.forEach(f=>{ const n = document.getElementById('in-'+f.id); if(n && state.values[f.id]) n.value = state.values[f.id]; });
   document.getElementById('in-amountWords').addEventListener('input', e => { e.target.dataset.touched = '1'; });
   setToday();
+  applyPreset(currentPreset());
 
   document.getElementById('btnPrint').addEventListener('click', doPrint);
   document.getElementById('btnSave').addEventListener('click', doSave);
