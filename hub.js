@@ -10,10 +10,13 @@ const BANKS = [
   {
     id:'abk', short:'ABK', name:'Al Ahli Bank of Kuwait – Egypt',
     forms:[
-      { id:'transfer',   name:'Bank Transfer', desc:'Swift or internal transfer' },
-      { id:'cheque-egp', name:'Cheque — EGP',  desc:'Egyptian pounds' },
-      { id:'cheque-usd', name:'Cheque — USD',  desc:'US dollars' },
-      { id:'cheque-eur', name:'Cheque — EUR',  desc:'Euro' },
+      { id:'transfer',         name:'Bank Transfer',            desc:'Swift or internal transfer' },
+      { id:'cheque-egp',       name:'Cheque — EGP',             desc:'Egyptian pounds' },
+      { id:'cheque-usd',       name:'Cheque — USD',             desc:'US dollars' },
+      { id:'cheque-eur',       name:'Cheque — EUR',             desc:'Euro' },
+      { id:'payroll-transfer', name:'Payroll Transfer',         desc:'Staff salaries' },
+      { id:'social-insurance', name:'Social Insurance Payment', desc:'Insurance contributions' },
+      { id:'salary-taxes',     name:'Salary Taxes Payment',     desc:'Payroll tax' },
     ],
   },
   { id:'cib', short:'CIB', name:'Commercial International Bank', forms:[] },
@@ -70,7 +73,9 @@ function selectBank(bank){
       if(ready) card.href = 'form.html?f=' + encodeURIComponent(f.id);
       else card.title = 'Not available yet';
       card.appendChild(el('span','cardName', f.name));
-      card.appendChild(el('span','cardDesc', ready ? f.desc : f.desc + ' — not available yet'));
+      card.appendChild(el('span','cardDesc', f.desc));
+      // a short tag reads better than repeating the words on every card
+      if(!ready) card.appendChild(el('span','pending','Awaiting PDF'));
       formsEl.appendChild(card);
     }
   }

@@ -20,7 +20,7 @@ The page asks for a password, remembered for the rest of the browser session.
 | Bank | Forms |
 |---|---|
 | **ABK** — Al Ahli Bank of Kuwait – Egypt | Bank Transfer |
-| ABK cheques (EGP, USD, EUR) | listed, not available — waiting on the blank PDF |
+| ABK, awaiting their blank PDFs | Cheque EGP · Cheque USD · Cheque EUR · Payroll Transfer · Social Insurance Payment · Salary Taxes Payment |
 | CIB, NBE, QNB, NBK | none yet — the blank PDFs are needed |
 
 A cheque is its own ABK form, not the transfer one. Until its blank PDF is added the
