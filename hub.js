@@ -1,21 +1,19 @@
 /* Landing page: pick a bank, then a form.
 
-   A form entry points at form.html with a preset id. Everything ABK offers is the
-   same "Transfer / Bank Draft Application" PDF — a cheque (شيك مصرفي / bank draft)
-   is that form with "Bank Draft" ticked and the currency set, which is what the
-   presets in form-presets.js do.
+   A form entry points at form.html with a preset id. `ready: false` means the blank
+   PDF for that form is not in assets/ yet, so it is shown but cannot be opened.
 
    To add a bank's form: drop its blank PDF and a page-1 preview in assets/, add a
-   preset in form-presets.js with the field boxes, and list it here. */
+   preset in form-presets.js with the field boxes, and set ready here. */
 
 const BANKS = [
   {
     id:'abk', short:'ABK', name:'Al Ahli Bank of Kuwait – Egypt',
     forms:[
-      { id:'transfer',   name:'Bank Transfer',  desc:'Swift or internal transfer' },
-      { id:'cheque-egp', name:'Cheque — EGP',   desc:'Bank draft in Egyptian pounds' },
-      { id:'cheque-usd', name:'Cheque — USD',   desc:'Bank draft in US dollars' },
-      { id:'cheque-eur', name:'Cheque — EUR',   desc:'Bank draft in euro' },
+      { id:'transfer',   name:'Bank Transfer', desc:'Swift or internal transfer', ready:true },
+      { id:'cheque-egp', name:'Cheque — EGP',  desc:'Egyptian pounds', ready:false },
+      { id:'cheque-usd', name:'Cheque — USD',  desc:'US dollars',      ready:false },
+      { id:'cheque-eur', name:'Cheque — EUR',  desc:'Euro',            ready:false },
     ],
   },
   { id:'cib', short:'CIB', name:'Commercial International Bank', forms:[] },
@@ -45,22 +43,30 @@ function showBanks(){
   }
 }
 
+const NEEDS_PDF = 'needs the blank PDF before it can be added — see the README.';
+
 function selectBank(bank){
   [...banksEl.children].forEach(c => c.classList.toggle('on', c.dataset.bank === bank.id));
   formsEl.innerHTML = '';
   formsSection.hidden = false;
 
   if(!bank.forms.length){
-    formsNote.textContent = 'No ' + bank.short + ' forms are set up yet. Add one by putting its blank PDF in assets/ and adding a preset — see the README.';
+    formsNote.textContent = 'No ' + bank.short + ' forms yet. Each one ' + NEEDS_PDF;
     formsNote.hidden = false;
   } else {
-    formsNote.hidden = true;
+    const waiting = bank.forms.filter(f => !f.ready);
+    formsNote.textContent = waiting.length
+      ? (waiting.length === 1 ? 'One form' : waiting.length + ' forms') + ' here ' + NEEDS_PDF
+      : '';
+    formsNote.hidden = !waiting.length;
+
     for(const f of bank.forms){
-      const a = el('a','card');
-      a.href = 'form.html?f=' + encodeURIComponent(f.id);
-      a.appendChild(el('span','cardName', f.name));
-      a.appendChild(el('span','cardDesc', f.desc));
-      formsEl.appendChild(a);
+      const card = el(f.ready ? 'a' : 'div', 'card' + (f.ready ? '' : ' empty'));
+      if(f.ready) card.href = 'form.html?f=' + encodeURIComponent(f.id);
+      else card.title = 'Not available yet';
+      card.appendChild(el('span','cardName', f.name));
+      card.appendChild(el('span','cardDesc', f.ready ? f.desc : f.desc + ' — not available yet'));
+      formsEl.appendChild(card);
     }
   }
   formsSection.scrollIntoView({ behavior:'smooth', block:'nearest' });

@@ -19,13 +19,13 @@ The page asks for a password, remembered for the rest of the browser session.
 
 | Bank | Forms |
 |---|---|
-| **ABK** — Al Ahli Bank of Kuwait – Egypt | Bank Transfer · Cheque EGP · Cheque USD · Cheque EUR |
+| **ABK** — Al Ahli Bank of Kuwait – Egypt | Bank Transfer |
+| ABK cheques (EGP, USD, EUR) | listed, not available — waiting on the blank PDF |
 | CIB, NBE, QNB, NBK | none yet — the blank PDFs are needed |
 
-All four ABK entries are the same *Transfer / Bank Draft Application* PDF, because
-that one form covers both jobs: a cheque (شيك مصرفي) is the form with **Bank Draft**
-ticked and the currency set. The three cheque entries open it with those two already
-filled and locked, so the only difference between them is the currency.
+A cheque is its own ABK form, not the transfer one. Until its blank PDF is added the
+three cheque entries are shown greyed out, and opening one by URL refuses rather
+than rendering the wrong document.
 
 ### Adding a form
 

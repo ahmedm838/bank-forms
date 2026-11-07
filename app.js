@@ -22,7 +22,7 @@ const FIELDS = [
   { id:'date',            label:'Date',                                box:[303,698.5,522,716.5], group:'head', hint:'dd/mm/yyyy', required:true, latin:true },
 
   { id:'currency',        label:'Currency (32A)',                      box:[61.3,618.4,114.2,635.8], group:'amount', type:'select', options:CURRENCY_CHOICES, align:'center', required:true, latin:true },
-  { id:'amountFigures',   label:'Amount in figures',                   box:[114.2,618.4,234.9,635.8], group:'amount', hint:'e.g. 125,400.50', required:true, latin:true },
+  { id:'amountFigures',   label:'Amount in figures',                   box:[114.2,618.4,234.9,635.8], group:'amount', hint:'e.g. 125,400.50', required:true, latin:true, thousands:true },
   { id:'amountWords',     label:'Amount in words',                     box:[234.9,618.4,553.6,635.8], group:'amount', multi:true, latin:true },
 
   { id:'benName',         label:"Beneficiary's name (59)",             box:[176.4,604.6,459.4,618.4], group:'ben', required:true },
@@ -119,6 +119,35 @@ function toWesternDigits(s){
 }
 function toLatinOnly(s){
   return toWesternDigits(s).replace(RTL_LETTERS_G, '');
+}
+
+/* ---------- amount formatting ----------
+   Groups the amount in thousands as it is typed: 1284560.75 -> 1,284,560.75 */
+const MAX_DECIMALS = 2;
+
+function formatThousands(raw){
+  let s = String(raw).replace(/[^\d.]/g, '');
+  const dot = s.indexOf('.');
+  if(dot !== -1) s = s.slice(0, dot + 1) + s.slice(dot + 1).replace(/\./g, '');
+
+  let [int = '', dec] = s.split('.');
+  int = int.replace(/^0+(?=\d)/, '');                       // 007 -> 7, but 0 stays 0
+  if(dec !== undefined) dec = dec.slice(0, MAX_DECIMALS);
+
+  const grouped = int.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return dec === undefined ? grouped : grouped + '.' + dec;
+}
+
+/* Reformatting moves the caret, so count the digits before it and put it back
+   after the same number of digits in the new string. */
+function caretAfterDigits(formatted, digitsBefore){
+  if(digitsBefore <= 0) return 0;
+  let seen = 0;
+  for(let i = 0; i < formatted.length; i++){
+    if(/[\d.]/.test(formatted[i])) seen++;
+    if(seen >= digitsBefore) return i + 1;
+  }
+  return formatted.length;
 }
 
 /* ---------- bidirectional text engine ---------- */
@@ -351,6 +380,16 @@ function onEdit(f, inp){
         if(hadArabicLetters) flash(f.label + ' must be written in English.');
       }
     }
+    if(f.thousands){
+      const caret = inp.selectionStart;
+      const digitsBefore = (v.slice(0, caret == null ? v.length : caret).match(/[\d.]/g) || []).length;
+      const formatted = formatThousands(v);
+      if(formatted !== v){
+        v = formatted;
+        inp.value = formatted;
+        try{ const c = caretAfterDigits(formatted, digitsBefore); inp.setSelectionRange(c, c); }catch(e){}
+      }
+    }
     state.values[f.id] = f.upper ? v.toUpperCase() : v;
     if(f.upper) inp.value = state.values[f.id];
     if(f.id === 'currency' || f.id === 'amountFigures') maybeAutoWords();
@@ -409,7 +448,7 @@ function validate(f, inp){
   const v = (state.values[f.id]||'').trim();
   let bad = false;
   if(f.id === 'benBankSwift' && v) bad = !/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(v);
-  if(f.id === 'amountFigures' && v) bad = !/^\d{1,3}(,\d{3})*(\.\d+)?$|^\d+(\.\d+)?$/.test(v);
+  if(f.id === 'amountFigures' && v) bad = !/^\d{1,3}(,\d{3})*(\.\d{1,2})?$/.test(v) || parseFloat(v.replace(/,/g,'')) <= 0;
   if(f.latin && v && RTL_LETTERS.test(v)) bad = true;
   inp.classList.toggle('bad', bad);
   return !bad;
@@ -440,14 +479,13 @@ function render(){
     const blockH = lines.length * size * LINE_RATIO;
     const topPdf = y0 + (boxH + blockH)/2;
 
-    const d = el('div', 'ov' + (f.align==='center' ? ' center' : ''));
+    const d = el('div', 'ov center');
     d.dir = 'auto';
     d.style.left = (x0*S)+'px';
     d.style.top = ((A4H - topPdf)*S)+'px';
     d.style.width = (boxW*S)+'px';
     d.style.fontSize = (size*S)+'px';
     d.style.lineHeight = (size*LINE_RATIO*S)+'px';
-    if(f.align !== 'center'){ d.style.paddingLeft = (PAD*S)+'px'; d.style.paddingRight = (PAD*S)+'px'; }
     d.textContent = lines.join('\n');
     overlayEl.appendChild(d);
   }
@@ -527,10 +565,8 @@ async function buildFilledPdf(){
     let cursor = y0 + (boxH + blockH)/2 - size;
 
     for(const line of lines){
-      let x;
-      if(f.align === 'center')  x = x0 + (boxW - measureText(line, size, dir))/2;
-      else if(dir === 'rtl')    x = x1 - PAD - measureText(line, size, dir);
-      else                      x = x0 + PAD;
+      // every value sits centred in its cell, Arabic and English alike
+      const x = x0 + (boxW - measureText(line, size, dir))/2;
       drawLine(page, fontKey, line, x, cursor + size*0.22, size, dir);
       cursor -= size * LINE_RATIO;
     }
@@ -691,6 +727,22 @@ function flash(msg){
 function busy(on){ document.body.classList.toggle('busy', on); }
 
 /* ---------- preset for the form chosen on the hub ---------- */
+
+/* A form whose blank PDF is not in assets/ must not open: whatever it rendered
+   would be the wrong document, and someone could print and submit it. */
+function refuseUnavailable(preset){
+  const box = document.getElementById('loading');
+  box.innerHTML = '';
+  const wrap = el('div','unavailable');
+  wrap.appendChild(el('p', null, preset.title + ' is not available yet.'));
+  wrap.appendChild(el('p','small', 'Its blank PDF has not been added, so this form cannot be filled in here.'));
+  const back = document.createElement('a');
+  back.href = 'index.html'; back.textContent = '← All forms'; back.className = 'backLink';
+  wrap.appendChild(back);
+  box.appendChild(wrap);
+  document.title = preset.title + ' — not available';
+}
+
 function applyPreset(preset){
   document.getElementById('formTitle').textContent = preset.title;
   document.getElementById('formSub').textContent = preset.bank + '  ·  fills the original form';
@@ -723,6 +775,10 @@ function applyPreset(preset){
 /* ---------- boot ---------- */
 async function boot(){
   await setupGate();
+
+  const preset = currentPreset();
+  if(preset.ready === false){ refuseUnavailable(preset); return; }
+
   const [pdfRes, fontRes] = await Promise.all([
     fetch('assets/transfer-request.pdf'),
     fetch('assets/IBMPlexSansArabic-Regular.ttf'),
@@ -737,7 +793,7 @@ async function boot(){
   FIELDS.forEach(f=>{ const n = document.getElementById('in-'+f.id); if(n && state.values[f.id]) n.value = state.values[f.id]; });
   document.getElementById('in-amountWords').addEventListener('input', e => { e.target.dataset.touched = '1'; });
   setToday();
-  applyPreset(currentPreset());
+  applyPreset(preset);
 
   document.getElementById('btnPrint').addEventListener('click', doPrint);
   document.getElementById('btnSave').addEventListener('click', doSave);
