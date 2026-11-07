@@ -123,3 +123,11 @@ node build-standalone.mjs
 If the bank ever issues a revised form, replace `assets/transfer-request.pdf`,
 re-render page 1 to `assets/preview.png` at scale 1.6, check the field boxes against
 the new grid, and rebuild.
+
+### Deploying a change
+
+Push to `main`; GitHub Pages rebuilds in a minute or two. Bump the `?v=` number on
+the local scripts in `index.html` and `form.html` whenever one of them changes, or
+browsers will keep the old copy. The HTML itself is served with `max-age=600`, so a
+visitor who was on the page in the last ten minutes may need a reload to see a
+change.
