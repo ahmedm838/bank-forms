@@ -6,10 +6,22 @@ prints the typed values straight into the original PDF. Arabic and English both 
 The output is the bank's own vector PDF with text drawn on top — not a scan or a
 screenshot — so it stays crisp at any size and the branch receives the real form.
 
+**Live:** https://ahmedm838.github.io/bank-forms/
+
 ## Using it
 
-Open the hosted page, or double-click `ABK-Transfer-Request.html` for the offline
+Open the live page, or double-click `ABK-Transfer-Request.html` for the offline
 single-file version (same app, everything embedded, no internet needed).
+
+The page asks for a password, remembered for the rest of the browser session.
+
+> **The password is a doormat, not a lock.** This is a static site: everything it
+> holds is sent to the browser, and this repository is public, so the check is
+> readable by anyone who looks. It keeps casual visitors out and nothing more. Put
+> nothing confidential in the page. For real access control the repository has to be
+> private with Pages on a paid GitHub plan, or people use the offline file instead.
+> To change the password, replace `PASS_SHA256` in `app.js` with the SHA-256 of the
+> new one: `node -e "console.log(require('crypto').createHash('sha256').update('NEW').digest('hex'))"`.
 
 Fill the fields on the left; the preview on the right shows exactly where each value
 will land. Then:
