@@ -23,9 +23,15 @@ The page asks for a password, remembered for the rest of the browser session.
 | ABK, awaiting their blank PDFs | Cheque EGP · Cheque USD · Cheque EUR · Payroll Transfer · Social Insurance Payment · Salary Taxes Payment |
 | CIB, NBE, QNB, NBK | none yet — the blank PDFs are needed |
 
-A cheque is its own ABK form, not the transfer one. Until its blank PDF is added the
-three cheque entries are shown greyed out, and opening one by URL refuses rather
-than rendering the wrong document.
+A cheque is its own ABK form, not the transfer one. Any form whose blank PDF is not
+in `assets/` is shown greyed out with an *awaiting PDF* tag, and opening it by URL
+refuses rather than rendering the wrong document.
+
+Payroll Transfer may need more than the others. The salary instruction this company
+has sent ABK before was a letterhead letter listing every employee with their ID,
+job title and salary — a table that grows with the payroll. If the blank form is
+that, it needs a repeating row rather than the single-value fields the other forms
+use, so check it before writing the field boxes.
 
 ### Adding a form
 

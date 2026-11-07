@@ -43,6 +43,7 @@ html = html
   .replace(...inlineScript('gate.js',                   text('gate.js')))
   .replace(...inlineScript('forms/abk-transfer.js',     text('forms/abk-transfer.js')))
   .replace(...inlineScript('forms/abk-cheques.js',      text('forms/abk-cheques.js')))
+  .replace(...inlineScript('forms/abk-payroll.js',      text('forms/abk-payroll.js')))
   .replace(...inlineScript('form-registry.js',          text('form-registry.js')))
   .replace(...inlineScript('app.js',                    app))
   // the offline file is one page, so there is no hub to go back to
