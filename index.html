@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ABK Transfer Request</title>
+<meta name="description" content="Fills the Al Ahli Bank of Kuwait – Egypt transfer / bank draft application and prints into the original PDF.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="title">Transfer / Bank Draft Application</div>
+    <div class="sub">Al Ahli Bank of Kuwait &ndash; Egypt &nbsp;&middot;&nbsp; fills the original form</div>
+  </div>
+  <div class="spacer"></div>
+  <button id="btnClear" type="button">Clear</button>
+  <button id="btnSave" type="button">Save PDF&hellip;</button>
+  <button id="btnPrint" type="button" class="primary">Print</button>
+</header>
+
+<main>
+  <div id="formPane">
+    <div id="errors" class="errors" hidden></div>
+    <div id="form"></div>
+  </div>
+  <div id="previewPane">
+    <div id="previewWrap">
+      <img id="pageImg" alt="Transfer request form preview" src="assets/preview.png">
+      <div id="overlay"></div>
+    </div>
+  </div>
+</main>
+
+<div id="toast"></div>
+<div id="loading">Loading the form&hellip;</div>
+<iframe id="printFrame" title="print"></iframe>
+
+<script src="vendor/pdf-lib.min.js"></script>
+<script src="vendor/fontkit.umd.min.js"></script>
+<script src="vendor/bidi.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
