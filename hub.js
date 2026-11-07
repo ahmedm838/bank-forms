@@ -43,7 +43,7 @@ function showBanks(){
   }
 }
 
-const NEEDS_PDF = 'needs the blank PDF before it can be added — see the README.';
+const SEE_README = ' — see the README.';
 
 function selectBank(bank){
   [...banksEl.children].forEach(c => c.classList.toggle('on', c.dataset.bank === bank.id));
@@ -51,13 +51,14 @@ function selectBank(bank){
   formsSection.hidden = false;
 
   if(!bank.forms.length){
-    formsNote.textContent = 'No ' + bank.short + ' forms yet. Each one ' + NEEDS_PDF;
+    formsNote.textContent = 'No ' + bank.short + ' forms yet. Each one needs its blank PDF' + SEE_README;
     formsNote.hidden = false;
   } else {
     const waiting = bank.forms.filter(f => !f.ready);
-    formsNote.textContent = waiting.length
-      ? (waiting.length === 1 ? 'One form' : waiting.length + ' forms') + ' here ' + NEEDS_PDF
-      : '';
+    formsNote.textContent = !waiting.length ? ''
+      : waiting.length === 1
+        ? 'One form here needs its blank PDF before it can be added' + SEE_README
+        : waiting.length + ' forms here need their blank PDFs before they can be added' + SEE_README;
     formsNote.hidden = !waiting.length;
 
     for(const f of bank.forms){
