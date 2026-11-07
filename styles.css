@@ -101,3 +101,24 @@ input.bad, textarea.bad, select.bad{border-color:var(--bad); background:#fff6f5}
 }
 
 .note{color:#8a94a6; font-style:italic}
+
+/* password gate — a deterrent for a page on a public repo, not real security */
+#gate{
+  position:fixed; inset:0; z-index:20; background:var(--bg);
+  display:flex; align-items:center; justify-content:center;
+}
+#gate.done{display:none}
+#gateForm{
+  background:var(--panel); border:1px solid var(--line); border-radius:12px;
+  padding:28px 30px; width:min(340px,90vw); box-shadow:0 6px 28px rgba(20,35,60,.12);
+  display:flex; flex-direction:column; gap:10px;
+}
+#gateForm h1{font-size:17px; margin:0; font-weight:650}
+#gateForm p{margin:0 0 4px; color:var(--muted); font-size:13px}
+#gateForm input{
+  font:inherit; padding:8px 10px; border:1px solid var(--line);
+  border-radius:6px; background:#fcfdff; width:100%;
+}
+#gateForm input:focus{outline:2px solid #bcd6f5; outline-offset:-1px; border-color:var(--brand)}
+#gateForm button{width:100%}
+#gateMsg{color:var(--bad); font-size:12.5px; min-height:16px}
