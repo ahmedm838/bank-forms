@@ -8,6 +8,12 @@
    To change the password, replace PASS_SHA256 with the SHA-256 of the new one:
      node -e "console.log(require('crypto').createHash('sha256').update('NEW').digest('hex'))"
 */
+/* Everything lives inside this function. Nothing is declared at the top level, so a
+   stale cached copy of another script can never collide with it and take the page
+   down with a SyntaxError. */
+(function(){
+'use strict';
+
 const PASS_SHA256 = '2e9c5b012b951567952ba1bb5b1820fbaf99316c44fcfeb4dcfcc252a517feb5';
 const GATE_KEY = 'abk-transfer-gate';
 
@@ -45,3 +51,6 @@ function setupGate(){
     });
   });
 }
+
+window.setupGate = setupGate;
+})();
