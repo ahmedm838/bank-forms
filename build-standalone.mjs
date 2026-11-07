@@ -14,20 +14,38 @@ const b64  = p => read(p).toString('base64');
 
 const OUT = 'ABK-Transfer-Request.html';
 
+/* every form file that the page loads; each has its PDF and preview inlined */
+const FORM_FILES = [
+  'forms/abk-transfer.js',
+  'forms/abk-cheques.js',
+  'forms/abk-payroll.js',
+  'forms/abk-payroll-transfer.js',
+];
+
+const MIME = { '.pdf':'application/pdf', '.png':'image/png', '.jpg':'image/jpeg', '.ttf':'font/ttf' };
+const dataUrl = p => `data:${MIME[path.extname(p)] || 'application/octet-stream'};base64,${b64(p)}`;
+
 let html = text('form.html');
 const css = text('styles.css')
   .replace("url('assets/IBMPlexSansArabic-Regular.ttf') format('truetype')",
-           `url(data:font/ttf;base64,${b64('assets/IBMPlexSansArabic-Regular.ttf')}) format('truetype')`);
+           `url(${dataUrl('assets/IBMPlexSansArabic-Regular.ttf')}) format('truetype')`);
 
-// the app fetches its two binaries; inline them as data URLs instead
+/* A form definition names its PDF and preview by path; offline there is nothing to
+   fetch them from, so each path becomes the file itself. */
+function inlineFormAssets(src, file){
+  let n = 0;
+  const out = src.replace(/(pdf|preview):(\s*)'(assets\/[^']+)'/g, (m, key, sp, p) => {
+    n++; return `${key}:${sp}'${dataUrl(p)}'`;
+  });
+  return { out, n };
+}
+
+// the font is fetched by boot(); the PDFs now arrive already inlined in the defs
 const app = text('app.js').replace(
-  /const \[pdfRes, fontRes\] = await Promise\.all\(\[[\s\S]*?\]\);/,
-  `const [pdfRes, fontRes] = await Promise.all([
-    fetch('data:application/pdf;base64,${b64('assets/transfer-request.pdf')}'),
-    fetch('data:font/ttf;base64,${b64('assets/IBMPlexSansArabic-Regular.ttf')}'),
-  ]);`
+  /fetch\('assets\/IBMPlexSansArabic-Regular\.ttf'\)/,
+  `fetch('${dataUrl('assets/IBMPlexSansArabic-Regular.ttf')}')`
 );
-if(!app.includes('data:application/pdf;base64')) throw new Error('could not inline the PDF — did boot() change?');
+if(app.includes("fetch('assets/")) throw new Error('app.js still fetches a file from disk — did boot() change?');
 
 /* `?v=` cache-busting suffixes may be on any of these, so match them loosely */
 const inlineScript = (file, body) =>
@@ -35,17 +53,23 @@ const inlineScript = (file, body) =>
 
 html = html
   .replace(/<link rel="stylesheet" href="styles\.css(\?v=\d+)?">/, () => `<style>\n${css}\n</style>`)
-  .replace(/<img id="pageImg"([^>]*?)src="assets\/preview\.png">/,
-           (m, attrs) => `<img id="pageImg"${attrs}src="data:image/png;base64,${b64('assets/preview.png')}">`)
+  .replace(/<img id="pageImg"([^>]*?)src="assets\/[^"]+">/,
+           (m, attrs) => `<img id="pageImg"${attrs}src="${dataUrl('assets/preview.png')}">`)
   .replace(...inlineScript('vendor/pdf-lib.min.js',     text('vendor/pdf-lib.min.js')))
   .replace(...inlineScript('vendor/fontkit.umd.min.js', text('vendor/fontkit.umd.min.js')))
   .replace(...inlineScript('vendor/bidi.min.js',        text('vendor/bidi.min.js')))
-  .replace(...inlineScript('gate.js',                   text('gate.js')))
-  .replace(...inlineScript('forms/abk-transfer.js',     text('forms/abk-transfer.js')))
-  .replace(...inlineScript('forms/abk-cheques.js',      text('forms/abk-cheques.js')))
-  .replace(...inlineScript('forms/abk-payroll.js',      text('forms/abk-payroll.js')))
-  .replace(...inlineScript('form-registry.js',          text('form-registry.js')))
-  .replace(...inlineScript('app.js',                    app))
+  .replace(...inlineScript('gate.js',                   text('gate.js')));
+
+let inlinedAssets = 0;
+for(const file of FORM_FILES){
+  const { out, n } = inlineFormAssets(text(file), file);
+  inlinedAssets += n;
+  html = html.replace(...inlineScript(file, out));
+}
+
+html = html
+  .replace(...inlineScript('form-registry.js', text('form-registry.js')))
+  .replace(...inlineScript('app.js',           app))
   // the offline file is one page, so there is no hub to go back to
   .replace(/<a class="back"[\s\S]*?<\/a>\s*/, '');
 
@@ -54,4 +78,4 @@ const dangling = html.match(/(?:src|href)="(?!data:|#|https?:)[^"]+"/g);
 if(dangling) throw new Error('standalone build still references: ' + dangling.join(', '));
 
 fs.writeFileSync(path.join(root, OUT), html);
-console.log('built', OUT, (Buffer.byteLength(html)/1048576).toFixed(2) + ' MB');
+console.log('built', OUT, inlinedAssets + ' form assets inlined,', (Buffer.byteLength(html)/1048576).toFixed(2) + ' MB');

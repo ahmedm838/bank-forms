@@ -19,9 +19,19 @@ The page asks for a password, remembered for the rest of the browser session.
 
 | Bank | Forms |
 |---|---|
-| **ABK** — Al Ahli Bank of Kuwait – Egypt | Bank Transfer |
-| ABK, awaiting their blank PDFs | Cheque EGP · Cheque USD · Cheque EUR · Payroll Transfer · Social Insurance Payment · Salary Taxes Payment |
+| **ABK** — Al Ahli Bank of Kuwait – Egypt | Bank Transfer · Payroll Transfer |
+| ABK, awaiting their blank PDFs | Cheque EGP · Cheque USD · Cheque EUR · Social Insurance Payment · Salary Taxes Payment |
 | CIB, NBE, QNB, NBK | none yet — the blank PDFs are needed |
+
+**Payroll Transfer** is the company's own *Payroll Debit Order* letter (خصم مرتبات),
+converted from Word to PDF once. It is written wholly in Arabic, so the amount and
+the date are typed in ordinary digits and printed in Arabic-Indic ones (`125400`
+prints as `١٢٥٬٤٠٠`). The amount in words goes in bare — the letter already prints
+*فقط* before the gap and *جنيها مصريا فقط لا غير* after it.
+
+Its account number, branch and signatory name used to be pre-printed in the
+template. They were blanked and turned into fields your browser remembers, so this
+public repository holds no account details; the printed letter is unchanged.
 
 A cheque is its own ABK form, not the transfer one. Any form whose blank PDF is not
 in `assets/` is shown greyed out with an *awaiting PDF* tag, and opening it by URL

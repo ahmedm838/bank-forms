@@ -11,8 +11,8 @@
    deliberately not used for text. */
 
 const PAD = 3.5;
-const BASE_SIZE = 9;
-const MIN_SIZE = 5.8;
+let BASE_SIZE = 9;      // a form may ask for larger type to match its own
+let MIN_SIZE = 5.8;     // how far a long value may shrink to fit its cell
 const LINE_RATIO = 1.18;
 const INK = [0.03, 0.09, 0.36];
 
@@ -72,6 +72,19 @@ function toWesternDigits(s){
 }
 function toLatinOnly(s){
   return toWesternDigits(s).replace(RTL_LETTERS_G, '');
+}
+
+/* The other way round, for a form written wholly in Arabic: the value is typed
+   in Western digits and printed in Arabic-Indic ones. A field asks for this
+   with `arabicDigits: true`; only what is printed changes, not what is typed. */
+function toArabicDigits(s){
+  return String(s).replace(/[0-9]/g, d => String.fromCharCode(0x0660 + Number(d)));
+}
+
+/* what actually goes on the page for a field */
+function displayValue(f, raw){
+  const v = (raw || '').trim();
+  return f.arabicDigits ? toArabicDigits(v) : v;
 }
 
 /* ---------- amount formatting ----------
@@ -172,6 +185,18 @@ function arMinor(frac, m){
   if(frac === 1) return m.one + ' واحد';
   if(frac === 2) return m.two;
   return arInteger(frac) + ' ' + (frac <= 10 ? m.plural : m.acc);
+}
+
+/* Some forms already print the wording around the blank — "فقط وقدره ___ جنيها
+   مصريا فقط لا غير" — so only the number itself belongs in the gap. */
+function amountInWordsArBare(amountStr){
+  const clean = String(amountStr||'').replace(/[,\s]/g,'');
+  if(!clean || !/^\d*\.?\d*$/.test(clean) || isNaN(parseFloat(clean))) return '';
+  const num = parseFloat(clean), major = Math.floor(num);
+  const frac = Math.round((num - major) * 100);
+  let s = arInteger(major, true);
+  if(frac > 0) s += ' و' + arMinor(frac, AR_CURRENCIES.EGP.minor);
+  return s;
 }
 
 function amountInWordsAr(amountStr, ccy){
@@ -386,7 +411,9 @@ function buildForm(){
         const gen = (fn, label) => {
           const b = el('button','mini',label); b.type='button';
           b.addEventListener('click', ()=>{
-            const w = fn(state.values[f.wordsOf], state.values[f.currencyField]);
+            const w = f.wordsStyle === 'bare' && fn === amountInWordsAr
+              ? amountInWordsArBare(state.values[f.wordsOf])
+              : fn(state.values[f.wordsOf], state.values[f.currencyField]);
             if(!w){ flash('Choose a currency and enter a numeric amount first.'); return; }
             state.values[f.id] = w;
             const n = document.getElementById('in-'+f.id);
@@ -500,7 +527,9 @@ function maybeAutoWords(){
   if(!f) return;
   const node = document.getElementById('in-'+f.id);
   if(!node || node.dataset.touched === '1') return;
-  const w = amountInWordsAr(state.values[f.wordsOf], state.values[f.currencyField]);
+  const w = f.wordsStyle === 'bare'
+    ? amountInWordsArBare(state.values[f.wordsOf])
+    : amountInWordsAr(state.values[f.wordsOf], state.values[f.currencyField]);
   if(w){ state.values[f.id] = w; node.value = w; }
 }
 
@@ -531,7 +560,7 @@ function render(){
   const S = previewScale;
 
   for(const f of FIELDS){
-    const text = (state.values[f.id]||'').trim();
+    const text = displayValue(f, state.values[f.id]);
     if(!text) continue;
     const [x0,y0,x1,y1] = f.box;
     const boxW = x1-x0, boxH = y1-y0;
@@ -615,7 +644,7 @@ async function buildFilledPdf(){
 
   page.pushOperators(op('q'));
   for(const f of FIELDS){
-    const text = (state.values[f.id]||'').trim();
+    const text = displayValue(f, state.values[f.id]);
     if(!text) continue;
     const [x0,y0,x1,y1] = f.box;
     const boxW = x1-x0, boxH = y1-y0;
@@ -836,6 +865,23 @@ function applyPreset(preset){
   }
 }
 
+/* Jump between the forms that are ready, without going back to the hub. It also
+   gives the offline single-file copy a way to reach them, since it has no hub. */
+function buildFormSwitch(preset){
+  const sel = document.getElementById('formSwitch');
+  if(!sel) return;
+  const ready = Object.entries(window.FORM_DEFS).filter(([, d]) => d.ready);
+  if(ready.length < 2) return;
+
+  for(const [id, def] of ready){
+    const o = new Option(def.title, id);
+    if(def === preset) o.selected = true;
+    sel.appendChild(o);
+  }
+  sel.hidden = false;
+  sel.addEventListener('change', () => { location.search = '?f=' + encodeURIComponent(sel.value); });
+}
+
 /* ---------- boot ---------- */
 async function boot(){
   await setupGate();
@@ -845,6 +891,8 @@ async function boot(){
 
   /* bind this form's definition before anything reads it */
   PAGE_W = preset.page.w; PAGE_H = preset.page.h;
+  BASE_SIZE = preset.fontSize || 9;
+  MIN_SIZE = Math.max(5.5, BASE_SIZE * 0.62);
   FIELDS = preset.fields; CHECKS = preset.checks || []; FLAGS = preset.flags || [];
   GROUPS = preset.groups;
   PAYEE_FIELDS = FIELDS.filter(f => f.payee).map(f => f.id);
@@ -870,6 +918,7 @@ async function boot(){
   setToday();
   applyPreset(preset);
 
+  buildFormSwitch(preset);
   document.getElementById('btnPrint').addEventListener('click', doPrint);
   document.getElementById('btnSave').addEventListener('click', doSave);
   document.getElementById('btnClear').addEventListener('click', clearAll);
