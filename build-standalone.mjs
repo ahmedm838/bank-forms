@@ -29,18 +29,26 @@ const app = text('app.js').replace(
 );
 if(!app.includes('data:application/pdf;base64')) throw new Error('could not inline the PDF — did boot() change?');
 
+/* `?v=` cache-busting suffixes may be on any of these, so match them loosely */
+const inlineScript = (file, body) =>
+  [new RegExp(`<script src="${file.replace('.','\\.')}(\\?v=\\d+)?"></script>`), () => `<script>${body}</script>`];
+
 html = html
-  .replace('<link rel="stylesheet" href="styles.css">', `<style>\n${css}\n</style>`)
-  .replace('<img id="pageImg" alt="Transfer request form preview" src="assets/preview.png">',
-           `<img id="pageImg" alt="Transfer request form preview" src="data:image/png;base64,${b64('assets/preview.png')}">`)
-  .replace('<script src="vendor/pdf-lib.min.js"></script>',      () => `<script>${text('vendor/pdf-lib.min.js')}</script>`)
-  .replace('<script src="vendor/fontkit.umd.min.js"></script>',  () => `<script>${text('vendor/fontkit.umd.min.js')}</script>`)
-  .replace('<script src="vendor/bidi.min.js"></script>',         () => `<script>${text('vendor/bidi.min.js')}</script>`)
-  .replace('<script src="gate.js"></script>',                    () => `<script>${text('gate.js')}</script>`)
-  .replace('<script src="form-presets.js"></script>',            () => `<script>${text('form-presets.js')}</script>`)
-  .replace('<script src="app.js"></script>',                     () => `<script>${app}</script>`)
+  .replace(/<link rel="stylesheet" href="styles\.css(\?v=\d+)?">/, () => `<style>\n${css}\n</style>`)
+  .replace(/<img id="pageImg"([^>]*?)src="assets\/preview\.png">/,
+           (m, attrs) => `<img id="pageImg"${attrs}src="data:image/png;base64,${b64('assets/preview.png')}">`)
+  .replace(...inlineScript('vendor/pdf-lib.min.js',     text('vendor/pdf-lib.min.js')))
+  .replace(...inlineScript('vendor/fontkit.umd.min.js', text('vendor/fontkit.umd.min.js')))
+  .replace(...inlineScript('vendor/bidi.min.js',        text('vendor/bidi.min.js')))
+  .replace(...inlineScript('gate.js',                   text('gate.js')))
+  .replace(...inlineScript('form-presets.js',           text('form-presets.js')))
+  .replace(...inlineScript('app.js',                    app))
   // the offline file is one page, so there is no hub to go back to
   .replace(/<a class="back"[\s\S]*?<\/a>\s*/, '');
+
+/* nothing may still point at a file on disk, or the offline copy is not offline */
+const dangling = html.match(/(?:src|href)="(?!data:|#|https?:)[^"]+"/g);
+if(dangling) throw new Error('standalone build still references: ' + dangling.join(', '));
 
 fs.writeFileSync(path.join(root, OUT), html);
 console.log('built', OUT, (Buffer.byteLength(html)/1048576).toFixed(2) + ' MB');
