@@ -10,10 +10,10 @@ const BANKS = [
   {
     id:'abk', short:'ABK', name:'Al Ahli Bank of Kuwait – Egypt',
     forms:[
-      { id:'transfer',   name:'Bank Transfer', desc:'Swift or internal transfer', ready:true },
-      { id:'cheque-egp', name:'Cheque — EGP',  desc:'Egyptian pounds', ready:false },
-      { id:'cheque-usd', name:'Cheque — USD',  desc:'US dollars',      ready:false },
-      { id:'cheque-eur', name:'Cheque — EUR',  desc:'Euro',            ready:false },
+      { id:'transfer',   name:'Bank Transfer', desc:'Swift or internal transfer' },
+      { id:'cheque-egp', name:'Cheque — EGP',  desc:'Egyptian pounds' },
+      { id:'cheque-usd', name:'Cheque — USD',  desc:'US dollars' },
+      { id:'cheque-eur', name:'Cheque — EUR',  desc:'Euro' },
     ],
   },
   { id:'cib', short:'CIB', name:'Commercial International Bank', forms:[] },
@@ -45,6 +45,9 @@ function showBanks(){
 
 const SEE_README = ' — see the README.';
 
+/* a form is ready when its definition in forms/ says so */
+const isReady = f => !!(window.FORM_DEFS[f.id] && window.FORM_DEFS[f.id].ready);
+
 function selectBank(bank){
   [...banksEl.children].forEach(c => c.classList.toggle('on', c.dataset.bank === bank.id));
   formsEl.innerHTML = '';
@@ -54,7 +57,7 @@ function selectBank(bank){
     formsNote.textContent = 'No ' + bank.short + ' forms yet. Each one needs its blank PDF' + SEE_README;
     formsNote.hidden = false;
   } else {
-    const waiting = bank.forms.filter(f => !f.ready);
+    const waiting = bank.forms.filter(f => !isReady(f));
     formsNote.textContent = !waiting.length ? ''
       : waiting.length === 1
         ? 'One form here needs its blank PDF before it can be added' + SEE_README
@@ -62,11 +65,12 @@ function selectBank(bank){
     formsNote.hidden = !waiting.length;
 
     for(const f of bank.forms){
-      const card = el(f.ready ? 'a' : 'div', 'card' + (f.ready ? '' : ' empty'));
-      if(f.ready) card.href = 'form.html?f=' + encodeURIComponent(f.id);
+      const ready = isReady(f);
+      const card = el(ready ? 'a' : 'div', 'card' + (ready ? '' : ' empty'));
+      if(ready) card.href = 'form.html?f=' + encodeURIComponent(f.id);
       else card.title = 'Not available yet';
       card.appendChild(el('span','cardName', f.name));
-      card.appendChild(el('span','cardDesc', f.ready ? f.desc : f.desc + ' — not available yet'));
+      card.appendChild(el('span','cardDesc', ready ? f.desc : f.desc + ' — not available yet'));
       formsEl.appendChild(card);
     }
   }

@@ -31,7 +31,8 @@ than rendering the wrong document.
 
 1. Put the blank PDF in `assets/`, and a page-1 render in `assets/` for the preview.
 2. Work out the field boxes from the PDF's table grid and add them to `FIELDS`.
-3. Add a preset in `form-presets.js` and list it under its bank in `hub.js`.
+3. Add a definition in `forms/` (copy the shape of `forms/abk-transfer.js`) and
+   list it under its bank in `hub.js`. Nothing in `app.js` needs to change.
 
 > **The password is a doormat, not a lock.** This is a static site: everything it
 > holds is sent to the browser, and this repository is public, so the check is
@@ -57,8 +58,9 @@ follow the Unicode bidirectional rules, so an English company name inside an Ara
 sentence stays readable.
 
 These fields are **English only**, and Arabic letters typed into them are refused:
-date, amount in figures, amount in words, and all three currency fields. Arabic-Indic
-digits (`١٢٣`) are converted to `123` automatically, including the Arabic decimal mark.
+date, amount in figures, and all three currency fields. Arabic-Indic digits (`١٢٣`)
+are converted to `123` automatically, including the Arabic decimal mark. The amount
+in words takes either script.
 
 ## Mandatory fields
 
@@ -72,7 +74,11 @@ account no. · Currency · Telephone no. · Purpose of transfer
 
 ## What it does for you
 
-- **Amount in words** generated from the figures and currency, in English.
+- **Amount in words** generated from the figures and the currency. Arabic is the
+  default, worded the way Egyptian bank forms do it — فقط … لا غير — with the scale
+  words and duals inflected (مئتا ألف, ألفا دولار, أحد عشر ألفاً). *In English* is
+  there too. Being the operative wording on a payment instrument, read it before
+  you sign.
 - **Saved beneficiaries** — *Save* stores the seven beneficiary/bank fields under the
   payee's name; pick them back from the dropdown next time.
 - **Your own details** (ordering customer name, ID, address, phone) are remembered
@@ -88,15 +94,17 @@ machine only. Nothing is uploaded, and no transfer data leaves the page.
 - The signature line and the *For Bank's Use only* block are deliberately left blank.
 - The currency dropdowns offer EGP, USD and EUR. To add more, extend
   `CURRENCY_CHOICES` and `CURRENCIES` at the top of `app.js`.
-- Amount-in-words is generated in English only. Arabic wording can be typed by hand.
+- The generated Arabic keeps the currency name uninflected (جنيه مصري), as bank
+  forms usually write it. Overtype the field if your branch wants it differently.
 
 ## How it is put together
 
 | | |
 |---|---|
 | `index.html`, `hub.js` | the landing page: bank, then form |
-| `form.html`, `app.js`, `styles.css` | the form filler |
-| `form-presets.js` | what each form id on the hub means |
+| `form.html`, `app.js`, `styles.css` | the filler, which knows how to draw and nothing about any one form |
+| `forms/*.js` | one file per form: its PDF, preview and field boxes |
+| `form-registry.js` | picks the form named by `?f=` |
 | `gate.js` | the password gate, shared by both pages |
 | `assets/transfer-request.pdf` | the blank form |
 | `assets/preview.png` | page 1 rendered, for the live preview |

@@ -41,7 +41,9 @@ html = html
   .replace(...inlineScript('vendor/fontkit.umd.min.js', text('vendor/fontkit.umd.min.js')))
   .replace(...inlineScript('vendor/bidi.min.js',        text('vendor/bidi.min.js')))
   .replace(...inlineScript('gate.js',                   text('gate.js')))
-  .replace(...inlineScript('form-presets.js',           text('form-presets.js')))
+  .replace(...inlineScript('forms/abk-transfer.js',     text('forms/abk-transfer.js')))
+  .replace(...inlineScript('forms/abk-cheques.js',      text('forms/abk-cheques.js')))
+  .replace(...inlineScript('form-registry.js',          text('form-registry.js')))
   .replace(...inlineScript('app.js',                    app))
   // the offline file is one page, so there is no hub to go back to
   .replace(/<a class="back"[\s\S]*?<\/a>\s*/, '');

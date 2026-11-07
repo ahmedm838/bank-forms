@@ -1,73 +1,26 @@
-/* ABK Transfer Request — form filler
-   Stamps typed values into the original vector PDF (A4 595.276 x 842).
-   Field boxes were taken from the PDF's own table grid, in PDF points,
-   origin bottom-left.
+/* Bank form filler — stamps typed values into a bank's own vector PDF.
 
-   Arabic and English both work. Text is laid out as bidirectional runs
-   (bidi-js), shaped by fontkit, and each glyph is positioned explicitly in
-   the content stream — pdf-lib's own drawText ignores GPOS and mis-spaces
-   Arabic, so it is deliberately not used for text. */
+   The form itself is data: each one lives in forms/<name>.js and gives its PDF,
+   its preview image and the box of every field, in PDF points with the origin at
+   the bottom-left. This file knows how to draw and nothing about any one form, so
+   adding a form means adding a definition, not editing this.
 
-const A4W = 595.276, A4H = 842;
+   Arabic and English both work. Text is laid out as bidirectional runs (bidi-js),
+   shaped by fontkit, and each glyph is positioned explicitly in the content
+   stream — pdf-lib's own drawText ignores GPOS and mis-spaces Arabic, so it is
+   deliberately not used for text. */
+
 const PAD = 3.5;
 const BASE_SIZE = 9;
 const MIN_SIZE = 5.8;
 const LINE_RATIO = 1.18;
 const INK = [0.03, 0.09, 0.36];
 
-const CURRENCY_CHOICES = ['EGP', 'USD', 'EUR'];
+/* bound to the chosen form at boot */
+let PAGE_W = 595.276, PAGE_H = 842;
+let FIELDS = [], CHECKS = [], FLAGS = [], GROUPS = [];
+let PAYEE_FIELDS = [];
 
-/* ---------- fields: box = [x0, y0, x1, y1] ---------- */
-const FIELDS = [
-  { id:'date',            label:'Date',                                box:[303,698.5,522,716.5], group:'head', hint:'dd/mm/yyyy', required:true, latin:true },
-
-  { id:'currency',        label:'Currency (32A)',                      box:[61.3,618.4,114.2,635.8], group:'amount', type:'select', options:CURRENCY_CHOICES, align:'center', required:true, latin:true },
-  { id:'amountFigures',   label:'Amount in figures',                   box:[114.2,618.4,234.9,635.8], group:'amount', hint:'e.g. 125,400.50', required:true, latin:true, thousands:true },
-  { id:'amountWords',     label:'Amount in words',                     box:[234.9,618.4,553.6,635.8], group:'amount', multi:true, latin:true },
-
-  { id:'benName',         label:"Beneficiary's name (59)",             box:[176.4,604.6,459.4,618.4], group:'ben', required:true },
-  { id:'benAddress',      label:"Beneficiary's address (or ID no. if paid in cash)", box:[176.4,586.6,459.4,604.6], group:'ben', multi:true },
-  { id:'benAccount',      label:"Beneficiary's account no. / IBAN",    box:[176.4,569.5,459.4,586.6], group:'ben', multi:true, required:true },
-  { id:'intermediaryBank',label:'Intermediary bank name & SWIFT code (56)', box:[176.4,552.2,459.4,569.5], group:'ben', multi:true },
-  { id:'benBank',         label:"Beneficiary's bank (57)",             box:[176.4,539.4,459.4,552.2], group:'ben', required:true },
-  { id:'benBankAddress',  label:"Beneficiary's bank address",          box:[176.4,521,459.4,539.4], group:'ben', multi:true },
-  { id:'benBankSwift',    label:"Beneficiary's bank SWIFT code",       box:[176.4,504.4,459.4,521], group:'ben', upper:true, hint:'8 or 11 characters' },
-  { id:'info70',          label:'Information for beneficiary (70)',    box:[176.4,491.1,459.4,504.4], group:'ben' },
-
-  { id:'debitAccount',    label:'Payment value debited to account no.', box:[176.4,413.6,459.4,431.1], group:'debit', required:true },
-  { id:'debitCurrency',   label:'Currency',                            box:[176.4,395.1,459.4,413.6], group:'debit', type:'select', options:CURRENCY_CHOICES, required:true, latin:true },
-  { id:'commAccount',     label:'Commission & charges debited to account no.', box:[176.4,369.4,459.4,395.1], group:'debit', required:true },
-  { id:'commCurrency',    label:'Currency',                            box:[176.4,351.9,459.4,369.4], group:'debit', type:'select', options:CURRENCY_CHOICES, required:true, latin:true },
-
-  { id:'ordName',         label:"Ordering customer's name (50)",       box:[176.4,316.9,459.4,334.4], group:'ord', remember:true },
-  { id:'ordID',           label:"Ordering customer's ID (if paid in cash)", box:[176.4,299.4,459.4,316.9], group:'ord', remember:true },
-  { id:'ordAddress',      label:"Ordering customer's address",         box:[176.4,282.5,459.4,299.4], group:'ord', multi:true, remember:true },
-  { id:'ordPhone',        label:'Telephone no.',                       box:[176.4,265.2,459.4,282.5], group:'ord', remember:true, required:true },
-  { id:'purpose',         label:'Purpose of transfer (goods type & delivery terms)', box:[176.4,237.3,459.4,265.2], group:'ord', multi:true, required:true },
-];
-
-const CHECKS = [
-  { id:'issueType', label:'Please issue', group:'head', required:true, options:[
-      { v:'draft',    t:'Bank Draft',        box:[156,672.3,166.7,683.3] },
-      { v:'internal', t:'Internal Transfer', box:[292.9,672.3,303.5,683.3] },
-      { v:'swift',    t:'Swift Transfer',    box:[436.5,672.3,447.3,683.3] } ] },
-  { id:'charges', label:'Charges (71A)', group:'debit', required:true, options:[
-      { v:'OUR', t:'OUR — all charges on my/our account',  box:[312.9,468.5,323.5,479.4] },
-      { v:'SHA', t:"SHA — sender's bank charges on us, others on beneficiary", box:[312.9,451.4,323.5,462.3] },
-      { v:'BEN', t:"BEN — all charges on beneficiary's account", box:[312.9,434.4,323.5,445.3] } ] },
-];
-
-const FLAGS = [
-  { id:'paidInCash', label:'Paid in cash', group:'debit', box:[312.9,337.5,323.5,348.4] },
-];
-
-const GROUPS = [
-  { id:'head',   title:'Application' },
-  { id:'amount', title:'Amount (32A)' },
-  { id:'ben',    title:'Beneficiary' },
-  { id:'debit',  title:'Charges & debit instructions' },
-  { id:'ord',    title:'Ordering customer (50)' },
-];
 
 /* ---------- amount in words (English) ---------- */
 const CURRENCIES = {
@@ -148,6 +101,99 @@ function caretAfterDigits(formatted, digitsBefore){
     if(seen >= digitsBefore) return i + 1;
   }
   return formatted.length;
+}
+
+/* ---------- amount in words, Arabic ----------
+   Written the way Egyptian bank forms word it: فقط … لا غير.
+   Grammar notes: 1 and 2 take the noun itself (ألف / ألفان), 3–10 take the
+   plural (ثلاثة آلاف), 11–99 the accusative singular (أحد عشر ألفاً), and 100+
+   the plain singular (مائة ألف). Units are said before tens: خمسة وعشرون. */
+const AR_ONES = ['','واحد','اثنان','ثلاثة','أربعة','خمسة','ستة','سبعة','ثمانية','تسعة','عشرة',
+  'أحد عشر','اثنا عشر','ثلاثة عشر','أربعة عشر','خمسة عشر','ستة عشر','سبعة عشر','ثمانية عشر','تسعة عشر'];
+const AR_TENS = ['','','عشرون','ثلاثون','أربعون','خمسون','ستون','سبعون','ثمانون','تسعون'];
+const AR_HUNDREDS = ['','مائة','مئتان','ثلاثمائة','أربعمائة','خمسمائة','ستمائة','سبعمائة','ثمانمائة','تسعمائة'];
+
+/* `two` is the free form (ألفان), `twoC` the construct one used when a noun is
+   annexed straight after it (ألفا دولار) */
+const AR_SCALES = [
+  { v:1e9, one:'مليار', two:'ملياران', twoC:'مليارا', plural:'مليارات', acc:'ملياراً', gen:'مليار' },
+  { v:1e6, one:'مليون', two:'مليونان', twoC:'مليونا', plural:'ملايين',  acc:'مليوناً', gen:'مليون' },
+  { v:1e3, one:'ألف',   two:'ألفان',   twoC:'ألفا',   plural:'آلاف',    acc:'ألفاً',   gen:'ألف'   },
+];
+
+/* `construct` is true when a noun follows directly, which turns مئتان into مئتا */
+function arUnder1000(n, construct){
+  const parts = [];
+  const h = Math.floor(n/100), r = n % 100;
+  if(h) parts.push(h === 2 && construct && !r ? 'مئتا' : AR_HUNDREDS[h]);
+  if(r < 20){ if(r) parts.push(AR_ONES[r]); }
+  else {
+    const u = r % 10, t = Math.floor(r/10);
+    if(u) parts.push(AR_ONES[u]);
+    parts.push(AR_TENS[t]);
+  }
+  return parts.join(' و');
+}
+
+/* The counted noun agrees with the tail of the number, not the whole of it:
+   284 ends in 84, so it is مئتان وأربعة وثمانون ألفاً, while 100 is مائة ألف. */
+function arScaleWord(count, s){
+  const tail = count % 100;
+  if(tail === 0) return s.gen;
+  if(tail >= 3 && tail <= 10) return s.plural;
+  return s.acc;
+}
+
+function arInteger(n, construct){
+  if(n === 0) return 'صفر';
+  const parts = [];
+  let rest = n;
+  for(const s of AR_SCALES){
+    const c = Math.floor(rest / s.v);
+    if(!c) continue;
+    rest %= s.v;
+    const last = rest === 0;
+    if(c === 1)      parts.push(s.one);
+    else if(c === 2) parts.push(last && construct ? s.twoC : s.two);
+    // a scale word always annexes what follows it, hence the construct flag here
+    else             parts.push(arUnder1000(c, true) + ' ' + arScaleWord(c, s));
+  }
+  if(rest) parts.push(arUnder1000(rest, construct));
+  return parts.join(' و');
+}
+
+const AR_CURRENCIES = {
+  EGP: { major:'جنيه مصري',   dual:'جنيهان مصريان', minor:{ one:'قرش', two:'قرشان', plural:'قروش',  acc:'قرشاً' } },
+  USD: { major:'دولار أمريكي', dual:'دولاران أمريكيان', minor:{ one:'سنت', two:'سنتان', plural:'سنتات', acc:'سنتاً' } },
+  EUR: { major:'يورو',        dual:'يوروان',        minor:{ one:'سنت', two:'سنتان', plural:'سنتات', acc:'سنتاً' } },
+};
+
+function arMinor(frac, m){
+  if(frac === 1) return m.one + ' واحد';
+  if(frac === 2) return m.two;
+  return arInteger(frac) + ' ' + (frac <= 10 ? m.plural : m.acc);
+}
+
+function amountInWordsAr(amountStr, ccy){
+  const clean = String(amountStr||'').replace(/[,\s]/g,'');
+  if(!clean || !/^\d*\.?\d*$/.test(clean) || isNaN(parseFloat(clean))) return '';
+  const info = AR_CURRENCIES[(ccy||'').toUpperCase()];
+  if(!info) return '';
+
+  const num = parseFloat(clean), major = Math.floor(num);
+  const frac = Math.round((num - major) * 100);
+
+  // an amount under one unit is just the fraction: فقط خمسون قرشاً لا غير
+  if(major === 0 && frac > 0) return 'فقط ' + arMinor(frac, info.minor) + ' لا غير';
+
+  let head;
+  if(major === 1)      head = info.major + ' واحد';
+  else if(major === 2) head = info.dual;
+  else                 head = arInteger(major, true) + ' ' + info.major;
+
+  let s = 'فقط ' + head;
+  if(frac > 0) s += ' و' + arMinor(frac, info.minor);
+  return s + ' لا غير';
 }
 
 /* ---------- bidirectional text engine ---------- */
@@ -257,7 +303,7 @@ function fitText(text, boxW, boxH, measureAt){
 const state = { values:{}, checks:{}, flags:{} };
 const LS_KEY = 'abk-transfer-tool';
 const PAYEE_KEY = 'abk-transfer-payees';
-const PAYEE_FIELDS = ['benName','benAddress','benAccount','intermediaryBank','benBank','benBankAddress','benBankSwift'];
+/* PAYEE_FIELDS comes from the form definition: the fields marked `payee:true` */
 
 function loadRemembered(){
   try{ Object.assign(state.values, (JSON.parse(localStorage.getItem(LS_KEY)||'{}').values)||{}); }catch(e){}
@@ -291,7 +337,8 @@ function buildForm(){
   for(const g of GROUPS){
     const sec = el('section','grp');
     sec.appendChild(el('h2',null,g.title));
-    if(g.id === 'ben') sec.appendChild(buildPayeeBar());
+    if(PAYEE_FIELDS.length && FIELDS.some(f => f.payee && f.group === g.id) &&
+       !document.querySelector('.payeebar')) sec.appendChild(buildPayeeBar());
 
     for(const c of CHECKS.filter(c=>c.group===g.id)){
       const row = el('div','row');
@@ -334,17 +381,23 @@ function buildForm(){
       inp.addEventListener('change', onEdit(f, inp));
       row.appendChild(inp);
 
-      if(f.id === 'amountWords'){
-        const b = el('button','mini','Generate from figures'); b.type='button';
-        b.addEventListener('click', ()=>{
-          const w = amountInWords(state.values.amountFigures, state.values.currency);
-          if(!w){ flash('Choose a currency and enter a numeric amount first.'); return; }
-          state.values.amountWords = w;
-          const n = document.getElementById('in-amountWords');
-          n.value = w; n.dataset.touched = '';
-          render();
-        });
-        row.appendChild(b);
+      if(f.wordsOf){
+        const bar = el('div','wordsBtns');
+        const gen = (fn, label) => {
+          const b = el('button','mini',label); b.type='button';
+          b.addEventListener('click', ()=>{
+            const w = fn(state.values[f.wordsOf], state.values[f.currencyField]);
+            if(!w){ flash('Choose a currency and enter a numeric amount first.'); return; }
+            state.values[f.id] = w;
+            const n = document.getElementById('in-'+f.id);
+            n.value = w; n.dataset.touched = '';
+            render();
+          });
+          return b;
+        };
+        bar.appendChild(gen(amountInWordsAr, 'بالعربية'));
+        bar.appendChild(gen(amountInWords,   'In English'));
+        row.appendChild(bar);
       }
       sec.appendChild(row);
     }
@@ -392,7 +445,8 @@ function onEdit(f, inp){
     }
     state.values[f.id] = f.upper ? v.toUpperCase() : v;
     if(f.upper) inp.value = state.values[f.id];
-    if(f.id === 'currency' || f.id === 'amountFigures') maybeAutoWords();
+    const wf = wordsField();
+    if(wf && (f.id === wf.wordsOf || f.id === wf.currencyField)) maybeAutoWords();
     if(f.remember) saveRemembered();
     inp.classList.remove('bad');
     validate(f, inp);
@@ -422,7 +476,8 @@ function buildPayeeBar(){
   });
   const save = el('button','mini','Save'); save.type='button';
   save.addEventListener('click', ()=>{
-    const name = (state.values.benName||'').trim();
+    const nameField = FIELDS.find(f => f.fileLabel) || FIELDS.find(f => f.payee);
+    const name = ((nameField && state.values[nameField.id])||'').trim();
     if(!name){ flash("Fill the beneficiary's name before saving."); return; }
     const p = getPayees();
     p[name] = {}; PAYEE_FIELDS.forEach(id=>p[name][id] = state.values[id]||'');
@@ -437,18 +492,23 @@ function buildPayeeBar(){
   return bar;
 }
 
+/* the field marked `wordsOf` spells out the amount it names, until typed over */
+function wordsField(){ return FIELDS.find(f => f.wordsOf); }
+
 function maybeAutoWords(){
-  const node = document.getElementById('in-amountWords');
+  const f = wordsField();
+  if(!f) return;
+  const node = document.getElementById('in-'+f.id);
   if(!node || node.dataset.touched === '1') return;
-  const w = amountInWords(state.values.amountFigures, state.values.currency);
-  if(w){ state.values.amountWords = w; node.value = w; }
+  const w = amountInWordsAr(state.values[f.wordsOf], state.values[f.currencyField]);
+  if(w){ state.values[f.id] = w; node.value = w; }
 }
 
 function validate(f, inp){
   const v = (state.values[f.id]||'').trim();
   let bad = false;
-  if(f.id === 'benBankSwift' && v) bad = !/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(v);
-  if(f.id === 'amountFigures' && v) bad = !/^\d{1,3}(,\d{3})*(\.\d{1,2})?$/.test(v) || parseFloat(v.replace(/,/g,'')) <= 0;
+  if(f.swift && v)     bad = !/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(v);
+  if(f.thousands && v) bad = !/^\d{1,3}(,\d{3})*(\.\d{1,2})?$/.test(v) || parseFloat(v.replace(/,/g,'')) <= 0;
   if(f.latin && v && RTL_LETTERS.test(v)) bad = true;
   inp.classList.toggle('bad', bad);
   return !bad;
@@ -460,9 +520,9 @@ const meas = document.createElement('canvas').getContext('2d');
 function measurePreview(text, size){ meas.font = size+'px ABKForm, Helvetica, Arial, sans-serif'; return meas.measureText(text).width; }
 
 function layoutOverlay(){
-  previewScale = previewWrap.clientWidth / A4W;
-  overlayEl.style.width = (A4W*previewScale)+'px';
-  overlayEl.style.height = (A4H*previewScale)+'px';
+  previewScale = previewWrap.clientWidth / PAGE_W;
+  overlayEl.style.width = (PAGE_W*previewScale)+'px';
+  overlayEl.style.height = (PAGE_H*previewScale)+'px';
   render();
 }
 
@@ -482,7 +542,7 @@ function render(){
     const d = el('div', 'ov center');
     d.dir = 'auto';
     d.style.left = (x0*S)+'px';
-    d.style.top = ((A4H - topPdf)*S)+'px';
+    d.style.top = ((PAGE_H - topPdf)*S)+'px';
     d.style.width = (boxW*S)+'px';
     d.style.fontSize = (size*S)+'px';
     d.style.lineHeight = (size*LINE_RATIO*S)+'px';
@@ -494,7 +554,7 @@ function render(){
     const [x0,y0,x1,y1] = b;
     const d = el('div','ovcheck','✓');
     d.style.left = (x0*S)+'px';
-    d.style.top = ((A4H - y1)*S)+'px';
+    d.style.top = ((PAGE_H - y1)*S)+'px';
     d.style.width = ((x1-x0)*S)+'px';
     d.style.height = ((y1-y0)*S)+'px';
     d.style.fontSize = ((y1-y0)*0.95*S)+'px';
@@ -626,8 +686,10 @@ function checkRequired(){
 /* ---------- output ---------- */
 function fileName(){
   // keep Arabic and accented names; drop only what a filesystem refuses
-  const who = (state.values.benName||'').replace(/[\\/:*?"<>|.]/g,'').trim().replace(/\s+/g,'-').slice(0,40) || 'transfer';
-  const d = (state.values.date||'').replace(/[^\d]/g,'-') || new Date().toISOString().slice(0,10);
+  const nameField = FIELDS.find(f => f.fileLabel) || FIELDS.find(f => f.payee);
+  const dateField = FIELDS.find(f => f.today);
+  const who = (((nameField && state.values[nameField.id])||'')).replace(/[\\/:*?"<>|.]/g,'').trim().replace(/\s+/g,'-').slice(0,40) || 'transfer';
+  const d = (((dateField && state.values[dateField.id])||'')).replace(/[^\d]/g,'-') || new Date().toISOString().slice(0,10);
   return `ABK-Transfer-${who}-${d}.pdf`;
 }
 
@@ -714,8 +776,10 @@ function clearAll(){
 function setToday(){
   const d = new Date();
   const s = String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
-  state.values.date = s;
-  const n = document.getElementById('in-date'); if(n) n.value = s;
+  const f = FIELDS.find(x => x.today);
+  if(!f) return;
+  state.values[f.id] = s;
+  const n = document.getElementById('in-'+f.id); if(n) n.value = s;
 }
 
 let flashTimer = null;
@@ -779,8 +843,15 @@ async function boot(){
   const preset = currentPreset();
   if(preset.ready === false){ refuseUnavailable(preset); return; }
 
+  /* bind this form's definition before anything reads it */
+  PAGE_W = preset.page.w; PAGE_H = preset.page.h;
+  FIELDS = preset.fields; CHECKS = preset.checks || []; FLAGS = preset.flags || [];
+  GROUPS = preset.groups;
+  PAYEE_FIELDS = FIELDS.filter(f => f.payee).map(f => f.id);
+  document.getElementById('pageImg').src = preset.preview;
+
   const [pdfRes, fontRes] = await Promise.all([
-    fetch('assets/transfer-request.pdf'),
+    fetch(preset.pdf),
     fetch('assets/IBMPlexSansArabic-Regular.ttf'),
   ]);
   if(!pdfRes.ok || !fontRes.ok) throw new Error('could not load the form or the font');
@@ -791,7 +862,11 @@ async function boot(){
   loadRemembered();
   buildForm();
   FIELDS.forEach(f=>{ const n = document.getElementById('in-'+f.id); if(n && state.values[f.id]) n.value = state.values[f.id]; });
-  document.getElementById('in-amountWords').addEventListener('input', e => { e.target.dataset.touched = '1'; });
+  const wordsField = FIELDS.find(f => f.wordsOf);
+  if(wordsField){
+    document.getElementById('in-'+wordsField.id)
+      .addEventListener('input', e => { e.target.dataset.touched = '1'; });
+  }
   setToday();
   applyPreset(preset);
 
