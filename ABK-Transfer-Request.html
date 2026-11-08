@@ -978,21 +978,21 @@ window.FORM_DEFS['cheque-egp'] = {
       cells: 8, cellSize: 11, baseline: 809, latin:true, required:true, today:true,
       hint:'dd/mm/yyyy — printed one digit per box' },
 
-    { id:'payTo', label:'إدفعوا بموجب هذا الشيك إلى — Pay to', box:[62,760,366,776], group:'body',
+    { id:'payTo', label:'إدفعوا بموجب هذا الشيك إلى — Pay to', box:[62,764,366,780], group:'body',
       type:'select', supplierNames:true,
-      maxLines:1, baseline:768, pad:2, arabic:true, required:true },
+      maxLines:1, baseline:772, pad:2, arabic:true, required:true },
 
     /* the printed EGP box; #...# so the figure cannot be extended */
-    { id:'amount', label:'المبلغ بالأرقام — EGP', box:[399,733,486,749], group:'body',
-      maxLines:1, baseline:741, pad:1, latin:true, thousands:true, wrap:'#', required:true,
+    { id:'amount', label:'المبلغ بالأرقام — EGP', box:[399,737,486,753], group:'body',
+      maxLines:1, baseline:745, pad:1, latin:true, thousands:true, wrap:'#', required:true,
       hint:'e.g. 125400' },
 
-    { id:'sumWords', label:'مبلغاً وقدره — The sum of', box:[78,741,320,757], group:'body',
-      maxLines:1, baseline:749, pad:2, required:true,
+    { id:'sumWords', label:'مبلغاً وقدره — The sum of', box:[78,745,320,761], group:'body',
+      maxLines:1, baseline:753, pad:2, required:true,
       wordsOf:'amount', currencyFixed:'EGP' },
 
-    { id:'name', label:'الاسم — Name', box:[50,700,465,716], group:'body',
-      maxLines:1, baseline:708, pad:2, arabic:true, required:true,
+    { id:'name', label:'الاسم — Name', box:[50,704,465,720], group:'body',
+      maxLines:1, baseline:712, pad:2, arabic:true, required:true,
       noShrink:true, align:'right' },
   ],
 };

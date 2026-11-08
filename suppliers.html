@@ -34,6 +34,8 @@
   </nav>
   <div class="spacer"></div>
   <span id="dirty" class="dirty" hidden>Unsaved changes</span>
+  <button id="btnLoad" type="button">Load file</button>
+  <input id="fileLoad" type="file" accept=".xlsx,.xls" hidden>
   <button id="btnExport" type="button">Export</button>
   <button id="btnSave" type="button">Save</button>
   <button id="btnAdd" type="button" class="primary">Add supplier</button>
@@ -41,6 +43,7 @@
 
 <main class="sheetMain">
   <p class="hint" id="state"></p>
+  <p class="hint" id="loadedFile" role="status">Use Load file to restore an exported list. Export keeps a copy outside this temporary workspace.</p>
   <div id="table"></div>
   <p class="hint footnote">
     Data is temporary, is never saved in browser storage, and clears on refresh or close.
@@ -51,11 +54,12 @@
 <div id="toast"></div>
 
 <script src="vendor/xlsx.full.min.js"></script>
+<script src="list-files.js?v=39"></script>
 <script src="gate.js?v=37"></script>
 <script src="banks-seed.js?v=37"></script>
 <script src="data-lists.js?v=37"></script>
-<script src="list-table.js?v=37"></script>
+<script src="list-table.js?v=39"></script>
 <script src="unsaved.js?v=37"></script>
-<script src="suppliers.js?v=37"></script>
+<script src="suppliers.js?v=39"></script>
 </body>
 </html>

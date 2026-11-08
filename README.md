@@ -347,3 +347,15 @@ Payroll Debit Order uses a flowing letter preview and browser printing, rather
 than stamping text onto a fixed PDF background. Its reference PDF and preview
 were regenerated from the supplied Word document. Other forms retain their
 existing PDF stamping and print placement.
+
+## Restore Suppliers and Transactions
+
+Use Load file on either list page to restore its exported XLSX workbook into the
+current temporary workspace. Loading replaces that page's current list; existing
+unsaved edits prompt before replacement. Transactions skip repeated rows.
+Export again to keep changes before refreshing or closing the workspace.
+
+New Transactions exports include a hidden Record data sheet so complete forms
+can be reopened after restoring the workbook. Older exports also load; fields
+that those older files never included must be filled again before printing.
+Previously cleared rows cannot be recovered without an exported copy.

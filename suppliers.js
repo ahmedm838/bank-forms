@@ -80,6 +80,12 @@ async function boot(){
     table.add({ nameAr:'', nameEn:'', iban:'', account:'', bank:'', swift:'', reason:'' }));
   $('btnSave').addEventListener('click', () => unsaved.save());
   $('btnExport').addEventListener('click', exportBook);
+  ListFiles.hook({button:$('btnLoad'),input:$('fileLoad'),load:ListFiles.suppliers,error:flashMsg,apply:(loaded,name)=>{
+    if(unsaved.dirty && !confirm('Replace the unsaved supplier edits with this file?'))return;
+    table.rows=loaded;LISTS.saveSuppliers(table.rows);unsaved.settled();refreshState();
+    $('loadedFile').textContent=name+' — '+loaded.length+' suppliers loaded.';
+    flashMsg('Suppliers loaded.');
+  }});
 }
 
 boot().catch(e => flashMsg('Could not start: ' + e.message));

@@ -137,7 +137,7 @@ window.ListTable = function ListTable(opts){
   return {
     render,
     get rows(){ return rows; },
-    set rows(v){ rows = v; sortRows(); renumber(); render(); },
+    set rows(v){ Object.keys(filters).forEach(key=>delete filters[key]); rows = v; sortRows(); renumber(); render(); },
     add(blank){ Object.keys(filters).forEach(key => delete filters[key]);
                 rows.push(Object.assign({ order: rows.length + 1 }, blank)); renumber(); changed(); render();
                 mount.querySelector('tbody tr:last-child input').focus(); },

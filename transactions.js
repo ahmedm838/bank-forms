@@ -206,6 +206,11 @@ function exportBook(){
                  {wch:46},{wch:26},{wch:10},{wch:9},{wch:18},{wch:9},{wch:18},{wch:9},{wch:28},{wch:34}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
+  // Preserve complete forms for reopening, alongside the readable table.
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([
+    ['Row','Record'],...shown.map((row,i)=>[i+1,JSON.stringify(row)]),
+  ]),'Record data');
+  wb.Workbook={Sheets:[{Hidden:0},{Hidden:1}]};
   const stamp = new Date().toISOString().slice(0,10);
   XLSX.writeFile(wb, `Transactions ${stamp}.xlsx`);
   flashMsg(`Saved ${shown.length} ${shown.length === 1 ? 'transfer' : 'transfers'}.`);
@@ -227,6 +232,14 @@ async function boot(){
   $('btnSave').addEventListener('click', () => unsaved.save());
   $('btnExport').addEventListener('click', exportBook);
   $('btnClearFilters').addEventListener('click', () => { filters = {}; render(); });
+  ListFiles.hook({button:$('btnLoad'),input:$('fileLoad'),load:ListFiles.transactions,error:flashMsg,apply:(loaded,name)=>{
+    if(unsaved.dirty && !confirm('Replace the unsaved transaction edits with this file?'))return;
+    rows=[];LISTS.saveTransactions([]);
+    loaded.forEach(row=>LISTS.addTransaction(row));
+    rows=LISTS.transactions();filters={};unsaved.settled();render();
+    $('loadedFile').textContent=name+' — '+rows.length+' transactions loaded.';
+    flashMsg('Transactions loaded.');
+  }});
 }
 
 boot().catch(e => flashMsg('Could not start: ' + e.message));
