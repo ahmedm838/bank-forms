@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Payroll Transfer Sheet</title>
+<meta name="description" content="Builds the payroll sheet and the bank transfer sheet from the monthly report.">
+<link rel="stylesheet" href="styles.css?v=20">
+</head>
+<body class="sheetpage">
+<div id="gate">
+  <form id="gateForm" autocomplete="off">
+    <h1>Payroll Transfer Sheet</h1>
+    <p>Enter the password to continue.</p>
+    <input id="gatePass" type="password" placeholder="Password" aria-label="Password" autocomplete="current-password">
+    <button type="submit" class="primary">Open</button>
+    <div id="gateMsg" role="alert"></div>
+  </form>
+</div>
+
+<header>
+  <a class="back" href="index.html" title="All forms">&#8592;</a>
+  <div class="brand">
+    <div class="title">Payroll Transfer Sheet</div>
+    <div class="sub">Al Ahli Bank of Kuwait &ndash; Egypt &nbsp;&middot;&nbsp; from the monthly report</div>
+  </div>
+  <div class="spacer"></div>
+  <button id="btnPayroll" type="button" disabled>Export payroll sheet</button>
+  <button id="btnTransfer" type="button" class="primary" disabled>Export transfer sheet</button>
+</header>
+
+<main class="sheetMain">
+
+  <section class="step-block">
+    <h2 class="step">1 &middot; Employees on file</h2>
+    <p class="hint" id="masterState">No employees yet.</p>
+    <div class="droprow">
+      <label class="drop" id="dropMaster">
+        <input type="file" id="fileMaster" accept=".xlsx,.xls" hidden>
+        <b>Payroll sheet</b>
+        <span>Any past <i>Payroll Sheet</i>. Read once for each person's basic salary, insured wages, bank account and S.I. number.</span>
+      </label>
+      <label class="drop" id="dropNames">
+        <input type="file" id="fileNames" accept=".xlsx,.xls" hidden>
+        <b>Transfer sheet</b>
+        <span>Any past <i>Transfer Sheet</i>, for the Arabic names. Matched to people by bank account.</span>
+      </label>
+    </div>
+    <div class="masterTools" hidden id="masterTools">
+      <button id="btnForget" type="button" class="mini">Forget employees</button>
+      <span class="hint" id="masterDetail"></span>
+    </div>
+  </section>
+
+  <section class="step-block">
+    <h2 class="step">2 &middot; This month</h2>
+    <label class="drop wide" id="dropReport">
+      <input type="file" id="fileReport" accept=".xlsx,.xls" hidden>
+      <b>Monthly report</b>
+      <span>The attendance export. Allowances, incentive, bonus, adjustments, overtime, deducted hours and salary advances.</span>
+    </label>
+    <p class="hint" id="reportState"></p>
+  </section>
+
+  <div id="problems" class="errors" hidden></div>
+
+  <section class="step-block" id="results" hidden>
+    <h2 class="step">3 &middot; Payroll sheet <span class="count" id="payrollCount"></span></h2>
+    <div class="tablewrap"><table id="tblPayroll"></table></div>
+
+    <h2 class="step">4 &middot; Transfer sheet <span class="count" id="transferCount"></span></h2>
+    <div class="tablewrap narrow"><table id="tblTransfer"></table></div>
+  </section>
+
+</main>
+
+<div id="toast"></div>
+
+<script src="vendor/xlsx.full.min.js"></script>
+<script src="gate.js?v=20"></script>
+<script src="payroll-calc.js?v=20"></script>
+<script src="payroll-sheet.js?v=20"></script>
+</body>
+</html>

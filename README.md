@@ -19,8 +19,8 @@ The page asks for a password, remembered for the rest of the browser session.
 
 | Bank | Forms |
 |---|---|
-| **ABK** — Al Ahli Bank of Kuwait – Egypt | Bank Transfer · Payroll Debit Order |
-| ABK, awaiting their blank PDFs | Cheque EGP · Cheque USD · Cheque EUR · Payroll Transfer Sheet · Social Insurance Payment · Salary Taxes Payment · VAT Payment · Withholding Payment |
+| **ABK** — Al Ahli Bank of Kuwait – Egypt | Bank Transfer · Payroll Debit Order · Payroll Transfer Sheet |
+| ABK, awaiting their blank PDFs | Cheque EGP · Cheque USD · Cheque EUR · Social Insurance Payment · Salary Taxes Payment · VAT Payment · Withholding Payment |
 | CIB, NBE, QNB, NBK | none yet — the blank PDFs are needed |
 
 **Payroll Debit Order** is the company's own letter to the bank (خصم مرتبات),
@@ -162,3 +162,45 @@ the local scripts in `index.html` and `form.html` whenever one of them changes, 
 browsers will keep the old copy. The HTML itself is served with `max-age=600`, so a
 visitor who was on the page in the last ten minutes may need a reload to see a
 change.
+
+## Payroll Transfer Sheet
+
+Not a bank form to stamp but two spreadsheets to build, so it has a page of its
+own (`payroll-sheet.html`). Drop in the month's attendance export and it produces
+the payroll sheet and the bank transfer sheet, each exportable as `.xlsx`.
+
+The monthly report carries only what changes each month — allowances, incentive,
+bonus, adjustments, overtime, deducted hours, salary advances. Everything standing
+(basic salary, insured wages, bank account, Arabic name) is read once from a past
+payroll sheet and transfer sheet and kept in the browser, so later months need only
+the report. People are matched on employee code, and the S.I. number is checked
+against it; a disagreement is reported rather than quietly accepted.
+
+### The arithmetic
+
+`payroll-calc.js` holds the formulas, taken from the company workbook rather than
+guessed, with the constants from its Input sheet: personal exemption 20,000,
+employee insurance 11%, company 18.75%, 240 working hours, martyrs fund 0.05%.
+
+Income tax follows Law 91/2005 art. 8 as amended by Law 7/2024. It is not a plain
+progressive table: the band the annual income falls in decides which lower brackets
+apply at all, so above 600,000 the 0% band is lost, above 700,000 the 10% band goes
+too, and so on. Income is rounded down to the nearest ten pounds first.
+
+Recomputing October 2026 from its monthly report reproduced all ten calculated
+figures for all seventeen employees exactly, and the net total matched the issued
+transfer sheet (430,282).
+
+Two things worth knowing:
+
+- Both outputs follow the **payroll sheet's own row order**, kept when the employee
+  list is read. Salary alone cannot reproduce it, because people on equal salaries
+  have a settled order. The issued October transfer sheet differs from its payroll
+  sheet in a few places, which looks like hand-sorting.
+- The workbook computes overtime as `basic / 240 × hours`, with no 1.5 multiplier,
+  although its own notes say "Overtime = Hour Rate × overtime hours × 1.5". This
+  follows the formula, not the note. No one had overtime in October, so the two
+  have not yet differed in practice.
+
+Nothing is uploaded anywhere: the workbooks are parsed in the page and the employee
+list stays in that browser's local storage.

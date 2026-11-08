@@ -197,6 +197,47 @@ body.hub{background:var(--bg)}
 .sizePick{display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--muted); white-space:nowrap}
 .sizePick select{width:auto; min-width:92px; padding:6px 8px}
 
+/* ---------- payroll sheet page ---------- */
+body.sheetpage{display:flex; flex-direction:column}
+/* the base `main` is the form page two-column grid; this page is a plain column */
+.sheetMain{display:block; flex:1; overflow:auto; padding:20px 22px 60px; width:100%; max-width:1500px; margin:0 auto}
+.step-block{margin-bottom:26px}
+.count{float:right; text-transform:none; letter-spacing:0; color:var(--muted); font-weight:400}
+.hint{color:var(--muted); font-size:13px; margin:0 0 10px}
+
+.droprow{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+.drop{
+  display:flex; flex-direction:column; gap:4px; cursor:pointer;
+  border:1.5px dashed var(--line); border-radius:10px; padding:14px 16px;
+  background:var(--panel); transition:border-color .12s, background .12s;
+}
+.drop.wide{grid-column:1 / -1}
+.drop:hover, .drop.over{border-color:var(--brand); background:#f6f9fe}
+.drop.busy{opacity:.6; cursor:progress}
+.drop b{font-size:13.5px}
+.drop span{color:var(--muted); font-size:12.5px; line-height:1.4}
+.drop i{font-style:normal; color:var(--ink)}
+.masterTools{display:flex; align-items:center; gap:10px; margin-top:10px}
+.masterTools .hint{margin:0}
+
+.tablewrap{overflow:auto; border:1px solid var(--line); border-radius:8px; background:var(--panel); max-height:62vh}
+.tablewrap.narrow{max-width:720px}
+.tablewrap table{border-collapse:collapse; font-size:12px; width:100%}
+.tablewrap th, .tablewrap td{border-bottom:1px solid var(--line); border-right:1px solid var(--line); padding:5px 8px; white-space:nowrap}
+.tablewrap th{
+  position:sticky; top:0; z-index:1; background:#f3f6fb; text-align:center;
+  font-weight:600; font-size:11px; vertical-align:bottom;
+}
+.tablewrap th .ar{display:block; font-family:'ABKForm',sans-serif; color:var(--brand); font-weight:500}
+.tablewrap th .en{display:block; color:var(--ink)}
+.tablewrap td.n{text-align:right; font-variant-numeric:tabular-nums}
+.tablewrap td.ar-cell{font-family:'ABKForm',sans-serif; text-align:right}
+.tablewrap tbody tr:nth-child(even){background:#fafcff}
+.tablewrap tbody tr:hover{background:#eef4fc}
+.tablewrap tfoot td{position:sticky; bottom:0; background:#f3f6fb; font-weight:650; border-top:2px solid var(--line)}
+
+@media (max-width:820px){ .droprow{grid-template-columns:1fr} }
+
 </style>
 </head>
 <body>
@@ -460,11 +501,15 @@ window.FORM_DEFS['social-insurance'] = pending('Social Insurance Payment',
 window.FORM_DEFS['salary-taxes'] = pending('Salary Taxes Payment',
   'Payment of payroll tax. Waiting on the blank PDF from the bank.');
 
-/* The sheet of employees that the Payroll Debit Order letter refers to as
-   "كما بالكشف المرفق". A row per employee, so unlike the forms here it will
-   need a repeating row rather than single-value fields. */
-window.FORM_DEFS['payroll-sheet'] = pending('Payroll Transfer Sheet',
-  'The attached sheet of employees. Waiting on the blank PDF from the bank.');
+/* The sheet of employees the Payroll Debit Order letter refers to as
+   "كما بالكشف المرفق". Not a bank form to stamp but two spreadsheets to build
+   from the month's attendance export, so it has a page of its own. */
+window.FORM_DEFS['payroll-sheet'] = {
+  title: 'Payroll Transfer Sheet',
+  bank:  'Al Ahli Bank of Kuwait – Egypt',
+  ready: true,
+  page:  'payroll-sheet.html',
+};
 
 /* Payroll Transfer is done — see forms/abk-payroll-transfer.js */
 })();

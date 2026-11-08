@@ -15,7 +15,7 @@ const BANKS = [
       { id:'cheque-usd',       name:'Cheque — USD',             desc:'US dollars' },
       { id:'cheque-eur',       name:'Cheque — EUR',             desc:'Euro' },
       { id:'payroll-debit-order',   name:'Payroll Debit Order',      desc:'Staff salaries' },
-      { id:'payroll-sheet',         name:'Payroll Transfer Sheet',   desc:'The attached employee sheet' },
+      { id:'payroll-sheet',         name:'Payroll Transfer Sheet',   desc:'Built from the monthly report' },
       { id:'social-insurance',      name:'Social Insurance Payment', desc:'Insurance contributions' },
       { id:'salary-taxes',          name:'Salary Taxes Payment',     desc:'Payroll tax' },
       { id:'vat-payment',           name:'VAT Payment',              desc:'Value added tax' },
@@ -73,7 +73,7 @@ function selectBank(bank){
     for(const f of bank.forms){
       const ready = isReady(f);
       const card = el(ready ? 'a' : 'div', 'card' + (ready ? '' : ' empty'));
-      if(ready) card.href = 'form.html?f=' + encodeURIComponent(f.id);
+      if(ready) card.href = (window.FORM_DEFS[f.id].page) || ('form.html?f=' + encodeURIComponent(f.id));
       else card.title = 'Not available yet';
       card.appendChild(el('span','cardName', f.name));
       card.appendChild(el('span','cardDesc', f.desc));
