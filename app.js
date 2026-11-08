@@ -630,6 +630,21 @@ function layoutOverlay(){
 }
 
 function render(){
+  if(CURRENT_FORM.flowingLetter){
+    document.getElementById('pageImg').hidden = true;
+    overlayEl.hidden = true;
+    let frame = document.getElementById('letterPreview');
+    if(!frame){
+      frame = document.createElement('iframe'); frame.id = 'letterPreview';
+      frame.title = 'Payroll Debit Order preview'; previewWrap.appendChild(frame);
+    }
+    const scale = previewWrap.clientWidth / 816;
+    frame.style.cssText = `position:absolute;left:0;top:0;width:816px;height:1056px;border:0;display:block;transform:scale(${scale});transform-origin:top left`;
+    previewWrap.style.height = (1056*scale)+'px';
+    const html = payrollLetterHtml(state.values, BASE_SIZE);
+    if(frame.srcdoc !== html) frame.srcdoc = html;
+    return;
+  }
   overlayEl.innerHTML = '';
   const S = previewScale;
 
@@ -841,6 +856,16 @@ function blobUrl(bytes){
 
 async function doPrint(){
   if(!checkRequired()) return;
+  if(CURRENT_FORM.flowingLetter){
+    const frame = document.getElementById('printFrame');
+    frame.onload = async () => {
+      await frame.contentDocument.fonts.ready;
+      frame.contentWindow.focus(); frame.contentWindow.print();
+    };
+    frame.removeAttribute('src');
+    frame.srcdoc = payrollLetterHtml(state.values, BASE_SIZE);
+    return;
+  }
   busy(true);
   try{
     const bytes = await buildFilledPdf();
@@ -924,7 +949,7 @@ function loadTransaction(id){
   EDITING_TX = id;
 
   const put = (fieldId, value) => {
-    if(value == null || value === '') return;
+    if(value == null) return;
     state.values[fieldId] = value;
     const n = document.getElementById('in-'+fieldId);
     // Keep a saved cheque readable if its supplier was renamed or removed.
@@ -1018,12 +1043,35 @@ function applyDefaults(){
   const d = new Date();
   const today = String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
 
+  const saved = window.LISTS ? LISTS.formDefaults(CURRENT_FORM.id) : {};
   for(const f of FIELDS){
-    const v = f.today ? today : f.def;
+    const custom = saved.values && saved.values[f.id];
+    let v = custom ? (custom.today ? today : custom.value) : (f.today ? today : f.def);
     if(v == null) continue;
+    if(f.latin) v = toLatinOnly(v);
+    if(f.thousands) v = formatThousands(v);
     state.values[f.id] = v;
     const n = document.getElementById('in-'+f.id);
-    if(n){ n.value = v; n.classList.remove('bad'); }
+    if(n){
+      if(f.supplierNames && !Array.from(n.options).some(o => o.value === v)) n.add(new Option(v,v));
+      n.value = v; n.classList.remove('bad');
+    }
+  }
+  for(const c of CHECKS){
+    if(!saved.checks || !Object.hasOwn(saved.checks,c.id)) continue;
+    const value = saved.checks[c.id]; state.checks[c.id] = value;
+    document.querySelectorAll(`#opts-${c.id} input`).forEach(n => { n.checked = n.value === value; });
+  }
+  for(const f of FLAGS){
+    if(!saved.flags || !Object.hasOwn(saved.flags,f.id)) continue;
+    state.flags[f.id] = saved.flags[f.id];
+    const n = document.getElementById('in-'+f.id); if(n) n.checked = saved.flags[f.id];
+  }
+  const words = wordsField();
+  if(words){
+    const node = document.getElementById('in-'+words.id);
+    if(node) node.dataset.touched = saved.values && saved.values[words.id] ? '1' : '';
+    if(!saved.values || !saved.values[words.id]) maybeAutoWords();
   }
 }
 const setToday = applyDefaults;   // called from clearAll too
@@ -1174,7 +1222,7 @@ async function boot(){
   buildFormSwitch(preset);
   buildSizePicker(preset);
   document.getElementById('btnPrint').addEventListener('click', doPrint);
-  document.getElementById('btnSave').addEventListener('click', doSave);
+  document.getElementById('btnSave')?.addEventListener('click', doSave);
   document.getElementById('btnClear').addEventListener('click', clearAll);
   window.addEventListener('resize', layoutOverlay);
   document.getElementById('pageImg').addEventListener('load', layoutOverlay);

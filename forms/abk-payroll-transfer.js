@@ -1,81 +1,53 @@
-/* ABK — Payroll Debit Order (خصم مرتبات).
-
-   A letter, not a ruled form: four blanks in running Arabic text. The template
-   is the company's own Word document converted to PDF once; the sentence around
-   each blank is already printed, so only the missing words go in.
-
-   The letter reads:
-     برجاء التكرم بخصم مبلغ ( <amount> ) فقط وقدره <amountWords>
-     جنيها مصريا فقط لا غير وذلك خصماً من حسابنا طرفكم رقم ( ... ) فرع ( ... )
-     وذلك لتحويله للعاملين بالشركة ( كما بالكشف المرفق ) مرتبات شهر ( <month> ).
-     ...
-     التاريخ: <date>
-
-   So `amountWords` holds the number alone — فقط, جنيها مصريا and لا غير are
-   already on the page, which is why it uses wordsStyle 'bare'.
-
-   Boxes are the gaps between the printed runs, measured off the PDF. The page is
-   US Letter (612 x 792), not A4. Values are typed in Western digits and printed
-   in Arabic-Indic ones to match the rest of the letter (`arabicDigits`). */
+/* Payroll Debit Order: wording and paragraph layout from Payroll Debit Order.docx.
+   Values flow inline, using the same Arial font as the supplied Word letter. */
 window.FORM_DEFS = window.FORM_DEFS || {};
-
 window.FORM_DEFS['payroll-debit-order'] = {
-  title: 'Payroll Debit Order',
-  bank:  'Al Ahli Bank of Kuwait – Egypt',
-  ready: true,
-  pdf:     'assets/payroll-debit-order.pdf',
-  preview: 'assets/payroll-debit-order-preview.png',
-  page: { w: 612, h: 792 },
-  fontSize: 20,            // the letter is set in 16pt; filled values sit larger
-
-  groups: [
-    { id:'amount',  title:'المبلغ — Amount' },
-    { id:'detail',  title:'التفاصيل — Month and date' },
-    { id:'company', title:'بيانات الشركة — Your account' },
-  ],
-
-  fields: [
-    /* The printed ( ) sit at 375.6 and 440.6, so the figure has that gap and no
-       more; pad:1 lets it use nearly all of it before it has to shrink. */
-    { id:'amount', label:'المبلغ بالأرقام — Amount in figures',
-      box:[376,514.8,440.5,552.8], group:'amount', maxLines:1, baseline:531.3, pad:2.5,
-      hint:'e.g. 125400', required:true, latin:true, thousands:true, arabicDigits:true },
-
-    { id:'amountWords', label:'المبلغ بالحروف — Amount in words',
-      box:[58,514.8,313,552.8], group:'amount', maxLines:1, baseline:531.3,
-      multi:true, required:true, wordsOf:'amount', wordsStyle:'bare' },
-
-    { id:'month', label:'مرتبات شهر — Month, as it goes in the brackets',
-      box:[103,425.3,222,463.3], group:'detail', maxLines:1, baseline:441.8,
-      hint:'مثال: أكتوبر ٢٠٢٦', required:true, arabicDigits:true },
-
-    { id:'date', label:'التاريخ — Date',
-      box:[105,215.2,211,253.2], group:'detail', maxLines:1, baseline:231.7,
-      hint:'dd/mm/yyyy', required:true, latin:true, arabicDigits:true, today:true },
-
-    /* The template used to carry these three pre-printed. They were blanked so
-       nothing private sits in a public repository; they are typed in like any
-       other field, and the printed letter comes out exactly as before. */
-    { id:'accountNo', label:'رقم الحساب — Account no.',
-      box:[198,470.1,258,508.1], group:'company', maxLines:1, baseline:486.6,
-      hint:'9229017', required:true, latin:true, arabicDigits:true },
-
-    { id:'branch', label:'الفرع — Branch',
-      box:[64,470.1,156,508.1], group:'company', maxLines:1, baseline:486.6,
-      hint:'القرية الذكية', required:true },
-
-    /* Nothing is printed to the left of الاسم:, so the name may run out to the
-       page margin. A long one still cannot reach 20pt across that width and
-       shrinks to fit rather than colliding with the label. */
-    { id:'signatory', label:'الاسم — Name of signatory',
-      box:[50,290.9,219,328.9], group:'company', maxLines:1, baseline:307.4, pad:1,
-      required:true, fileLabel:true },
+  title:'Payroll Debit Order', bank:'Al Ahli Bank of Kuwait – Egypt', ready:true,
+  flowingLetter:true, overlayOnly:true,
+  preview:'assets/payroll-debit-order-preview.png', page:{w:612,h:792}, fontSize:16,
+  groups:[{id:'letter',title:'خصم مرتبات — Debit order'}],
+  fields:[
+    {id:'amount',label:'المبلغ بالأرقام — Amount in figures',group:'letter',latin:true,thousands:true,arabicDigits:true,required:true},
+    {id:'amountWords',label:'المبلغ بالحروف — Amount in words',group:'letter',multi:true,wordsOf:'amount',wordsStyle:'bare',required:true},
+    {id:'accountNo',label:'رقم الحساب — Account no.',group:'letter',latin:true,arabicDigits:true,required:true},
+    {id:'branch',label:'الفرع — Branch',group:'letter',required:true},
+    {id:'month',label:'مرتبات شهر — Month',group:'letter',arabicDigits:true,required:true},
+    {id:'signatory',label:'الاسم — Name of signatory',group:'letter',required:true,fileLabel:true},
+    {id:'date',label:'التاريخ — Date',group:'letter',latin:true,arabicDigits:true,today:true,required:true,hint:'dd/mm/yyyy'},
   ],
 };
+window.FORM_DEFS['payroll-transfer'] = Object.assign(
+  Object.create(window.FORM_DEFS['payroll-debit-order']),
+  {alias:true,canonicalId:'payroll-debit-order'});
 
-/* It was called Payroll Transfer at first; links handed out under that name
-   still work. `alias` keeps it out of the form switcher so it is not listed
-   twice. */
-window.FORM_DEFS['payroll-transfer'] =
-  Object.assign(Object.create(window.FORM_DEFS['payroll-debit-order']),
-    { alias: true, canonicalId: 'payroll-debit-order' });
+window.payrollLetterHtml = function(values, size = 16){
+  const escape = text => String(text || '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const field = id => {
+    const f = window.FORM_DEFS['payroll-debit-order'].fields.find(f => f.id === id);
+    let value = String(values[id] || '');
+    if(f.arabicDigits) value = value.replace(/[0-9]/g, n => '٠١٢٣٤٥٦٧٨٩'[Number(n)]);
+    return '<bdi>' + escape(value || '…………') + '</bdi>';
+  };
+  const pt = Math.max(7, Math.min(30, Number(size) || 16));
+  return `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>Payroll Debit Order</title>
+  <style>@page{size:letter portrait;margin:36pt}*{box-sizing:border-box}html{background:#fff;color:#000}
+  body{font-family:Arial,sans-serif;font-size:${pt}pt;line-height:1.15;margin:36pt;width:540pt}
+  p{margin:0 0 8pt;white-space:normal;overflow-wrap:anywhere;break-inside:avoid}
+  .blank{height:26.4pt}.center{text-align:center}.double{line-height:2}
+  .body{text-align:justify}.sign{width:216pt;margin-right:324pt;margin-bottom:18pt}
+  .signature{line-height:2;margin-bottom:24pt}
+  @media print{body{margin:0;width:auto}html{width:auto}}</style></head><body>
+  <p class="blank"></p><p class="blank"></p>
+  <p><strong>الســادة / البنك الأهلي الكويتي – مصر</strong></p><p class="blank"></p>
+  <p class="center">تحية طيبة وبعد،،</p>
+  <p class="center double">الحاقاً بعقد المرتبات المبرم بيننا وبين بنككم الموقر ..</p>
+  <p style="height:16pt;margin-bottom:6pt"></p>
+  <p class="body double">برجاء التكرم بخصم مبلغ ( ${field('amount')} ) فقط وقدره ${field('amountWords')} جنيها مصريا فقط لا غير وذلك خصماً من حسابنا طرفكم رقم ( ${field('accountNo')} ) فرع ( ${field('branch')} ) وذلك لتحويله للعاملين بالشركة ( كما بالكشف المرفق ) مرتبات شهر ( ${field('month')} ).</p>
+  <p class="center double">برجاء التكرم بتحويل المبلغ وإخطارنا بالإشعارات الدالة على ذلك.</p>
+  <p class="center double">وتفضلوا بقبول فائق الاحترام ،،،</p>
+  <p class="sign">الاســم: ${field('signatory')}</p>
+  <p class="sign">التاريخ: ${field('date')}</p>
+  <p class="sign signature">التوقيع:</p>
+  <p class="sign">ختم الشركة:</p>
+  </body></html>`;
+};

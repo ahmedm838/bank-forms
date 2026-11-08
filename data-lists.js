@@ -41,6 +41,19 @@ function resetBanks(){ try{ localStorage.removeItem(BANKS_KEY); }catch(e){} }
 function suppliers(){ return byOrder(read(SUPPLIERS_KEY, [])); }
 function saveSuppliers(rows){ return write(SUPPLIERS_KEY, rows); }
 
+/* Defaults are kept separately from transaction history and reference lists. */
+function allFormDefaults(){
+  try{
+    const value = JSON.parse(localStorage.getItem('abk-form-defaults') || '{}');
+    return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  }catch(e){ return {}; }
+}
+function formDefaults(id){ return allFormDefaults()[id] || {}; }
+function saveFormDefaults(id, settings){
+  const all = allFormDefaults(); all[id] = settings;
+  return write('abk-form-defaults', all);
+}
+
 /* ---------- transfers made ----------
    Every transfer saved from the Bank Transfer form is written down here, so
    there is a record of what was sent and to whom. Like the other lists it is
@@ -157,7 +170,7 @@ function payTo(supplier){
 
 return {
   banks, saveBanks, resetBanks,
-  suppliers, saveSuppliers,
+  suppliers, saveSuppliers, formDefaults, saveFormDefaults,
   transactions, saveTransactions, addTransaction, updateTransaction, getTransaction,
   matchBank, matchBankBySwift, isBic, looksLikeIban, payTo, byOrder, normalise,
   BANKS_KEY, SUPPLIERS_KEY, TX_KEY,

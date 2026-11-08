@@ -23,15 +23,17 @@ The page asks for a password, remembered for the rest of the browser session.
 | ABK, awaiting their blank PDFs | Cheque USD · Cheque EUR · Social Insurance Payment · Salary Taxes Payment · VAT Payment · Withholding Payment |
 | CIB, NBE, QNB, NBK | none yet — the blank PDFs are needed |
 
-**Payroll Debit Order** is the company's own letter to the bank (خصم مرتبات),
-converted from Word to PDF once. It is written wholly in Arabic, so the amount and
-the date are typed in ordinary digits and printed in Arabic-Indic ones (`125400`
-prints as `١٢٥٬٤٠٠`). The amount in words goes in bare — the letter already prints
-*فقط* before the gap and *جنيها مصريا فقط لا غير* after it.
+**Payroll Debit Order** follows the supplied `Payroll Debit Order.docx` letter
+(خصم مرتبات). Its fields follow the document order: amount, amount in words,
+account, branch, month, signatory and date. Values flow inside the Arabic
+sentences in the same Arial font, with the document's Letter page size and
+half-inch margins. Print opens the completed letter; choose Save as PDF in the
+print dialog for a PDF with selectable text. Disable browser headers and footers
+when printing. Figures and dates print in Arabic-Indic digits. The amount in
+words goes in bare because the surrounding currency wording is in the letter.
 
-Its account number, branch and signatory name used to be pre-printed in the
-template. They were blanked and turned into fields your browser remembers, so this
-public repository holds no account details; the printed letter is unchanged.
+Account number, branch and signatory are fields. Personal values can be set on
+the Default values page and stay in your browser.
 
 A cheque is its own ABK form, not the transfer one. Any form whose blank PDF is not
 in `assets/` is shown greyed out with an *awaiting PDF* tag, and opening it by URL
@@ -318,3 +320,18 @@ Rows cannot be edited — a record of a payment should not change after the fact
 but one can be removed, and removals wait for Save like the other lists.
 
 A form opts in with `records: true`; only Bank Transfer does.
+
+## Default values
+
+The Default values page follows Transactions in the navigation. Choose an
+available fillable form and set its field values, radio choices and checkboxes.
+Save applies changes across forms; Reset this form restores its built-in defaults
+when saved. A custom empty value clears a built-in default. Today stays dynamic
+for date fields. Defaults apply when opening or clearing a form, remain editable
+on that form, and do not overwrite values restored from a saved transaction.
+They are stored separately in this browser, never in the repository.
+
+Payroll Debit Order uses a flowing letter preview and browser printing, rather
+than stamping text onto a fixed PDF background. Its reference PDF and preview
+were regenerated from the supplied Word document. Other forms retain their
+existing PDF stamping and print placement.

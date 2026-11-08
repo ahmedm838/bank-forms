@@ -71,6 +71,7 @@ input.bad, textarea.bad, select.bad{border-color:var(--bad); background:#fff6f5}
 
 #previewWrap{position:relative; width:100%; max-width:860px; box-shadow:0 2px 14px rgba(20,35,60,.16); background:#fff}
 #pageImg{display:block; width:100%; height:auto}
+#pageImg[hidden]{display:none}
 #overlay{position:absolute; inset:0; pointer-events:none}
 .ov{
   position:absolute; white-space:pre-wrap; color:#07175c;
@@ -324,3 +325,13 @@ body.editing #btnSave{background:var(--brand); border-color:var(--brand); color:
 .txtable .rowacts{width:124px; text-align:right; white-space:nowrap}
 .txtable .rowacts .rowbtn + .rowbtn{margin-left:5px}
 .rowacts-head{width:124px}
+
+/* Form defaults editor */
+.defaults-main{max-width:960px}
+.defaults-main #defaultForm{min-width:260px;padding:8px}
+.default-row{margin:16px 0}
+.default-controls{display:flex;gap:10px;align-items:start}
+.default-controls select,.default-controls input,.default-controls textarea{font:inherit;border:1px solid var(--line);border-radius:6px;padding:8px;min-width:0;background:#fff;color:var(--ink)}
+.default-mode{flex:0 0 190px}.default-input{flex:1;width:100%}
+.default-controls [hidden]{display:none}
+@media(max-width:700px){.default-controls{flex-direction:column}.default-mode{flex:auto;width:100%}}
