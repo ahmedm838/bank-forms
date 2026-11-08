@@ -20,7 +20,7 @@ The page asks for a password, remembered for the rest of the browser session.
 | Bank | Forms |
 |---|---|
 | **ABK** — Al Ahli Bank of Kuwait – Egypt | Bank Transfer · Payroll Debit Order |
-| ABK, awaiting their blank PDFs | Cheque EGP · Cheque USD · Cheque EUR · Social Insurance Payment · Salary Taxes Payment |
+| ABK, awaiting their blank PDFs | Cheque EGP · Cheque USD · Cheque EUR · Payroll Transfer Sheet · Social Insurance Payment · Salary Taxes Payment · VAT Payment · Withholding Payment |
 | CIB, NBE, QNB, NBK | none yet — the blank PDFs are needed |
 
 **Payroll Debit Order** is the company's own letter to the bank (خصم مرتبات),

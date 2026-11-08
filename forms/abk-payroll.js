@@ -28,5 +28,11 @@ window.FORM_DEFS['social-insurance'] = pending('Social Insurance Payment',
 window.FORM_DEFS['salary-taxes'] = pending('Salary Taxes Payment',
   'Payment of payroll tax. Waiting on the blank PDF from the bank.');
 
+/* The sheet of employees that the Payroll Debit Order letter refers to as
+   "كما بالكشف المرفق". A row per employee, so unlike the forms here it will
+   need a repeating row rather than single-value fields. */
+window.FORM_DEFS['payroll-sheet'] = pending('Payroll Transfer Sheet',
+  'The attached sheet of employees. Waiting on the blank PDF from the bank.');
+
 /* Payroll Transfer is done — see forms/abk-payroll-transfer.js */
 })();

@@ -136,12 +136,16 @@ body.hub{background:var(--bg)}
   font-size:11.5px; text-transform:uppercase; letter-spacing:.09em;
   color:var(--brand); margin:0 0 12px; padding-bottom:6px; border-bottom:1px solid var(--line);
 }
-/* banks on one row, and the forms under them on one row too */
-.cards{display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); gap:12px}
-@media (max-width:820px){
-  /* too narrow for one row: let them scroll sideways rather than squash */
-  .cards{overflow-x:auto; grid-auto-columns:minmax(170px,1fr); padding-bottom:4px}
+/* Banks on one row, and the forms under them on one row too. Cards never go
+   below a readable width: once there are too many for the pane, the row scrolls
+   sideways rather than squeezing the names into slivers. */
+.cards{
+  display:grid; grid-auto-flow:column; grid-auto-columns:minmax(155px,1fr);
+  gap:12px; overflow-x:auto; overscroll-behavior-x:contain; padding-bottom:6px;
 }
+.cards::-webkit-scrollbar{height:9px}
+.cards::-webkit-scrollbar-thumb{background:#c6cedb; border-radius:5px}
+.cards::-webkit-scrollbar-thumb:hover{background:#aab4c4}
 .card{
   display:flex; flex-direction:column; gap:3px; text-align:left; text-decoration:none;
   background:var(--panel); border:1px solid var(--line); border-radius:10px;
