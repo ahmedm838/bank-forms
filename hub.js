@@ -73,7 +73,8 @@ function selectBank(bank){
     for(const f of bank.forms){
       const ready = isReady(f);
       const card = el(ready ? 'a' : 'div', 'card' + (ready ? '' : ' empty'));
-      if(ready) card.href = (window.FORM_DEFS[f.id].page) || ('form.html?f=' + encodeURIComponent(f.id));
+      // `page` is already the page SIZE on a stamped form, so the link key is pageUrl
+      if(ready) card.href = window.FORM_DEFS[f.id].pageUrl || ('form.html?f=' + encodeURIComponent(f.id));
       else card.title = 'Not available yet';
       card.appendChild(el('span','cardName', f.name));
       card.appendChild(el('span','cardDesc', f.desc));
