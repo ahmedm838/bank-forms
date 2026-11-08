@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ABK Transfer Request</title>
 <meta name="description" content="Fills the Al Ahli Bank of Kuwait – Egypt transfer / bank draft application and prints into the original PDF.">
-<link rel="stylesheet" href="styles.css?v=24">
+<link rel="stylesheet" href="styles.css?v=26">
 </head>
 <body>
 <div id="gate">
@@ -36,12 +36,16 @@
     <select id="fontSize" aria-label="Text size"></select>
   </label>
   <button id="btnClear" type="button">Clear</button>
-  <button id="btnSave" type="button">Save PDF&hellip;</button>
+  <button id="btnSave" type="button">Save</button>
   <button id="btnPrint" type="button" class="primary">Print</button>
 </header>
 
 <main>
   <div id="formPane">
+    <div id="editing" class="editing-note" hidden>
+      <span></span>
+      <a href="transactions.html">Back to transactions</a>
+    </div>
     <div id="errors" class="errors" hidden></div>
     <div id="form"></div>
   </div>
@@ -60,16 +64,16 @@
 <script src="vendor/pdf-lib.min.js"></script>
 <script src="vendor/fontkit.umd.min.js"></script>
 <script src="vendor/bidi.min.js"></script>
-<script src="banks-seed.js?v=24"></script>
-<script src="data-lists.js?v=24"></script>
-<script src="gate.js?v=24"></script>
-<script src="forms/abk-transfer.js?v=24"></script>
-<script src="forms/abk-cheques.js?v=24"></script>
-<script src="forms/abk-cheque-egp.js?v=24"></script>
-<script src="forms/abk-payroll.js?v=24"></script>
-<script src="forms/abk-tax.js?v=24"></script>
-<script src="forms/abk-payroll-transfer.js?v=24"></script>
-<script src="form-registry.js?v=24"></script>
-<script src="app.js?v=24"></script>
+<script src="banks-seed.js?v=26"></script>
+<script src="data-lists.js?v=26"></script>
+<script src="gate.js?v=26"></script>
+<script src="forms/abk-transfer.js?v=26"></script>
+<script src="forms/abk-cheques.js?v=26"></script>
+<script src="forms/abk-cheque-egp.js?v=26"></script>
+<script src="forms/abk-payroll.js?v=26"></script>
+<script src="forms/abk-tax.js?v=26"></script>
+<script src="forms/abk-payroll-transfer.js?v=26"></script>
+<script src="form-registry.js?v=26"></script>
+<script src="app.js?v=26"></script>
 </body>
 </html>

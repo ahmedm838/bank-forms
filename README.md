@@ -292,17 +292,25 @@ form in front of you.
 
 ## Transactions
 
-Every transfer saved from the Bank Transfer form with **Save PDF…** is written
-down: when, the value date, beneficiary, account, bank, SWIFT, currency, amount,
-amount in words, purpose, type, charges, the account debited, the ordering
-customer, and the file that was saved.
+Every transfer made from the Bank Transfer form is written down — **Save** makes
+the PDF and records it, **Print** does the same and sends it to the printer.
+Alongside the columns on screen the record keeps the whole form, so a transfer
+opened again comes back exactly as it was.
+
+**Edit** on a row reopens that transfer on the form; saving overwrites the record
+it came from rather than leaving two, keeping when it was first written and
+noting when it was changed.
 
 Each heading carries a filter box; they narrow together, and the count and
 currency total follow what is shown. Export writes what is shown, so a filter is
-also a way to take out one month or one beneficiary.
+also a way to take out one month or one beneficiary — and it carries every field,
+not only the columns on screen.
+
+Newest sits on top. Column widths default to about 1280px so they land on an
+ordinary laptop; drag the right edge of a heading to change one, double-click it
+to put it back, and what you set is remembered.
 
 Rows cannot be edited — a record of a payment should not change after the fact —
 but one can be removed, and removals wait for Save like the other lists.
 
-A form opts in with `records: true`; only Bank Transfer does. Printing does not
-record, since Print does not always mean the transfer went out.
+A form opts in with `records: true`; only Bank Transfer does.

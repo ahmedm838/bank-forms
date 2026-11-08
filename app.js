@@ -839,6 +839,7 @@ async function doPrint(){
     };
     frame.src = url;
     setTimeout(()=>{ if(!fired) window.open(url, '_blank'); }, 2500);
+    recordTransaction(fileName());   // printing records it too
   } finally { busy(false); }
 }
 
@@ -847,13 +848,16 @@ async function doPrint(){
    form is kept; nothing is inferred. */
 function recordTransaction(fileSaved){
   if(!CURRENT_FORM.records || !window.LISTS) return;
+  if(recordTransaction.busy) return;         // Print saves then prints; record once
+  recordTransaction.busy = true;
+  setTimeout(() => { recordTransaction.busy = false; }, 0);
   const v = id => (state.values[id] || '').trim();
   const labelOf = (groupId, value) => {
     const g = CHECKS.find(c => c.id === groupId);
     const o = g && g.options.find(o => o.v === value);
     return o ? o.v.toUpperCase() : '';
   };
-  const ok = LISTS.addTransaction({
+  const entry = {
     form: CURRENT_FORM.title,
     date: v('date'),
     issueType: labelOf('issueType', state.checks.issueType),
@@ -868,10 +872,83 @@ function recordTransaction(fileSaved){
     charges: labelOf('charges', state.checks.charges),
     debitAccount: v('debitAccount'),
     debitCurrency: v('debitCurrency'),
+    commAccount: v('commAccount'),
+    commCurrency: v('commCurrency'),
     ordName: v('ordName'),
     file: fileSaved,
-  });
-  if(!ok) flash('The PDF was saved, but the transfer could not be written to Transactions.');
+    /* every field as it stood, so a transfer opened again comes back whole —
+       including the ones the table does not show */
+    values: FIELDS.reduce((o, f) => { o[f.id] = state.values[f.id] || ''; return o; }, {}),
+    checks: Object.assign({}, state.checks),
+    flags: Object.assign({}, state.flags),
+  };
+  const ok = EDITING_TX
+    ? LISTS.updateTransaction(EDITING_TX, entry)
+    : LISTS.addTransaction(entry);
+  if(!ok) flash('The PDF was made, but the transfer could not be written to Transactions.');
+  else if(EDITING_TX) flash('Transaction updated.');
+}
+
+/* Opening a saved transfer puts its figures back on the form; saving then
+   overwrites that record rather than adding a second one. */
+let EDITING_TX = null;
+
+function loadTransaction(id){
+  const tx = LISTS.getTransaction(id);
+  if(!tx){ flash('That transaction is no longer on the list.'); return; }
+  EDITING_TX = id;
+
+  const put = (fieldId, value) => {
+    if(value == null || value === '') return;
+    state.values[fieldId] = value;
+    const n = document.getElementById('in-'+fieldId);
+    if(n) n.value = value;
+  };
+
+  if(tx.values){
+    for(const [id, value] of Object.entries(tx.values)) put(id, value);
+  } else {
+    // a record written before whole-form saving; restore what it has
+    put('date', tx.date);            put('currency', tx.currency);
+    put('amountFigures', tx.amount); put('amountWords', tx.amountWords);
+    put('benName', tx.benName);      put('benAccount', tx.benAccount);
+    put('benBank', tx.benBank);      put('benBankSwift', tx.benSwift);
+    put('purpose', tx.purpose);      put('ordName', tx.ordName);
+    put('debitAccount', tx.debitAccount); put('debitCurrency', tx.debitCurrency);
+    put('commAccount', tx.commAccount);   put('commCurrency', tx.commCurrency);
+  }
+
+  // a stored group is the option name, saved in capitals on older records
+  const pick = (groupId, stored) => {
+    if(!stored) return;
+    const g = CHECKS.find(c => c.id === groupId);
+    const o = g && g.options.find(o => o.v.toLowerCase() === String(stored).toLowerCase());
+    if(!o) return;
+    state.checks[groupId] = o.v;
+    const n = document.getElementById(groupId+'-'+o.v);
+    if(n) n.checked = true;
+  };
+  pick('issueType', (tx.checks && tx.checks.issueType) || tx.issueType);
+  pick('charges',   (tx.checks && tx.checks.charges)   || tx.charges);
+
+  for(const [id, on] of Object.entries(tx.flags || {})){
+    state.flags[id] = on;
+    const n = document.getElementById('in-'+id);
+    if(n) n.checked = !!on;
+  }
+
+  const words = document.getElementById('in-amountWords');
+  if(words) words.dataset.touched = '1';     // keep the wording that was saved
+
+  document.body.classList.add('editing');
+  const note = document.getElementById('editing');
+  if(note){
+    note.hidden = false;
+    note.querySelector('span').textContent =
+      'Editing the transfer to ' + (tx.benName || 'this beneficiary') + ' saved on ' +
+      new Date(tx.recordedAt).toLocaleDateString('en-GB') + '. Saving overwrites it.';
+  }
+  render();
 }
 
 async function doSave(){
@@ -1085,6 +1162,9 @@ async function boot(){
   }
   setToday();
   applyPreset(preset);
+
+  const txId = new URLSearchParams(location.search).get('tx');
+  if(txId && CURRENT_FORM.records && window.LISTS) loadTransaction(txId);
 
   buildFormSwitch(preset);
   buildSizePicker(preset);

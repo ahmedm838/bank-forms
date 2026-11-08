@@ -59,6 +59,25 @@ function addTransaction(entry){
   return write(TX_KEY, rows);
 }
 
+/* Saving a transfer opened for editing overwrites the record it came from
+   rather than leaving two. When it was first written is kept; when it was last
+   changed is noted beside it. */
+function updateTransaction(id, entry){
+  const rows = read(TX_KEY, []);
+  const i = rows.findIndex(r => r.id === id);
+  if (i === -1) return addTransaction(entry);
+  rows[i] = Object.assign({}, rows[i], entry, {
+    id: rows[i].id,
+    recordedAt: rows[i].recordedAt,
+    editedAt: new Date().toISOString(),
+  });
+  return write(TX_KEY, rows);
+}
+
+function getTransaction(id){
+  return read(TX_KEY, []).find(r => r.id === id) || null;
+}
+
 /* ---------- matching a written bank name to the list ----------
    An imported sheet names banks however whoever typed it felt that day — "cib",
    "CIB", "National Bank Egypt", "بنك مصر". This tries to land each on a row of
@@ -122,7 +141,7 @@ function payTo(supplier){
 return {
   banks, saveBanks, resetBanks,
   suppliers, saveSuppliers,
-  transactions, saveTransactions, addTransaction,
+  transactions, saveTransactions, addTransaction, updateTransaction, getTransaction,
   matchBank, matchBankBySwift, isBic, looksLikeIban, payTo, byOrder, normalise,
   BANKS_KEY, SUPPLIERS_KEY, TX_KEY,
 };
