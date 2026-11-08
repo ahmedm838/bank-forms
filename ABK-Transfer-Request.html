@@ -502,37 +502,37 @@ window.FORM_DEFS['payroll-debit-order'] = {
     /* The printed ( ) sit at 375.6 and 440.6, so the figure has that gap and no
        more; pad:1 lets it use nearly all of it before it has to shrink. */
     { id:'amount', label:'المبلغ بالأرقام — Amount in figures',
-      box:[376,514.8,440.5,552.8], group:'amount', maxLines:1, pad:2.5,
+      box:[376,514.8,440.5,552.8], group:'amount', maxLines:1, baseline:531.3, pad:2.5,
       hint:'e.g. 125400', required:true, latin:true, thousands:true, arabicDigits:true },
 
     { id:'amountWords', label:'المبلغ بالحروف — Amount in words',
-      box:[78,514.8,313,552.8], group:'amount', maxLines:1,
+      box:[58,514.8,313,552.8], group:'amount', maxLines:1, baseline:531.3,
       multi:true, required:true, wordsOf:'amount', wordsStyle:'bare' },
 
     { id:'month', label:'مرتبات شهر — Month, as it goes in the brackets',
-      box:[103,425.3,222,463.3], group:'detail', maxLines:1,
+      box:[103,425.3,222,463.3], group:'detail', maxLines:1, baseline:441.8,
       hint:'مثال: أكتوبر ٢٠٢٦', required:true, arabicDigits:true },
 
     { id:'date', label:'التاريخ — Date',
-      box:[105,215.2,211,253.2], group:'detail', maxLines:1,
+      box:[105,215.2,211,253.2], group:'detail', maxLines:1, baseline:231.7,
       hint:'dd/mm/yyyy', required:true, latin:true, arabicDigits:true, today:true },
 
     /* The template used to carry these three pre-printed. They were blanked so
        nothing private sits in a public repository; each browser remembers its
        own, and the printed letter comes out exactly as before. */
     { id:'accountNo', label:'رقم الحساب — Account no.',
-      box:[198,470.1,258,508.1], group:'company', maxLines:1,
+      box:[198,470.1,258,508.1], group:'company', maxLines:1, baseline:486.6,
       hint:'9229017', required:true, latin:true, arabicDigits:true, remember:true },
 
     { id:'branch', label:'الفرع — Branch',
-      box:[64,470.1,156,508.1], group:'company', maxLines:1,
+      box:[64,470.1,156,508.1], group:'company', maxLines:1, baseline:486.6,
       hint:'القرية الذكية', required:true, remember:true },
 
     /* Nothing is printed to the left of الاسم:, so the name may run out to the
        page margin. A long one still cannot reach 20pt across that width and
        shrinks to fit rather than colliding with the label. */
     { id:'signatory', label:'الاسم — Name of signatory',
-      box:[50,290.9,219,328.9], group:'company', maxLines:1, pad:1,
+      box:[50,290.9,219,328.9], group:'company', maxLines:1, baseline:307.4, pad:1,
       required:true, remember:true, fileLabel:true },
   ],
 };
@@ -887,6 +887,27 @@ function wrapLines(text, maxWidth, measure){
 /* `maxLines` is for a blank inside running text, where a second line would print
    over the sentence below: such a field shrinks instead of wrapping, and if even
    the smallest size will not do it runs on past its gap rather than downwards. */
+/* Where each line of a field sits, as a baseline in PDF points.
+
+   Normally the block is centred in its box, which is what a ruled cell wants.
+   A field in running text instead gives `baseline`: the baseline the printed
+   sentence sits on, so the value lines up with the words either side of it at
+   any size, rather than drifting lower as the type grows. */
+function lineBaselines(f, size, lineCount, y0, boxH){
+  if(f.baseline != null && lineCount === 1) return [f.baseline];
+  const blockH = lineCount * size * LINE_RATIO;
+  const out = [];
+  let cursor = y0 + (boxH + blockH)/2 - size;
+  for(let i = 0; i < lineCount; i++){
+    out.push(cursor + size * 0.22);
+    cursor -= size * LINE_RATIO;
+  }
+  return out;
+}
+
+/* the top of a line's em box, which is how the preview positions text */
+const topOfLine = (baseline, size) => baseline + size * 0.78;
+
 function fitText(text, boxW, boxH, measureAt, maxLines, pad){
   const maxW = boxW - (pad == null ? PAD : pad) * 2;
   for(let size = BASE_SIZE; size >= MIN_SIZE; size -= 0.25){
@@ -1142,8 +1163,7 @@ function render(){
     const [x0,y0,x1,y1] = f.box;
     const boxW = x1-x0, boxH = y1-y0;
     const { size, lines } = fitText(text, boxW, boxH, measurePreview, f.maxLines, f.pad);
-    const blockH = lines.length * size * LINE_RATIO;
-    const topPdf = y0 + (boxH + blockH)/2;
+    const topPdf = topOfLine(lineBaselines(f, size, lines.length, y0, boxH)[0], size);
 
     const d = el('div', 'ov center');
     d.dir = 'auto';
@@ -1227,15 +1247,13 @@ async function buildFilledPdf(){
     const boxW = x1-x0, boxH = y1-y0;
     const dir = baseDirOf(text);
     const { size, lines } = fitText(text, boxW, boxH, (s,sz)=>measureText(s,sz,dir), f.maxLines, f.pad);
-    const blockH = lines.length * size * LINE_RATIO;
-    let cursor = y0 + (boxH + blockH)/2 - size;
+    const baselines = lineBaselines(f, size, lines.length, y0, boxH);
 
-    for(const line of lines){
+    lines.forEach((line, i) => {
       // every value sits centred in its cell, Arabic and English alike
       const x = x0 + (boxW - measureText(line, size, dir))/2;
-      drawLine(page, fontKey, line, x, cursor + size*0.22, size, dir);
-      cursor -= size * LINE_RATIO;
-    }
+      drawLine(page, fontKey, line, x, baselines[i], size, dir);
+    });
   }
 
   for(const [x0,y0,x1,y1] of markedBoxes()){

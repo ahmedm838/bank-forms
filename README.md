@@ -45,7 +45,10 @@ text leaves it: the figure can only grow until it meets the ( ), and the
 signatory until it meets the label. A field may set `pad` to claim more of a
 tight gap than the usual 3.5pt margin. A field marked maxLines sits in a blank inside running
 text, where a second line would print over the sentence below: it shrinks rather
-than wrapping.
+than wrapping. Such a field also gives `baseline`, the baseline the printed
+sentence sits on, so the value stays level with the words either side of it at
+any size instead of drifting lower as the type grows. A field in a ruled cell
+gives no baseline and is centred in the cell as before.
 
 ### Adding a form
 
