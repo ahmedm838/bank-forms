@@ -486,7 +486,14 @@ function buildForm(){
       if(f.type === 'select'){
         inp = document.createElement('select');
         inp.appendChild(new Option('— select —',''));
-        f.options.forEach(o=>inp.appendChild(new Option(o,o)));
+        const options = f.supplierNames
+          ? [...new Set((window.LISTS ? LISTS.suppliers() : [])
+              .map(s => String(s.nameAr || '').trim()).filter(Boolean))]
+          : f.options;
+        options.forEach(o=>inp.appendChild(new Option(o,o)));
+        if(f.supplierNames && !options.length){
+          inp.options[0].textContent = '— add Arabic supplier names in Suppliers —';
+        }
       } else if(f.multi){
         inp = document.createElement('textarea'); inp.rows = 2;
       } else {
@@ -917,6 +924,11 @@ function loadTransaction(id){
     if(value == null || value === '') return;
     state.values[fieldId] = value;
     const n = document.getElementById('in-'+fieldId);
+    // Keep a saved cheque readable if its supplier was renamed or removed.
+    if(n && FIELDS.find(f => f.id === fieldId && f.supplierNames) &&
+       !Array.from(n.options).some(o => o.value === value)){
+      n.add(new Option(value, value));
+    }
     if(n) n.value = value;
   };
 

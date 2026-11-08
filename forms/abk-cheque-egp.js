@@ -39,6 +39,7 @@ window.FORM_DEFS['cheque-egp'] = {
       hint:'dd/mm/yyyy — printed one digit per box' },
 
     { id:'payTo', label:'إدفعوا بموجب هذا الشيك إلى — Pay to', box:[62,760,366,776], group:'body',
+      type:'select', supplierNames:true,
       maxLines:1, baseline:768, pad:2, arabic:true, required:true },
 
     /* the printed EGP box; #...# so the figure cannot be extended */
