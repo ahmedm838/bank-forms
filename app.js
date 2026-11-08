@@ -839,12 +839,12 @@ function blobUrl(bytes){
   return lastUrl;
 }
 
-async function doPrint(){
+async function doPrint(recorded){
   if(!checkRequired()) return;
   busy(true);
   try{
     const bytes = await buildFilledPdf();
-    if(recordTransaction(fileName()) === false) return;
+    if(recorded !== 'duplicate' && recordTransaction(fileName()) === false) return;
     const url = blobUrl(bytes);
     const frame = document.getElementById('printFrame');
     let fired = false;
@@ -908,7 +908,7 @@ function recordTransaction(fileSaved){
   const ok = EDITING_TX
     ? LISTS.updateTransaction(EDITING_TX, entry)
     : LISTS.addTransaction(entry);
-  if(ok === 'duplicate'){ flash('Already recorded.'); return false; }
+  if(ok === 'duplicate'){ flash('Already recorded.'); return 'duplicate'; }
   if(!ok) flash('Could not save to Transactions.');
   else if(EDITING_TX) flash('Transaction updated.');
   return ok;
@@ -990,7 +990,9 @@ function doSave(){
     return;
   }
   const was = EDITING_TX;
-  if(recordTransaction('') === false) return;
+  const result = recordTransaction('');
+  if(result === 'duplicate'){ doPrint('duplicate'); return; }
+  if(result === false) return;
   if(!was) flash('Transfer saved to Transactions.');
 }
 
