@@ -7,7 +7,10 @@ window.FORM_DEFS = window.FORM_DEFS || {};
 
 function currentForm(){
   const id = new URLSearchParams(location.search).get('f') || 'transfer';
-  return window.FORM_DEFS[id] || { title:'Unknown form', bank:'', ready:false };
+  const def = window.FORM_DEFS[id];
+  if(!def) return { id, title:'Unknown form', bank:'', ready:false };
+  // an old name points at the current one, and shares whatever it has saved
+  return Object.assign(Object.create(def), { id: def.canonicalId || id });
 }
 
 /* app.js calls it by this name */

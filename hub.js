@@ -14,7 +14,7 @@ const BANKS = [
       { id:'cheque-egp',       name:'Cheque — EGP',             desc:'Egyptian pounds' },
       { id:'cheque-usd',       name:'Cheque — USD',             desc:'US dollars' },
       { id:'cheque-eur',       name:'Cheque — EUR',             desc:'Euro' },
-      { id:'payroll-transfer', name:'Payroll Transfer',         desc:'Staff salaries' },
+      { id:'payroll-debit-order', name:'Payroll Debit Order',  desc:'Staff salaries' },
       { id:'social-insurance', name:'Social Insurance Payment', desc:'Insurance contributions' },
       { id:'salary-taxes',     name:'Salary Taxes Payment',     desc:'Payroll tax' },
     ],

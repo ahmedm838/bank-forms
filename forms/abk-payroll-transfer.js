@@ -19,8 +19,8 @@
    in Arabic-Indic ones to match the rest of the letter (`arabicDigits`). */
 window.FORM_DEFS = window.FORM_DEFS || {};
 
-window.FORM_DEFS['payroll-transfer'] = {
-  title: 'Payroll Transfer',
+window.FORM_DEFS['payroll-debit-order'] = {
+  title: 'Payroll Debit Order',
   bank:  'Al Ahli Bank of Kuwait – Egypt',
   ready: true,
   pdf:     'assets/payroll-debit-order.pdf',
@@ -67,3 +67,10 @@ window.FORM_DEFS['payroll-transfer'] = {
       required:true, remember:true, fileLabel:true },
   ],
 };
+
+/* It was called Payroll Transfer at first; links handed out under that name
+   still work. `alias` keeps it out of the form switcher so it is not listed
+   twice. */
+window.FORM_DEFS['payroll-transfer'] =
+  Object.assign(Object.create(window.FORM_DEFS['payroll-debit-order']),
+    { alias: true, canonicalId: 'payroll-debit-order' });

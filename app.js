@@ -11,8 +11,10 @@
    deliberately not used for text. */
 
 const PAD = 3.5;
-let BASE_SIZE = 9;      // a form may ask for larger type to match its own
-let MIN_SIZE = 5.8;     // how far a long value may shrink to fit its cell
+let BASE_SIZE = 9;         // the size values are written at, before fitting
+let MIN_SIZE = 5.8;        // how far a long value may shrink to fit its cell
+let FORM_SIZE = 9;         // the form's own default, which the reader may override
+const SIZE_KEY = 'abk-transfer-size';
 const LINE_RATIO = 1.18;
 const INK = [0.03, 0.09, 0.36];
 
@@ -865,17 +867,47 @@ function applyPreset(preset){
   }
 }
 
+/* ---------- text size ----------
+   Each form sets the size its own printing suits, but how a filled form reads
+   depends on handwriting habits and the branch, so the reader can override it.
+   The choice is kept per form. The shrink floor stays tied to the form's own
+   default, so raising the size never stops a long value fitting its cell. */
+function sizeKeyFor(preset){ return SIZE_KEY + ':' + (preset.id || 'form'); }
+
+function loadSize(preset){
+  try{
+    const v = parseFloat(localStorage.getItem(sizeKeyFor(preset)));
+    if(v >= 6 && v <= 24) return v;
+  }catch(e){}
+  return FORM_SIZE;
+}
+
+function buildSizePicker(preset){
+  const sel = document.getElementById('fontSize');
+  if(!sel) return;
+  for(let s = 7; s <= 20; s++){
+    const o = new Option(s === FORM_SIZE ? s + ' pt (default)' : s + ' pt', String(s));
+    if(s === Math.round(BASE_SIZE)) o.selected = true;
+    sel.appendChild(o);
+  }
+  sel.addEventListener('change', () => {
+    BASE_SIZE = parseFloat(sel.value);
+    try{ localStorage.setItem(sizeKeyFor(preset), String(BASE_SIZE)); }catch(e){}
+    render();
+  });
+}
+
 /* Jump between the forms that are ready, without going back to the hub. It also
    gives the offline single-file copy a way to reach them, since it has no hub. */
 function buildFormSwitch(preset){
   const sel = document.getElementById('formSwitch');
   if(!sel) return;
-  const ready = Object.entries(window.FORM_DEFS).filter(([, d]) => d.ready);
+  const ready = Object.entries(window.FORM_DEFS).filter(([, d]) => d.ready && !d.alias);
   if(ready.length < 2) return;
 
   for(const [id, def] of ready){
     const o = new Option(def.title, id);
-    if(def === preset) o.selected = true;
+    if(id === preset.id) o.selected = true;
     sel.appendChild(o);
   }
   sel.hidden = false;
@@ -891,8 +923,9 @@ async function boot(){
 
   /* bind this form's definition before anything reads it */
   PAGE_W = preset.page.w; PAGE_H = preset.page.h;
-  BASE_SIZE = preset.fontSize || 9;
-  MIN_SIZE = Math.max(5.5, BASE_SIZE * 0.62);
+  FORM_SIZE = preset.fontSize || 9;
+  MIN_SIZE  = Math.max(5.5, FORM_SIZE * 0.62);
+  BASE_SIZE = loadSize(preset);
   FIELDS = preset.fields; CHECKS = preset.checks || []; FLAGS = preset.flags || [];
   GROUPS = preset.groups;
   PAYEE_FIELDS = FIELDS.filter(f => f.payee).map(f => f.id);
@@ -919,6 +952,7 @@ async function boot(){
   applyPreset(preset);
 
   buildFormSwitch(preset);
+  buildSizePicker(preset);
   document.getElementById('btnPrint').addEventListener('click', doPrint);
   document.getElementById('btnSave').addEventListener('click', doSave);
   document.getElementById('btnClear').addEventListener('click', clearAll);

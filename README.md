@@ -19,11 +19,11 @@ The page asks for a password, remembered for the rest of the browser session.
 
 | Bank | Forms |
 |---|---|
-| **ABK** — Al Ahli Bank of Kuwait – Egypt | Bank Transfer · Payroll Transfer |
+| **ABK** — Al Ahli Bank of Kuwait – Egypt | Bank Transfer · Payroll Debit Order |
 | ABK, awaiting their blank PDFs | Cheque EGP · Cheque USD · Cheque EUR · Social Insurance Payment · Salary Taxes Payment |
 | CIB, NBE, QNB, NBK | none yet — the blank PDFs are needed |
 
-**Payroll Transfer** is the company's own *Payroll Debit Order* letter (خصم مرتبات),
+**Payroll Debit Order** is the company's own *Payroll Debit Order* letter (خصم مرتبات),
 converted from Word to PDF once. It is written wholly in Arabic, so the amount and
 the date are typed in ordinary digits and printed in Arabic-Indic ones (`125400`
 prints as `١٢٥٬٤٠٠`). The amount in words goes in bare — the letter already prints
@@ -37,11 +37,9 @@ A cheque is its own ABK form, not the transfer one. Any form whose blank PDF is 
 in `assets/` is shown greyed out with an *awaiting PDF* tag, and opening it by URL
 refuses rather than rendering the wrong document.
 
-Payroll Transfer may need more than the others. The salary instruction this company
-has sent ABK before was a letterhead letter listing every employee with their ID,
-job title and salary — a table that grows with the payroll. If the blank form is
-that, it needs a repeating row rather than the single-value fields the other forms
-use, so check it before writing the field boxes.
+Text size: each form sets the size its printing suits, and a picker in the header
+lets the reader override it. The choice is remembered per form, and a long value
+still shrinks to fit its cell whatever is chosen.
 
 ### Adding a form
 
