@@ -1,11 +1,12 @@
 <!doctype html>
 <html lang="en">
 <head>
+<script src="workspace.js?v=37"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Payroll Transfer Sheet</title>
 <meta name="description" content="Builds the payroll sheet and the bank transfer sheet from the monthly report.">
-<link rel="stylesheet" href="styles.css?v=36">
+<link rel="stylesheet" href="styles.css?v=37">
 </head>
 <body class="sheetpage">
 <div id="gate">
@@ -32,29 +33,31 @@
     <a href="defaults.html">Default values</a>
   </nav>
   <div class="spacer"></div>
-  <button id="btnPayroll" type="button" disabled>Export payroll sheet</button>
+  <button id="btnPayroll" type="button" class="primary" disabled>Export payroll sheet</button>
   <button id="btnTransfer" type="button" class="primary" disabled>Export transfer sheet</button>
 </header>
 
 <main class="sheetMain">
 
   <section class="step-block">
-    <h2 class="step">1 &middot; Employees on file</h2>
+    <h2 class="step">1 &middot; Upload reference files</h2>
     <p class="hint" id="masterState">No employees yet.</p>
     <div class="droprow">
       <label class="drop" id="dropMaster">
         <input type="file" id="fileMaster" accept=".xlsx,.xls" hidden>
         <b>Payroll sheet</b>
-        <span>Any past <i>Payroll Sheet</i>. Read once for each person's basic salary, insured wages, bank account and S.I. number.</span>
+        <span>Upload a <i>Payroll Sheet</i> for each person's basic salary, insured wages, bank account and S.I. number.</span>
+        <span id="masterFileState" role="status"></span>
       </label>
       <label class="drop" id="dropNames">
         <input type="file" id="fileNames" accept=".xlsx,.xls" hidden>
         <b>Transfer sheet</b>
         <span>Any past <i>Transfer Sheet</i>, for the Arabic names. Matched to people by bank account.</span>
+        <span id="namesFileState" role="status"></span>
       </label>
     </div>
     <div class="masterTools" hidden id="masterTools">
-      <button id="btnForget" type="button" class="mini">Forget employees</button>
+      <button id="btnForget" type="button" class="mini">Clear uploaded files</button>
       <span class="hint" id="masterDetail"></span>
     </div>
   </section>
@@ -69,7 +72,11 @@
     <p class="hint" id="reportState"></p>
   </section>
 
-  <div id="problems" class="errors" hidden></div>
+  <section class="step-block" id="mismatchSection" hidden>
+    <h2 class="step">Employee mismatches <span class="count" id="mismatchCount"></span></h2>
+    <p class="hint">These employees are excluded from the transfer sheet. Correct the source files and upload them again.</p>
+    <div class="tablewrap"><table id="tblMismatch"></table></div>
+  </section>
 
   <section class="step-block" id="results" hidden>
     <h2 class="step">3 &middot; Payroll sheet <span class="count" id="payrollCount"></span></h2>
@@ -84,8 +91,8 @@
 <div id="toast"></div>
 
 <script src="vendor/xlsx.full.min.js"></script>
-<script src="gate.js?v=27"></script>
-<script src="payroll-calc.js?v=27"></script>
-<script src="payroll-sheet.js?v=27"></script>
+<script src="gate.js?v=37"></script>
+<script src="payroll-calc.js?v=37"></script>
+<script src="payroll-sheet.js?v=37"></script>
 </body>
 </html>

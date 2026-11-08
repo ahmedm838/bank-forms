@@ -1,6 +1,6 @@
 /* The two reference lists — banks and suppliers — and the storage behind them.
 
-   Both live in this browser's local storage and nowhere else. The banks ship
+   Both live only in temporary workspace memory. The banks ship
    with a seed, since bank names and SWIFT codes are public; suppliers start
    empty and are imported from your own spreadsheet, because their account
    numbers are not something to keep in a public repository.
@@ -12,19 +12,10 @@ const BANKS_KEY = 'abk-banks';
 const SUPPLIERS_KEY = 'abk-suppliers';
 const TX_KEY = 'abk-transactions';
 
-const read = (key, fallback) => {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return fallback;
-    const v = JSON.parse(raw);
-    return Array.isArray(v) ? v : fallback;
-  } catch(e){ return fallback; }
-};
-const write = (key, value) => {
-  try { localStorage.setItem(key, JSON.stringify(value)); return true; }
-  catch(e){ return false; }
-};
-
+const memory = window.BankFormsMemory;
+const clone = value => JSON.parse(JSON.stringify(value));
+const read = (key, fallback) => Array.isArray(memory[key]) ? clone(memory[key]) : fallback;
+const write = (key, value) => { memory[key] = clone(value); return true; };
 const byOrder = rows => rows.slice().sort((a, b) =>
   (Number(a.order) || 0) - (Number(b.order) || 0));
 
@@ -35,20 +26,24 @@ function banks(){
   return byOrder((window.BANKS_SEED || []).map(b => Object.assign({}, b)));
 }
 function saveBanks(rows){ return write(BANKS_KEY, rows); }
-function resetBanks(){ try{ localStorage.removeItem(BANKS_KEY); }catch(e){} }
+function resetBanks(){ delete memory[BANKS_KEY]; }
 
 /* ---------- suppliers ---------- */
 function suppliers(){ return byOrder(read(SUPPLIERS_KEY, [])); }
 function saveSuppliers(rows){ return write(SUPPLIERS_KEY, rows); }
 
 /* Defaults are kept separately from transaction history and reference lists. */
-function allFormDefaults(){
-  try{
-    const value = JSON.parse(localStorage.getItem('abk-form-defaults') || '{}');
-    return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
-  }catch(e){ return {}; }
+function allFormDefaults(){ return clone(memory['abk-form-defaults'] || {}); }
+const canDefault = field => !field.thousands && !field.wordsOf && field.type !== 'select';
+function formDefaults(id){
+  const saved=allFormDefaults()[id] || {}, definition=window.FORM_DEFS && window.FORM_DEFS[id];
+  if(!definition) return saved;
+  const values={};
+  (definition.fields || []).filter(canDefault).forEach(f=>{
+    if(saved.values && Object.hasOwn(saved.values,f.id)) values[f.id]=saved.values[f.id];
+  });
+  return {values};
 }
-function formDefaults(id){ return allFormDefaults()[id] || {}; }
 function saveFormDefaults(id, settings){
   const all = allFormDefaults(); all[id] = settings;
   return write('abk-form-defaults', all);
@@ -57,7 +52,7 @@ function saveFormDefaults(id, settings){
 /* ---------- transfers made ----------
    Every transfer saved from the Bank Transfer form is written down here, so
    there is a record of what was sent and to whom. Like the other lists it is
-   this browser's own; export it to keep a copy anywhere else. */
+   temporary workspace data; export it to keep a copy. */
 function transactions(){
   return read(TX_KEY, []).slice().sort((a, b) =>
     String(b.recordedAt || '').localeCompare(String(a.recordedAt || '')));
@@ -170,7 +165,7 @@ function payTo(supplier){
 
 return {
   banks, saveBanks, resetBanks,
-  suppliers, saveSuppliers, formDefaults, saveFormDefaults,
+  suppliers, saveSuppliers, formDefaults, saveFormDefaults, canDefault,
   transactions, saveTransactions, addTransaction, updateTransaction, getTransaction,
   matchBank, matchBankBySwift, isBic, looksLikeIban, payTo, byOrder, normalise,
   BANKS_KEY, SUPPLIERS_KEY, TX_KEY,

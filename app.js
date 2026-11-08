@@ -383,15 +383,6 @@ function fitText(text, boxW, boxH, measureAt, maxLines, pad){
 
 /* ---------- state ---------- */
 const state = { values:{}, checks:{}, flags:{} };
-/* Every form opens blank. Nothing typed into one is kept, so a value from last
-   time can never end up printed on this time's form. These are the keys older
-   versions wrote; they are cleared on load. */
-const STALE_KEYS = ['abk-transfer-tool', 'abk-transfer-payees'];
-
-function clearStaleStorage(){
-  try{ STALE_KEYS.forEach(k => localStorage.removeItem(k)); }catch(e){}
-}
-
 /* ---------- form ---------- */
 const formEl = document.getElementById('form');
 const overlayEl = document.getElementById('overlay');
@@ -1045,6 +1036,12 @@ function applyDefaults(){
 
   const saved = window.LISTS ? LISTS.formDefaults(CURRENT_FORM.id) : {};
   for(const f of FIELDS){
+    if(!LISTS.canDefault(f)){
+      state.values[f.id] = '';
+      const n = document.getElementById('in-'+f.id);
+      if(n){ n.value=''; n.dataset.touched=''; }
+      continue;
+    }
     const custom = saved.values && saved.values[f.id];
     let v = custom ? (custom.today ? today : custom.value) : (f.today ? today : f.def);
     if(v == null) continue;
@@ -1058,14 +1055,12 @@ function applyDefaults(){
     }
   }
   for(const c of CHECKS){
-    if(!saved.checks || !Object.hasOwn(saved.checks,c.id)) continue;
-    const value = saved.checks[c.id]; state.checks[c.id] = value;
-    document.querySelectorAll(`#opts-${c.id} input`).forEach(n => { n.checked = n.value === value; });
+    state.checks[c.id] = '';
+    document.querySelectorAll(`#opts-${c.id} input`).forEach(n => { n.checked = false; });
   }
   for(const f of FLAGS){
-    if(!saved.flags || !Object.hasOwn(saved.flags,f.id)) continue;
-    state.flags[f.id] = saved.flags[f.id];
-    const n = document.getElementById('in-'+f.id); if(n) n.checked = saved.flags[f.id];
+    state.flags[f.id] = false;
+    const n = document.getElementById('in-'+f.id); if(n) n.checked = false;
   }
   const words = wordsField();
   if(words){
@@ -1139,7 +1134,7 @@ function sizeKeyFor(preset){ return SIZE_KEY + ':' + (preset.id || 'form'); }
 
 function loadSize(preset){
   try{
-    const v = parseFloat(localStorage.getItem(sizeKeyFor(preset)));
+    const v = parseFloat(window.BankFormsMemory[sizeKeyFor(preset)]);
     if(v >= SIZE_MIN && v <= SIZE_MAX) return v;
   }catch(e){}
   return FORM_SIZE;
@@ -1155,7 +1150,7 @@ function buildSizePicker(preset){
   }
   sel.addEventListener('change', () => {
     BASE_SIZE = parseFloat(sel.value);
-    try{ localStorage.setItem(sizeKeyFor(preset), String(BASE_SIZE)); }catch(e){}
+    try{ window.BankFormsMemory[sizeKeyFor(preset)] = String(BASE_SIZE); }catch(e){}
     render();
   });
 }
@@ -1205,7 +1200,7 @@ async function boot(){
   fontBytes = new Uint8Array(await fontRes.arrayBuffer());
   fkFont = fontkit.create(fontBytes);
 
-  clearStaleStorage();
+
   buildForm();
   FIELDS.forEach(f=>{ const n = document.getElementById('in-'+f.id); if(n && state.values[f.id]) n.value = state.values[f.id]; });
   const wordsField = FIELDS.find(f => f.wordsOf);

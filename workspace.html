@@ -1,0 +1,23 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Bank Forms</title>
+<style>html,body{margin:0;height:100%;overflow:hidden}.temporary-note{height:28px;padding:5px 12px;font:12px "Segoe UI",sans-serif;background:#eef3fa;color:#52647a;box-sizing:border-box}iframe{width:100%;height:calc(100% - 28px);border:0;display:block}</style>
+<script>window.BANK_FORMS_WORKSPACE=true;</script><script src="workspace.js?v=37"></script></head><body>
+<div class="temporary-note">Temporary workspace · Refreshing or closing clears all data. Export sheets to keep a copy.</div>
+<iframe id="appFrame" title="Bank Forms workspace"></iframe>
+<script>
+const view=new URLSearchParams(location.search).get('view') || 'index.html';
+const target=new URL(view,location.href);
+const pages=new Set(['index.html','form.html','banks.html','suppliers.html','transactions.html','defaults.html','payroll-sheet.html']);
+const frame=document.getElementById('appFrame');
+window.addEventListener('pagehide',()=>{Object.keys(BankFormsMemory).forEach(key=>delete BankFormsMemory[key]);});
+window.addEventListener('pageshow',event=>{if(event.persisted)location.reload();});
+frame.src=target.origin===location.origin && pages.has(target.pathname.split('/').pop()) && target.pathname.startsWith(location.pathname.slice(0,location.pathname.lastIndexOf('/')+1)) ? target.href : 'index.html';
+frame.addEventListener('load',()=>{
+  try{
+    const active=new URL(frame.contentWindow.location.href);
+    document.title=frame.contentDocument.title;
+    if(active.origin===location.origin && pages.has(active.pathname.split('/').pop())){
+      history.replaceState(null,'','workspace.html?view='+encodeURIComponent(active.pathname.split('/').pop()+active.search+active.hash));
+    }
+  }catch(e){}
+});
+</script></body></html>

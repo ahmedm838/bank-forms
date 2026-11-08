@@ -54,6 +54,7 @@ const inlineScript = (file, body) =>
   [new RegExp(`<script src="${file.replace('.','\\.')}(\\?v=\\d+)?"></script>`), () => `<script>${body}</script>`];
 
 html = html
+  .replace(...inlineScript('workspace.js', 'window.BANK_FORMS_STANDALONE=true;\n' + text('workspace.js')))
   .replace(/<link rel="stylesheet" href="styles\.css(\?v=\d+)?">/, () => `<style>\n${css}\n</style>`)
   .replace(/<img id="pageImg"([^>]*?)src="assets\/[^"]+">/,
            (m, attrs) => `<img id="pageImg"${attrs}src="${dataUrl('assets/preview.png')}">`)

@@ -1,5 +1,29 @@
 # Bank Forms
 
+## Current workspace behavior
+
+All app data is temporary. The workspace holds lists, transactions, defaults,
+uploads and display preferences in memory across internal page navigation.
+Refreshing or closing clears everything. No app data is saved to localStorage,
+sessionStorage, cookies, or a database. App data saved by earlier versions is
+removed on startup. Export workbooks if a copy is needed later.
+
+Default values exclude amounts in figures, amounts in words, dropdowns, radio
+choices and checkboxes. These always start blank/unselected on a new or cleared
+form. Other defaults last only for the current workspace; dates can use Today.
+
+Payroll uploads show filenames and employee counts. Employee mismatches are
+listed separately and excluded from the transfer output. The transfer salary is
+the payroll Paid Salary value, including salary advances and cents, rather than
+Net Salary. Monetary cells in exported payroll, transfer and transaction sheets
+remain numeric and use thousands separators. Both payroll export buttons use
+the same style.
+
+The Debit Order wording follows the updated Payroll Debit Order.docx. Its date
+reads day/month/year from right to left, with each numeric component kept in its
+normal digit order.
+
+
 Pick a bank, pick a form, fill it, and print the typed values straight into the
 bank's own PDF. Arabic and English both work.
 
@@ -13,7 +37,7 @@ screenshot — so it stays crisp at any size and the branch receives the real fo
 Open the live page, or double-click `ABK-Transfer-Request.html` for the offline
 single-file version (same app, everything embedded, no internet needed).
 
-The page asks for a password, remembered for the rest of the browser session.
+The page asks for a password, remembered only while the temporary workspace remains open.
 
 ## Which forms exist
 
@@ -33,7 +57,7 @@ when printing. Figures and dates print in Arabic-Indic digits. The amount in
 words goes in bare because the surrounding currency wording is in the letter.
 
 Account number, branch and signatory are fields. Personal values can be set on
-the Default values page and stay in your browser.
+the Default values page for the temporary workspace.
 
 A cheque is its own ABK form, not the transfer one. Any form whose blank PDF is not
 in `assets/` is shown greyed out with an *awaiting PDF* tag, and opening it by URL
@@ -41,7 +65,7 @@ refuses rather than rendering the wrong document.
 
 Text size: each form sets the size its printing suits — 20pt for the Payroll Debit
 Order, 9pt for the Bank Transfer — and a picker in the header overrides it between
-7 and 30pt, remembered per form. A long value still shrinks to fit whatever is
+7 and 30pt, kept per form only until the workspace is refreshed or closed. A long value still shrinks to fit whatever is
 chosen, down to 5.5pt, so what a field reaches depends on the gap the printed
 text leaves it: the figure can only grow until it meets the ( ), and the
 signatory until it meets the label. A field may set `pad` to claim more of a
@@ -104,15 +128,10 @@ account no. · Currency · Telephone no. · Purpose of transfer
   words and duals inflected (مئتا ألف, ألفا دولار, أحد عشر ألفاً). *In English* is
   there too. Being the operative wording on a payment instrument, read it before
   you sign.
-- **Saved beneficiaries** — *Save* stores the seven beneficiary/bank fields under the
-  payee's name; pick them back from the dropdown next time.
-- **Your own details** (ordering customer name, ID, address, phone) are remembered
-  between sessions and survive *Clear*.
 - **Long text shrinks to fit** its cell instead of overflowing, down to ~6pt.
 - Flags a malformed SWIFT/BIC or amount before printing.
 
-Saved payees and remembered details live in your browser's local storage, on your
-machine only. Nothing is uploaded, and no transfer data leaves the page.
+No form, list or payroll data is saved in browser storage.
 
 ## Notes
 
@@ -174,8 +193,7 @@ the payroll sheet and the bank transfer sheet, each exportable as `.xlsx`.
 The monthly report carries only what changes each month — allowances, incentive,
 bonus, adjustments, overtime, deducted hours, salary advances. Everything standing
 (basic salary, insured wages, bank account, Arabic name) is read once from a past
-payroll sheet and transfer sheet and kept in the browser, so later months need only
-the report. People are matched on employee code, and the S.I. number is checked
+payroll sheet and transfer sheet, uploaded again for each new workspace. People are matched on employee code, and the S.I. number is checked
 against it; a disagreement is reported rather than quietly accepted.
 
 ### The arithmetic
@@ -205,19 +223,13 @@ Two things worth knowing:
   have not yet differed in practice.
 
 Nothing is uploaded anywhere: the workbooks are parsed in the page and the employee
-list stays in that browser's local storage.
+list stays only in temporary memory and clears on refresh or close.
 
 ## Forms open blank
 
-Nothing typed into a form is kept. Earlier versions remembered the ordering
-customer's details and let beneficiaries be saved by name; both are gone, and
-what they stored is cleared on load. A value from last time can no longer be
-printed on this time's form by accident. The date still fills in today, which is
-a fresh default rather than something remembered.
-
-Two things that are not form values are still kept: the text size picked per
-form, and the employee list on the Payroll Transfer Sheet, which is uploaded
-reference data shown on screen with a *Forget employees* button.
+Amounts and selection fields always start blank or unselected. Text defaults and
+dynamic dates can be set for the current workspace. No data survives refresh or
+close. Opening a saved transaction within the workspace restores that record.
 
 ## Cheque — EGP
 
@@ -253,7 +265,7 @@ standard list of 25 — public reference data — which you can edit, reorder an
 add to, with *Restore the standard list* to go back.
 
 **Suppliers** holds who gets paid, into which account, and what for. It lives in
-your browser alone.
+temporary workspace memory only.
 
 Edits on either page are held until **Save**: the page marks itself, the Save
 button lights, and closing the tab asks first. Nothing reaches the list the
@@ -286,7 +298,7 @@ is one and the account number otherwise, and it leaves a SWIFT out rather than
 write one the form would reject. Everything it writes stays editable — the
 purpose especially, since one supplier is paid for different things.
 
-Supplier accounts live in that browser alone and are never uploaded.
+Supplier accounts are held only in temporary workspace memory and are never uploaded.
 
 ## Defaults on a blank form
 
@@ -324,12 +336,12 @@ A form opts in with `records: true`; only Bank Transfer does.
 ## Default values
 
 The Default values page follows Transactions in the navigation. Choose an
-available fillable form and set its field values, radio choices and checkboxes.
+available fillable form and set its text defaults. Amounts and selections are excluded.
 Save applies changes across forms; Reset this form restores its built-in defaults
 when saved. A custom empty value clears a built-in default. Today stays dynamic
 for date fields. Defaults apply when opening or clearing a form, remain editable
 on that form, and do not overwrite values restored from a saved transaction.
-They are stored separately in this browser, never in the repository.
+They last only in temporary workspace memory, never in browser storage or the repository.
 
 Payroll Debit Order uses a flowing letter preview and browser printing, rather
 than stamping text onto a fixed PDF background. Its reference PDF and preview

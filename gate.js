@@ -29,7 +29,7 @@ function setupGate(){
   if(!gate) return Promise.resolve();
 
   let remembered = null;
-  try{ remembered = sessionStorage.getItem(GATE_KEY); }catch(e){}
+  try{ remembered = window.BankFormsMemory[GATE_KEY]; }catch(e){}
   if(remembered === PASS_SHA256){ gate.classList.add('done'); return Promise.resolve(); }
 
   return new Promise(resolve => {
@@ -41,7 +41,7 @@ function setupGate(){
       e.preventDefault();
       msg.textContent = '';
       if(await sha256Hex(pass.value) === PASS_SHA256){
-        try{ sessionStorage.setItem(GATE_KEY, PASS_SHA256); }catch(e){}
+        try{ window.BankFormsMemory[GATE_KEY] = PASS_SHA256; }catch(e){}
         gate.classList.add('done');
         resolve();
       } else {

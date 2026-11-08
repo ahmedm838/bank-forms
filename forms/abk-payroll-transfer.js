@@ -26,6 +26,9 @@ window.payrollLetterHtml = function(values, size = 16){
     const f = window.FORM_DEFS['payroll-debit-order'].fields.find(f => f.id === id);
     let value = String(values[id] || '');
     if(f.arabicDigits) value = value.replace(/[0-9]/g, n => '٠١٢٣٤٥٦٧٨٩'[Number(n)]);
+    if(id === 'date' && /^[٠-٩0-9]{1,2}\/[٠-٩0-9]{1,2}\/[٠-٩0-9]{4}$/.test(value)){
+      return '<span class="date-value" dir="rtl">' + value.split('/').map(part => '<bdi dir="ltr">'+escape(part)+'</bdi>').join('<span>/</span>') + '</span>';
+    }
     return '<bdi>' + escape(value || '…………') + '</bdi>';
   };
   const pt = Math.max(7, Math.min(30, Number(size) || 16));
@@ -36,13 +39,14 @@ window.payrollLetterHtml = function(values, size = 16){
   .blank{height:26.4pt}.center{text-align:center}.double{line-height:2}
   .body{text-align:justify}.sign{width:216pt;margin-right:324pt;margin-bottom:18pt}
   .signature{line-height:2;margin-bottom:24pt}
+  .date-value{display:inline-flex;direction:rtl;unicode-bidi:isolate;white-space:nowrap}
   @media print{body{margin:0;width:auto}html{width:auto}}</style></head><body>
   <p class="blank"></p><p class="blank"></p>
   <p><strong>الســادة / البنك الأهلي الكويتي – مصر</strong></p><p class="blank"></p>
   <p class="center">تحية طيبة وبعد،،</p>
   <p class="center double">الحاقاً بعقد المرتبات المبرم بيننا وبين بنككم الموقر ..</p>
   <p style="height:16pt;margin-bottom:6pt"></p>
-  <p class="body double">برجاء التكرم بخصم مبلغ ( ${field('amount')} ) فقط وقدره ${field('amountWords')} جنيها مصريا فقط لا غير وذلك خصماً من حسابنا طرفكم رقم ( ${field('accountNo')} ) فرع ( ${field('branch')} ) وذلك لتحويله للعاملين بالشركة ( كما بالكشف المرفق ) مرتبات شهر ( ${field('month')} ).</p>
+  <p class="body double">برجاء التكرم بخصم مبلغ اجمالي و قدره ( ${field('amount')} ) فقط و ( ${field('amountWords')} ) جنيهاً مصرياً فقط لا غير وذلك خصماً من حسابنا طرفكم رقم ( ${field('accountNo')} ) فرع ( ${field('branch')} ) وذلك لتحويله لحسابات العاملين بالشركة ( كما بالكشف المرفق ) كمرتبات شهر ( ${field('month')} ).</p>
   <p class="center double">برجاء التكرم بتحويل المبلغ وإخطارنا بالإشعارات الدالة على ذلك.</p>
   <p class="center double">وتفضلوا بقبول فائق الاحترام ،،،</p>
   <p class="sign">الاســم: ${field('signatory')}</p>

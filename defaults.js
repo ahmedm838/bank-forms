@@ -27,8 +27,8 @@
   function render(){
     const f=window.FORM_DEFS[current], saved=drafts[current];
     const mount=$('defaultsFields');mount.replaceChildren();
-    $('formNote').textContent = 'Defaults fill a new or cleared form. You can change them while filling the form. They are stored in this browser.';
-    for(const [kind,fields] of [['values',f.fields],['checks',f.checks||[]],['flags',f.flags||[]]]){
+    $('formNote').textContent = 'Defaults last only while this workspace is open and clear on refresh. Amounts and selections always start blank.';
+    for(const [kind,fields] of [['values',f.fields.filter(LISTS.canDefault)]]){
       for(const field of fields){
         const row=el('div');row.className='row default-row';row.dataset.defaultRow='';row.dataset.kind=kind;row.dataset.key=field.id;
         const label=el('label',field.label);label.className='lbl';label.htmlFor='default-'+field.id;row.appendChild(label);

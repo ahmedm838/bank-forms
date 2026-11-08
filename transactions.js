@@ -50,12 +50,12 @@ const cellText = (row, col) => String(col.get ? col.get(row) : (row[col.key] == 
 const ACTS_W = 124;
 const WIDTH_KEY = 'abk-tx-widths-v2'; // start with the compact layout on existing browsers too
 let widths = (() => {
-  try { return JSON.parse(localStorage.getItem(WIDTH_KEY)) || {}; }
+  try { return window.BankFormsMemory[WIDTH_KEY] || {}; }
   catch(e){ return {}; }
 })();
 const widthOf = c => Math.max(44, Number(widths[c.key]) || c.width);
 function saveWidths(){
-  try { localStorage.setItem(WIDTH_KEY, JSON.stringify(widths)); } catch(e){}
+  try { window.BankFormsMemory[WIDTH_KEY] = Object.assign({},widths); } catch(e){}
 }
 
 function makeResizer(col){
@@ -195,6 +195,13 @@ function exportBook(){
               r.debitAccount, r.debitCurrency, r.commAccount, r.commCurrency, r.ordName, r.file]);
   }
   const ws = XLSX.utils.aoa_to_sheet(aoa);
+  for(let i=1;i<aoa.length;i++){
+    const cell=ws['H'+(i+1)];
+    if(cell && String(cell.v).trim()){
+      const value=Number(String(cell.v).replace(/,/g,''));
+      if(Number.isFinite(value)){cell.t='n';cell.v=value;cell.z='#,##0.00';}
+    }
+  }
   ws['!cols'] = [{wch:17},{wch:12},{wch:34},{wch:32},{wch:26},{wch:13},{wch:8},{wch:14},
                  {wch:46},{wch:26},{wch:10},{wch:9},{wch:18},{wch:9},{wch:18},{wch:9},{wch:28},{wch:34}];
   const wb = XLSX.utils.book_new();
