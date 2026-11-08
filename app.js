@@ -842,6 +842,38 @@ async function doPrint(){
   } finally { busy(false); }
 }
 
+/* A form that declares `records` writes down every transfer saved from it, so
+   there is a record of what was sent and to whom. Only what was actually on the
+   form is kept; nothing is inferred. */
+function recordTransaction(fileSaved){
+  if(!CURRENT_FORM.records || !window.LISTS) return;
+  const v = id => (state.values[id] || '').trim();
+  const labelOf = (groupId, value) => {
+    const g = CHECKS.find(c => c.id === groupId);
+    const o = g && g.options.find(o => o.v === value);
+    return o ? o.v.toUpperCase() : '';
+  };
+  const ok = LISTS.addTransaction({
+    form: CURRENT_FORM.title,
+    date: v('date'),
+    issueType: labelOf('issueType', state.checks.issueType),
+    currency: v('currency'),
+    amount: v('amountFigures'),
+    amountWords: v('amountWords'),
+    benName: v('benName'),
+    benAccount: v('benAccount'),
+    benBank: v('benBank'),
+    benSwift: v('benBankSwift'),
+    purpose: v('purpose'),
+    charges: labelOf('charges', state.checks.charges),
+    debitAccount: v('debitAccount'),
+    debitCurrency: v('debitCurrency'),
+    ordName: v('ordName'),
+    file: fileSaved,
+  });
+  if(!ok) flash('The PDF was saved, but the transfer could not be written to Transactions.');
+}
+
 async function doSave(){
   if(!checkRequired()) return;
   const name = fileName();
@@ -876,6 +908,7 @@ async function doSave(){
       document.body.appendChild(a); a.click(); a.remove();
       flash('Saved ' + name + ' to your downloads folder');
     }
+    recordTransaction(name);
   } catch(e){
     flash('Could not save: ' + e.message);
   } finally { busy(false); }

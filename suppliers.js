@@ -6,7 +6,7 @@
    because a branch code can differ from the bank's own. */
 
 const $ = id => document.getElementById(id);
-let table;
+let table, unsaved;
 
 function flashMsg(msg){
   const n = $('toast');
@@ -15,8 +15,9 @@ function flashMsg(msg){
   flashMsg.t = setTimeout(() => n.classList.remove('show'), 3200);
 }
 
-function save(rows){
-  if (!LISTS.saveSuppliers(rows)) flashMsg('Could not save in this browser.');
+/* an edit only marks the page; Save is what writes it */
+function touched(){
+  unsaved.touch();
   refreshState();
 }
 
@@ -86,79 +87,6 @@ function refreshState(){
   box.hidden = false;
 }
 
-/* ---------- import ----------
-   Reads the sheet by its headings rather than by column position, since the
-   attached one starts at column B. */
-const HEAD = {
-  nameAr:  /اسم المورد.*عرب|supplier name \(arabic\)/i,
-  nameEn:  /اسم المورد.*انج|supplier name \(english\)/i,
-  iban:    /iban/i,
-  account: /^رقم الحساب$|account/i,
-  bank:    /^البنك$|^bank$/i,
-  swift:   /سوفت|swift/i,
-  reason:  /سبب|reason|purpose/i,
-};
-
-function importBook(file){
-  const r = new FileReader();
-  r.onload = () => {
-    let wb;
-    try { wb = XLSX.read(new Uint8Array(r.result), { type:'array' }); }
-    catch(e){ return flashMsg('That file is not a workbook this can read.'); }
-
-    const grid = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header:1, raw:false, defval:'' });
-    const headRow = grid.findIndex(row => row.some(c => HEAD.iban.test(String(c))));
-    if (headRow === -1) return flashMsg('No heading row found — is that the suppliers sheet?');
-
-    const cols = {};
-    grid[headRow].forEach((cell, i) => {
-      const text = String(cell).trim();
-      for (const [key, re] of Object.entries(HEAD)){
-        if (cols[key] == null && text && re.test(text)) cols[key] = i;
-      }
-    });
-
-    const bankList = LISTS.banks();
-    const out = [];
-    let placed = 0, unplaced = 0;
-
-    for (let i = headRow + 1; i < grid.length; i++){
-      const row = grid[i];
-      const get = key => cols[key] == null ? '' : String(row[cols[key]] || '').trim();
-      const nameAr = get('nameAr'), nameEn = get('nameEn');
-      if (!nameAr && !nameEn) continue;
-
-      const rawBank = get('bank');
-      const rawSwift = get('swift').replace(/^-+$/, '');
-      const hit = LISTS.matchBank(rawBank, bankList) || LISTS.matchBankBySwift(rawSwift, bankList);
-      if (hit) placed++; else if (rawBank) unplaced++;
-
-      // what sits in the IBAN column is not always an IBAN
-      const ibanCell = get('iban').replace(/\s+/g, '');
-      const acctCell = get('account');
-      const isIban = LISTS.looksLikeIban(ibanCell);
-
-      out.push({
-        order: out.length + 1,
-        nameAr, nameEn,
-        iban:    isIban ? ibanCell.toUpperCase() : '',
-        account: acctCell || (isIban ? '' : ibanCell),
-        bank:    hit ? (hit.en || hit.ar) : rawBank,
-        swift:   rawSwift || (hit ? hit.swift : ''),
-        reason:  get('reason'),
-      });
-    }
-
-    if (!out.length) return flashMsg('No suppliers found in that file.');
-    table.rows = out;
-    save(out);
-    flashMsg(`Imported ${out.length} suppliers. ${placed} banks matched the list` +
-             (unplaced ? `, ${unplaced} could not be placed — they are marked below.` : '.'));
-  };
-  r.onerror = () => flashMsg('Could not read that file.');
-  r.readAsArrayBuffer(file);
-}
-
 function exportBook(){
   const aoa = [['#','Supplier Name (Arabic)','Supplier Name (English)','IBAN','Account No.','Bank','SWIFT','Reason']];
   table.rows.forEach(s => aoa.push([s.order, s.nameAr, s.nameEn, s.iban, s.account, s.bank, s.swift, s.reason]));
@@ -172,17 +100,21 @@ function exportBook(){
 
 async function boot(){
   await setupGate();
-  table = ListTable({ mount: $('table'), columns: COLUMNS, rows: LISTS.suppliers(), onChange: save });
+  table = ListTable({ mount: $('table'), columns: COLUMNS, rows: LISTS.suppliers(), onChange: touched });
+  unsaved = Unsaved({
+    badge: $('dirty'), saveBtn: $('btnSave'),
+    commit: () => {
+      if (LISTS.saveSuppliers(table.rows)) return true;
+      flashMsg('Could not save in this browser.'); return false;
+    },
+    onSaved: () => flashMsg(table.rows.length + ' suppliers saved.'),
+  });
   table.render();
   refreshState();
 
   $('btnAdd').addEventListener('click', () =>
     table.add({ nameAr:'', nameEn:'', iban:'', account:'', bank:'', swift:'', reason:'' }));
-  $('btnImport').addEventListener('click', () => $('fileImport').click());
-  $('fileImport').addEventListener('change', e => {
-    if (e.target.files[0]) importBook(e.target.files[0]);
-    e.target.value = '';
-  });
+  $('btnSave').addEventListener('click', () => unsaved.save());
   $('btnExport').addEventListener('click', exportBook);
 }
 

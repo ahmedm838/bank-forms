@@ -243,12 +243,16 @@ way, so it cannot be extended after printing.
 Two list pages, reachable from the bar at the top of every page.
 
 **Banks** holds the Egyptian banks and their SWIFT codes. It ships with a
-standard list of 25 — public reference data — which you can edit, reorder, add
-to or import over, with *Restore the standard list* to go back.
+standard list of 25 — public reference data — which you can edit, reorder and
+add to, with *Restore the standard list* to go back.
 
-**Suppliers** holds who gets paid, into which account, and what for. It starts
-empty: import your own spreadsheet. Both pages read a sheet by its headings
-rather than by column position, and export back to `.xlsx`.
+**Suppliers** holds who gets paid, into which account, and what for. It lives in
+your browser alone.
+
+Edits on either page are held until **Save**: the page marks itself, the Save
+button lights, and closing the tab asks first. Nothing reaches the list the
+transfer form reads until you say so. **Export** writes the list to `.xlsx` —
+the only way back if the browser is ever cleared, since there is no import.
 
 The bank on a supplier is chosen from the Banks list, so the SWIFT code comes
 with it, but stays editable because a branch code can differ from the bank's own.
@@ -285,3 +289,20 @@ customer is *IEnergy Meters Manufacturing* and the telephone *01206037776*, both
 mandatory and both yours to change. The date opens on today. These are fresh
 defaults, not values kept from last time — changing one goes no further than the
 form in front of you.
+
+## Transactions
+
+Every transfer saved from the Bank Transfer form with **Save PDF…** is written
+down: when, the value date, beneficiary, account, bank, SWIFT, currency, amount,
+amount in words, purpose, type, charges, the account debited, the ordering
+customer, and the file that was saved.
+
+Each heading carries a filter box; they narrow together, and the count and
+currency total follow what is shown. Export writes what is shown, so a filter is
+also a way to take out one month or one beneficiary.
+
+Rows cannot be edited — a record of a payment should not change after the fact —
+but one can be removed, and removals wait for Save like the other lists.
+
+A form opts in with `records: true`; only Bank Transfer does. Printing does not
+record, since Print does not always mean the transfer went out.

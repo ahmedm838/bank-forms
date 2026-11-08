@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Transactions</title>
+<meta name="description" content="Every transfer saved from the bank transfer form.">
+<link rel="stylesheet" href="styles.css?v=24">
+</head>
+<body class="sheetpage">
+<div id="gate">
+  <form id="gateForm" autocomplete="off">
+    <h1>Transactions</h1>
+    <p>Enter the password to continue.</p>
+    <input id="gatePass" type="password" placeholder="Password" aria-label="Password" autocomplete="current-password">
+    <button type="submit" class="primary">Open</button>
+    <div id="gateMsg" role="alert"></div>
+  </form>
+</div>
+
+<header>
+  <a class="back" href="index.html" title="All forms">&#8592;</a>
+  <div class="brand">
+    <div class="title">Transactions</div>
+    <div class="sub">Every transfer saved from the bank transfer form</div>
+  </div>
+  <nav class="pagenav">
+    <a href="index.html">Forms</a>
+    <a href="banks.html">Banks</a>
+    <a href="suppliers.html">Suppliers</a>
+    <a href="transactions.html" class="on">Transactions</a>
+  </nav>
+  <div class="spacer"></div>
+  <span id="dirty" class="dirty" hidden>Unsaved changes</span>
+  <button id="btnClearFilters" type="button">Clear filters</button>
+  <button id="btnExport" type="button">Export</button>
+  <button id="btnSave" type="button">Save</button>
+</header>
+
+<main class="sheetMain">
+  <p class="hint" id="state"></p>
+  <div id="table"></div>
+  <p class="hint footnote">
+    Written here when you use <b>Save PDF&hellip;</b> on the bank transfer form.
+    Kept in this browser only — export to keep a copy elsewhere.
+  </p>
+</main>
+
+<div id="toast"></div>
+
+<script src="vendor/xlsx.full.min.js"></script>
+<script src="gate.js?v=24"></script>
+<script src="banks-seed.js?v=24"></script>
+<script src="data-lists.js?v=24"></script>
+<script src="unsaved.js?v=24"></script>
+<script src="transactions.js?v=24"></script>
+</body>
+</html>

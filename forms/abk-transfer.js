@@ -23,6 +23,7 @@ window.FORM_DEFS['transfer'] = {
   bank:  'Al Ahli Bank of Kuwait – Egypt',
   ready: true,
   suppliersInto: 'ben',      // show the supplier picker above the beneficiary fields
+  records: true,            // every transfer saved from here goes to Transactions
   pdf:     'assets/transfer-request.pdf',
   preview: 'assets/preview.png',
   page: { w: 595.276, h: 842 },

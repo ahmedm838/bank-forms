@@ -10,6 +10,7 @@ window.LISTS = (function(){
 
 const BANKS_KEY = 'abk-banks';
 const SUPPLIERS_KEY = 'abk-suppliers';
+const TX_KEY = 'abk-transactions';
 
 const read = (key, fallback) => {
   try {
@@ -39,6 +40,24 @@ function resetBanks(){ try{ localStorage.removeItem(BANKS_KEY); }catch(e){} }
 /* ---------- suppliers ---------- */
 function suppliers(){ return byOrder(read(SUPPLIERS_KEY, [])); }
 function saveSuppliers(rows){ return write(SUPPLIERS_KEY, rows); }
+
+/* ---------- transfers made ----------
+   Every transfer saved from the Bank Transfer form is written down here, so
+   there is a record of what was sent and to whom. Like the other lists it is
+   this browser's own; export it to keep a copy anywhere else. */
+function transactions(){
+  return read(TX_KEY, []).slice().sort((a, b) =>
+    String(b.recordedAt || '').localeCompare(String(a.recordedAt || '')));
+}
+function saveTransactions(rows){ return write(TX_KEY, rows); }
+function addTransaction(entry){
+  const rows = read(TX_KEY, []);
+  rows.push(Object.assign({
+    id: 'tx' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    recordedAt: new Date().toISOString(),
+  }, entry));
+  return write(TX_KEY, rows);
+}
 
 /* ---------- matching a written bank name to the list ----------
    An imported sheet names banks however whoever typed it felt that day — "cib",
@@ -103,7 +122,8 @@ function payTo(supplier){
 return {
   banks, saveBanks, resetBanks,
   suppliers, saveSuppliers,
+  transactions, saveTransactions, addTransaction,
   matchBank, matchBankBySwift, isBic, looksLikeIban, payTo, byOrder, normalise,
-  BANKS_KEY, SUPPLIERS_KEY,
+  BANKS_KEY, SUPPLIERS_KEY, TX_KEY,
 };
 })();

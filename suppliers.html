@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Suppliers List</title>
 <meta name="description" content="Suppliers, their accounts and what they are paid for.">
-<link rel="stylesheet" href="styles.css?v=23">
+<link rel="stylesheet" href="styles.css?v=24">
 </head>
 <body class="sheetpage">
 <div id="gate">
@@ -28,12 +28,13 @@
     <a href="index.html">Forms</a>
     <a href="banks.html">Banks</a>
     <a href="suppliers.html" class="on">Suppliers</a>
+    <a href="transactions.html">Transactions</a>
   </nav>
   <div class="spacer"></div>
-  <button id="btnImport" type="button">Import&hellip;</button>
+  <span id="dirty" class="dirty" hidden>Unsaved changes</span>
   <button id="btnExport" type="button">Export</button>
+  <button id="btnSave" type="button">Save</button>
   <button id="btnAdd" type="button" class="primary">Add supplier</button>
-  <input type="file" id="fileImport" accept=".xlsx,.xls" hidden>
 </header>
 
 <main class="sheetMain">
@@ -49,10 +50,11 @@
 <div id="toast"></div>
 
 <script src="vendor/xlsx.full.min.js"></script>
-<script src="gate.js?v=23"></script>
-<script src="banks-seed.js?v=23"></script>
-<script src="data-lists.js?v=23"></script>
-<script src="list-table.js?v=23"></script>
-<script src="suppliers.js?v=23"></script>
+<script src="gate.js?v=24"></script>
+<script src="banks-seed.js?v=24"></script>
+<script src="data-lists.js?v=24"></script>
+<script src="list-table.js?v=24"></script>
+<script src="unsaved.js?v=24"></script>
+<script src="suppliers.js?v=24"></script>
 </body>
 </html>
