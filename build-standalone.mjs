@@ -60,6 +60,8 @@ html = html
   .replace(...inlineScript('vendor/pdf-lib.min.js',     text('vendor/pdf-lib.min.js')))
   .replace(...inlineScript('vendor/fontkit.umd.min.js', text('vendor/fontkit.umd.min.js')))
   .replace(...inlineScript('vendor/bidi.min.js',        text('vendor/bidi.min.js')))
+  .replace(...inlineScript('banks-seed.js',             text('banks-seed.js')))
+  .replace(...inlineScript('data-lists.js',             text('data-lists.js')))
   .replace(...inlineScript('gate.js',                   text('gate.js')));
 
 let inlinedAssets = 0;
@@ -72,8 +74,9 @@ for(const file of FORM_FILES){
 html = html
   .replace(...inlineScript('form-registry.js', text('form-registry.js')))
   .replace(...inlineScript('app.js',           app))
-  // the offline file is one page, so there is no hub to go back to
-  .replace(/<a class="back"[\s\S]*?<\/a>\s*/, '');
+  // the offline file is one page: no hub to go back to and no list pages to visit
+  .replace(/<a class="back"[\s\S]*?<\/a>\s*/, '')
+  .replace(/<nav class="pagenav">[\s\S]*?<\/nav>\s*/, '');
 
 /* nothing may still point at a file on disk, or the offline copy is not offline */
 const dangling = html.match(/(?:src|href)="(?!data:|#|https?:)[^"]+"/g);

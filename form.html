@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ABK Transfer Request</title>
 <meta name="description" content="Fills the Al Ahli Bank of Kuwait – Egypt transfer / bank draft application and prints into the original PDF.">
-<link rel="stylesheet" href="styles.css?v=22">
+<link rel="stylesheet" href="styles.css?v=23">
 </head>
 <body>
 <div id="gate">
@@ -24,6 +24,11 @@
     <div class="title" id="formTitle">Transfer / Bank Draft Application</div>
     <div class="sub" id="formSub">Al Ahli Bank of Kuwait &ndash; Egypt &nbsp;&middot;&nbsp; fills the original form</div>
   </div>
+  <nav class="pagenav">
+    <a href="index.html" class="on">Forms</a>
+    <a href="banks.html">Banks</a>
+    <a href="suppliers.html">Suppliers</a>
+  </nav>
   <div class="spacer"></div>
   <select id="formSwitch" aria-label="Switch form" hidden></select>
   <label class="sizePick">Text size
@@ -54,14 +59,16 @@
 <script src="vendor/pdf-lib.min.js"></script>
 <script src="vendor/fontkit.umd.min.js"></script>
 <script src="vendor/bidi.min.js"></script>
-<script src="gate.js?v=22"></script>
-<script src="forms/abk-transfer.js?v=22"></script>
-<script src="forms/abk-cheques.js?v=22"></script>
-<script src="forms/abk-cheque-egp.js?v=22"></script>
-<script src="forms/abk-payroll.js?v=22"></script>
-<script src="forms/abk-tax.js?v=22"></script>
-<script src="forms/abk-payroll-transfer.js?v=22"></script>
-<script src="form-registry.js?v=22"></script>
-<script src="app.js?v=22"></script>
+<script src="banks-seed.js?v=23"></script>
+<script src="data-lists.js?v=23"></script>
+<script src="gate.js?v=23"></script>
+<script src="forms/abk-transfer.js?v=23"></script>
+<script src="forms/abk-cheques.js?v=23"></script>
+<script src="forms/abk-cheque-egp.js?v=23"></script>
+<script src="forms/abk-payroll.js?v=23"></script>
+<script src="forms/abk-tax.js?v=23"></script>
+<script src="forms/abk-payroll-transfer.js?v=23"></script>
+<script src="form-registry.js?v=23"></script>
+<script src="app.js?v=23"></script>
 </body>
 </html>

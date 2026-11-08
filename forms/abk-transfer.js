@@ -11,7 +11,8 @@
      thousands                 groups the number as it is typed
      upper                     forced to upper case
      arabic                    Arabic only; Latin letters are refused
-     hint                      placeholder text */
+     hint                      placeholder text
+     def                       value a blank form opens with, yours to change */
 window.FORM_DEFS = window.FORM_DEFS || {};
 
 (function(){
@@ -21,6 +22,7 @@ window.FORM_DEFS['transfer'] = {
   title: 'Bank Transfer',
   bank:  'Al Ahli Bank of Kuwait – Egypt',
   ready: true,
+  suppliersInto: 'ben',      // show the supplier picker above the beneficiary fields
   pdf:     'assets/transfer-request.pdf',
   preview: 'assets/preview.png',
   page: { w: 595.276, h: 842 },
@@ -55,10 +57,10 @@ window.FORM_DEFS['transfer'] = {
     { id:'commAccount',     label:'Commission & charges debited to account no.', box:[176.4,369.4,459.4,395.1], group:'debit', required:true },
     { id:'commCurrency',    label:'Currency',                            box:[176.4,351.9,459.4,369.4], group:'debit', type:'select', options:CURRENCIES, required:true, latin:true },
 
-    { id:'ordName',         label:"Ordering customer's name (50)",       box:[176.4,316.9,459.4,334.4], group:'ord' },
+    { id:'ordName',         label:"Ordering customer's name (50)",       box:[176.4,316.9,459.4,334.4], group:'ord', required:true, def:'IEnergy Meters Manufacturing' },
     { id:'ordID',           label:"Ordering customer's ID (if paid in cash)", box:[176.4,299.4,459.4,316.9], group:'ord' },
     { id:'ordAddress',      label:"Ordering customer's address",         box:[176.4,282.5,459.4,299.4], group:'ord', multi:true },
-    { id:'ordPhone',        label:'Telephone no.',                       box:[176.4,265.2,459.4,282.5], group:'ord', required:true },
+    { id:'ordPhone',        label:'Telephone no.',                       box:[176.4,265.2,459.4,282.5], group:'ord', required:true, def:'01206037776' },
     { id:'purpose',         label:'Purpose of transfer (goods type & delivery terms)', box:[176.4,237.3,459.4,265.2], group:'ord', multi:true, required:true },
   ],
 

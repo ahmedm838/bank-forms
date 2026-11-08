@@ -407,10 +407,58 @@ function labelFor(f){
   return n;
 }
 
+/* Pick a supplier and the beneficiary half of the form fills itself from the
+   Suppliers list: the IBAN where there is one, otherwise the account number.
+   Everything it writes stays editable — the reason especially, since one
+   supplier is paid for different things. */
+function buildSupplierPicker(){
+  const bar = el('div','payeebar');
+  const sel = document.createElement('select');
+  const suppliers = (window.LISTS ? LISTS.suppliers() : []);
+
+  sel.appendChild(new Option(suppliers.length
+    ? '— fill from a supplier —'
+    : '— no suppliers yet —', ''));
+  suppliers.forEach((s, i) => {
+    const name = s.nameEn || s.nameAr || ('supplier ' + (i+1));
+    sel.appendChild(new Option(name, String(i)));
+  });
+  sel.disabled = !suppliers.length;
+
+  sel.addEventListener('change', () => {
+    const s = suppliers[Number(sel.value)];
+    if(!s) return;
+    const bank = LISTS.banks().find(b => (b.en || b.ar) === s.bank);
+    const put = (id, v) => {
+      if(v == null || v === '') return;
+      state.values[id] = v;
+      const n = document.getElementById('in-'+id);
+      if(n){ n.value = v; n.classList.remove('bad'); }
+    };
+    put('benName', s.nameEn || s.nameAr);
+    put('benAccount', LISTS.payTo(s));
+    put('benBank', s.bank);
+    // a SWIFT that is not a real BIC would only trip the form's own check
+    if(LISTS.isBic(s.swift)) put('benBankSwift', String(s.swift).toUpperCase());
+    else if(bank && LISTS.isBic(bank.swift)) put('benBankSwift', bank.swift);
+    put('purpose', s.reason);
+    render();
+    flash('Filled from ' + (s.nameEn || s.nameAr) + '. Change anything you need to.');
+  });
+
+  const link = document.createElement('a');
+  link.href = 'suppliers.html'; link.className = 'mini aslink';
+  link.textContent = suppliers.length ? 'Edit list' : 'Add suppliers';
+  bar.appendChild(sel); bar.appendChild(link);
+  return bar;
+}
+
 function buildForm(){
   for(const g of GROUPS){
     const sec = el('section','grp');
     sec.appendChild(el('h2',null,g.title));
+    if(CURRENT_FORM.suppliersInto && g.id === CURRENT_FORM.suppliersInto)
+      sec.appendChild(buildSupplierPicker());
 
     for(const c of CHECKS.filter(c=>c.group===g.id)){
       const row = el('div','row');
@@ -848,14 +896,22 @@ function clearAll(){
   render();
 }
 
-function setToday(){
+/* What a blank form opens with: today's date, and any field that names a `def`.
+   These are fresh defaults, not values kept from last time — change one and the
+   change goes no further than the form in front of you. */
+function applyDefaults(){
   const d = new Date();
-  const s = String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
-  const f = FIELDS.find(x => x.today);
-  if(!f) return;
-  state.values[f.id] = s;
-  const n = document.getElementById('in-'+f.id); if(n) n.value = s;
+  const today = String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
+
+  for(const f of FIELDS){
+    const v = f.today ? today : f.def;
+    if(v == null) continue;
+    state.values[f.id] = v;
+    const n = document.getElementById('in-'+f.id);
+    if(n){ n.value = v; n.classList.remove('bad'); }
+  }
 }
+const setToday = applyDefaults;   // called from clearAll too
 
 let flashTimer = null;
 function flash(msg){

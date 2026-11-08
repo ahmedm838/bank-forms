@@ -237,3 +237,51 @@ Field rules, as asked: the date is English digits laid out one to a box
 with thousands separators printed as `#125,400#`, and the sum in words is
 generated in Arabic. The Bank Transfer form's figure is wrapped in `#` the same
 way, so it cannot be extended after printing.
+
+## Banks and Suppliers
+
+Two list pages, reachable from the bar at the top of every page.
+
+**Banks** holds the Egyptian banks and their SWIFT codes. It ships with a
+standard list of 25 — public reference data — which you can edit, reorder, add
+to or import over, with *Restore the standard list* to go back.
+
+**Suppliers** holds who gets paid, into which account, and what for. It starts
+empty: import your own spreadsheet. Both pages read a sheet by its headings
+rather than by column position, and export back to `.xlsx`.
+
+The bank on a supplier is chosen from the Banks list, so the SWIFT code comes
+with it, but stays editable because a branch code can differ from the bank's own.
+
+### What the import sorts out
+
+A sheet written by hand names banks however the typist felt that day. The import
+matches on the English or Arabic name, on an abbreviation in brackets, on a
+containing name, or on the first eight characters of the SWIFT code; 24 of 25
+landed on the attached sheet. What it cannot place is kept as written and marked.
+
+It also moves a value out of the IBAN column when it is not an IBAN — several
+were plain account numbers — into the account column where it belongs.
+
+The page then reports what needs a person: an account missing altogether, a bank
+not on the list, a SWIFT that is not 8 or 11 characters, and a SWIFT whose first
+eight characters disagree with the bank chosen, which is how a mistyped letter in
+an otherwise well-formed code gets caught.
+
+### Filling the transfer form
+
+Pick a supplier on the Bank Transfer form and it fills the beneficiary name, the
+account, the bank, the SWIFT and the purpose. It pays into the IBAN where there
+is one and the account number otherwise, and it leaves a SWIFT out rather than
+write one the form would reject. Everything it writes stays editable — the
+purpose especially, since one supplier is paid for different things.
+
+Supplier accounts live in that browser alone and are never uploaded.
+
+## Defaults on a blank form
+
+A field may name a `def`, the value a blank form opens with: the ordering
+customer is *IEnergy Meters Manufacturing* and the telephone *01206037776*, both
+mandatory and both yours to change. The date opens on today. These are fresh
+defaults, not values kept from last time — changing one goes no further than the
+form in front of you.
