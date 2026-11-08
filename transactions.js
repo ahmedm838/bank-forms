@@ -19,17 +19,17 @@ function flashMsg(msg){
   flashMsg.t = setTimeout(() => n.classList.remove('show'), 3000);
 }
 
-/* Widths are in pixels and add up to about 1280, so every column lands on an
+/* Widths are in pixels and add up to about 1220, so every column lands on an
    ordinary laptop without scrolling sideways. Drag a heading edge to change
    one; the widths you set are remembered. */
 const COLUMNS = [
   { key:'recordedAt', label:'Saved',          width:116, get: r => formatWhen(r.recordedAt) },
   { key:'date',       label:'Value date',     width:88 },
   { key:'benName',    label:'Beneficiary',    width:208 },
-  { key:'benAccount', label:'Account / IBAN', width:224 },
+  { key:'benAccount', label:'Account / IBAN', width:112 },
   { key:'benBank',    label:'Bank',           width:186 },
   { key:'currency',   label:'Ccy',            width:52 },
-  { key:'amount',     label:'Amount',         width:104, num:true },
+  { key:'amount',     label:'Amount',         width:80, num:true },
   { key:'purpose',    label:'Purpose',        width:182 },
   { key:'issueType',  label:'Type',           width:72 },
 ];
@@ -48,7 +48,7 @@ const cellText = (row, col) => String(col.get ? col.get(row) : (row[col.key] == 
    The defaults add up to a laptop screen. Drag the right edge of a heading to
    change one, and the widths are remembered for next time. */
 const ACTS_W = 124;
-const WIDTH_KEY = 'abk-tx-widths';
+const WIDTH_KEY = 'abk-tx-widths-v2'; // start with the compact layout on existing browsers too
 let widths = (() => {
   try { return JSON.parse(localStorage.getItem(WIDTH_KEY)) || {}; }
   catch(e){ return {}; }
