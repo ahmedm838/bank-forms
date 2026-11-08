@@ -23,7 +23,7 @@ The page asks for a password, remembered for the rest of the browser session.
 | ABK, awaiting their blank PDFs | Cheque EGP · Cheque USD · Cheque EUR · Social Insurance Payment · Salary Taxes Payment |
 | CIB, NBE, QNB, NBK | none yet — the blank PDFs are needed |
 
-**Payroll Debit Order** is the company's own *Payroll Debit Order* letter (خصم مرتبات),
+**Payroll Debit Order** is the company's own letter to the bank (خصم مرتبات),
 converted from Word to PDF once. It is written wholly in Arabic, so the amount and
 the date are typed in ordinary digits and printed in Arabic-Indic ones (`125400`
 prints as `١٢٥٬٤٠٠`). The amount in words goes in bare — the letter already prints
