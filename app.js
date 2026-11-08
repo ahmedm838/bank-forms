@@ -866,6 +866,7 @@ function recordTransaction(fileSaved){
   };
   const entry = {
     form: CURRENT_FORM.title,
+    formId: CURRENT_FORM.id,
     date: v('date'),
     issueType: labelOf('issueType', state.checks.issueType),
     currency: v('currency'),
@@ -889,6 +890,13 @@ function recordTransaction(fileSaved){
     checks: Object.assign({}, state.checks),
     flags: Object.assign({}, state.flags),
   };
+  if(CURRENT_FORM.id === 'cheque-egp'){
+    Object.assign(entry, {
+      date: v('date'), benName: v('payTo'), benAccount: '', benBank: 'ABK',
+      currency: 'EGP', amount: v('amount'), amountWords: v('sumWords'),
+      purpose: '', issueType: 'CHQ-EGP',
+    });
+  }
   const ok = EDITING_TX
     ? LISTS.updateTransaction(EDITING_TX, entry)
     : LISTS.addTransaction(entry);

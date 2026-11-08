@@ -145,7 +145,7 @@ function render(){
     const act = el('td', 'rowacts');
 
     const edit = el('a', 'rowbtn', 'Edit');
-    edit.href = 'form.html?f=transfer&tx=' + encodeURIComponent(r.id);
+    edit.href = 'form.html?f=' + encodeURIComponent(r.formId || 'transfer') + '&tx=' + encodeURIComponent(r.id);
     edit.title = 'Open this transfer on the form to change it';
     edit.addEventListener('click', e => {
       if (!unsaved.dirty) return;

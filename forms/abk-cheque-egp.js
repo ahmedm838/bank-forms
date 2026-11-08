@@ -19,6 +19,7 @@ window.FORM_DEFS['cheque-egp'] = {
   title: 'Cheque — EGP',
   bank:  'Al Ahli Bank of Kuwait – Egypt',
   ready: true,
+  records: true,
   overlayOnly: true,                       // print the values, never the cheque
   preview: 'assets/cheque-egp-preview.png',
   previewBand: [625, 841.68],              // the strip of the page the scan covers
