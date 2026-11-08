@@ -43,48 +43,12 @@ const COLUMNS = [
   { key:'reason',  label:'سبب التحويل — Reason', width:'13%',  dir:'auto' },
 ];
 
-function problems(rows){
-  const out = [];
-  const bankList = LISTS.banks();
-  const known = new Set(bankList.map(b => b.en || b.ar));
-  rows.forEach((s, i) => {
-    const who = s.nameEn || s.nameAr || ('row ' + (i + 1));
-
-    /* The first eight characters of a SWIFT code are the bank. If they disagree
-       with the bank chosen, one of the two is wrong — which is how a mistyped
-       letter in a code that still looks well-formed gets caught. */
-    const chosen = bankList.find(b => (b.en || b.ar) === s.bank);
-    if (chosen && s.swift && LISTS.isBic(s.swift)){
-      const head = String(s.swift).toUpperCase().slice(0, 8);
-      const bankHead = String(chosen.swift).toUpperCase().slice(0, 8);
-      if (bankHead && head !== bankHead)
-        out.push(`${who}: SWIFT starts "${head}" but ${chosen.en || chosen.ar} is "${bankHead}" — one of the two is wrong.`);
-    }
-    if (!LISTS.payTo(s)) out.push(`${who} has neither an IBAN nor an account number, so the transfer form cannot pay it.`);
-    if (s.bank && !known.has(s.bank)) out.push(`${who}: "${s.bank}" is not on the Banks list — pick a bank so the SWIFT code comes with it.`);
-    if (s.swift && !LISTS.isBic(s.swift)) out.push(`${who}: SWIFT "${s.swift}" is not the usual 8 or 11 characters; the transfer form will leave it out.`);
-    if (s.iban && !LISTS.looksLikeIban(s.iban)) out.push(`${who}: "${s.iban}" is in the IBAN column but does not read like one — if it is a plain account number it belongs in the next column.`);
-  });
-  return out;
-}
-
 function refreshState(){
   const rows = table ? table.rows : LISTS.suppliers();
   $('state').textContent = rows.length
     ? rows.length + (rows.length === 1 ? ' supplier' : ' suppliers')
     : 'No suppliers yet. Add one, or import your spreadsheet.';
 
-  const list = problems(rows);
-  const box = $('problems');
-  if (!list.length){ box.hidden = true; return; }
-  box.innerHTML = '';
-  const b = document.createElement('b');
-  b.textContent = list.length === 1 ? 'One thing to check:' : list.length + ' things to check:';
-  box.appendChild(b);
-  const ul = document.createElement('ul');
-  list.forEach(p => { const li = document.createElement('li'); li.textContent = p; ul.appendChild(li); });
-  box.appendChild(ul);
-  box.hidden = false;
 }
 
 function exportBook(){
