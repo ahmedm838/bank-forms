@@ -50,8 +50,24 @@ function transactions(){
     String(b.recordedAt || '').localeCompare(String(a.recordedAt || '')));
 }
 function saveTransactions(rows){ return write(TX_KEY, rows); }
+// Compare the transaction columns, excluding save times and PDF filenames.
+function transactionKey(row){
+  return JSON.stringify(['date','benName','benAccount','benBank','currency','amount','purpose','issueType']
+    .map(key => {
+      const value = String(row[key] || '').trim().replace(/\s+/g, ' ').toLowerCase();
+      if(key === 'amount'){
+        const number = Number(value.replace(/,/g, ''));
+        if(value && Number.isFinite(number)) return String(number);
+      }
+      return value;
+    }));
+}
+function alreadyRecorded(rows, entry){
+  return rows.some(row => transactionKey(row) === transactionKey(entry));
+}
 function addTransaction(entry){
   const rows = read(TX_KEY, []);
+  if(alreadyRecorded(rows, entry)) return 'duplicate';
   rows.push(Object.assign({
     id: 'tx' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     recordedAt: new Date().toISOString(),
@@ -64,6 +80,7 @@ function addTransaction(entry){
    changed is noted beside it. */
 function updateTransaction(id, entry){
   const rows = read(TX_KEY, []);
+  if(alreadyRecorded(rows, entry)) return 'duplicate';
   const i = rows.findIndex(r => r.id === id);
   if (i === -1) return addTransaction(entry);
   rows[i] = Object.assign({}, rows[i], entry, {

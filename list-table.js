@@ -6,6 +6,14 @@
 window.ListTable = function ListTable(opts){
   const { mount, columns, onChange } = opts;
   let rows = opts.rows || [];
+  const filters = {};
+
+  function applyFilters(tb){
+    Array.from(tb.children).forEach((tr, i) => {
+      tr.hidden = !columns.every(c => String(rows[i][c.key] == null ? '' : rows[i][c.key])
+        .toLowerCase().includes((filters[c.key] || '').toLowerCase().trim()));
+    });
+  }
 
   const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c; if (x != null) n.textContent = x; return n; };
 
@@ -73,6 +81,21 @@ window.ListTable = function ListTable(opts){
     for (const c of columns) hr.appendChild(el('th', null, c.label));
     hr.appendChild(el('th', null, ''));
     thead.appendChild(hr);
+    const filterRow = el('tr', 'filterrow');
+    for(const c of columns){
+      const th = el('th');
+      const input = document.createElement('input');
+      input.type = 'search'; input.placeholder = 'Filter…';
+      input.setAttribute('aria-label', 'Filter ' + c.label);
+      input.value = filters[c.key] || '';
+      input.addEventListener('input', () => {
+        filters[c.key] = input.value;
+        applyFilters(table.querySelector('tbody'));
+      });
+      th.appendChild(input); filterRow.appendChild(th);
+    }
+    filterRow.appendChild(el('th'));
+    thead.appendChild(filterRow);
     table.appendChild(thead);
 
     const tb = el('tbody');
@@ -102,6 +125,7 @@ window.ListTable = function ListTable(opts){
       tb.appendChild(tr);
     });
     table.appendChild(tb);
+    applyFilters(tb);
 
     if (!rows.length){
       const p = el('p', 'hint', 'Nothing here yet. Add a row, or import a spreadsheet.');
@@ -114,7 +138,8 @@ window.ListTable = function ListTable(opts){
     render,
     get rows(){ return rows; },
     set rows(v){ rows = v; sortRows(); renumber(); render(); },
-    add(blank){ rows.push(Object.assign({ order: rows.length + 1 }, blank)); renumber(); changed(); render();
+    add(blank){ Object.keys(filters).forEach(key => delete filters[key]);
+                rows.push(Object.assign({ order: rows.length + 1 }, blank)); renumber(); changed(); render();
                 mount.querySelector('tbody tr:last-child input').focus(); },
     renumber, sortRows,
   };

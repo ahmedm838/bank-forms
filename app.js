@@ -843,7 +843,9 @@ async function doPrint(){
   if(!checkRequired()) return;
   busy(true);
   try{
-    const url = blobUrl(await buildFilledPdf());
+    const bytes = await buildFilledPdf();
+    if(recordTransaction(fileName()) === false) return;
+    const url = blobUrl(bytes);
     const frame = document.getElementById('printFrame');
     let fired = false;
     frame.onload = () => {
@@ -853,7 +855,6 @@ async function doPrint(){
     };
     frame.src = url;
     setTimeout(()=>{ if(!fired) window.open(url, '_blank'); }, 2500);
-    recordTransaction(fileName());   // printing records it too
   } finally { busy(false); }
 }
 
@@ -862,7 +863,7 @@ async function doPrint(){
    form is kept; nothing is inferred. */
 function recordTransaction(fileSaved){
   if(!CURRENT_FORM.records || !window.LISTS) return;
-  if(recordTransaction.busy) return;         // Print saves then prints; record once
+  if(recordTransaction.busy) return false;
   recordTransaction.busy = true;
   setTimeout(() => { recordTransaction.busy = false; }, 0);
   const v = id => (state.values[id] || '').trim();
@@ -907,8 +908,10 @@ function recordTransaction(fileSaved){
   const ok = EDITING_TX
     ? LISTS.updateTransaction(EDITING_TX, entry)
     : LISTS.addTransaction(entry);
-  if(!ok) flash('The PDF was made, but the transfer could not be written to Transactions.');
+  if(ok === 'duplicate'){ flash('Already recorded.'); return false; }
+  if(!ok) flash('Could not save to Transactions.');
   else if(EDITING_TX) flash('Transaction updated.');
+  return ok;
 }
 
 /* Opening a saved transfer puts its figures back on the form; saving then
@@ -987,7 +990,7 @@ function doSave(){
     return;
   }
   const was = EDITING_TX;
-  recordTransaction('');
+  if(recordTransaction('') === false) return;
   if(!was) flash('Transfer saved to Transactions.');
 }
 
