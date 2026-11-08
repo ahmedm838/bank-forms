@@ -12,8 +12,11 @@
 
 const PAD = 3.5;
 let BASE_SIZE = 9;         // the size values are written at, before fitting
-let MIN_SIZE = 5.8;        // how far a long value may shrink to fit its cell
 let FORM_SIZE = 9;         // the form's own default, which the reader may override
+/* An absolute floor, not one scaled from the form's default: a form that prints
+   at 20pt must still be able to shrink a long value right down to fit its gap. */
+const MIN_SIZE = 5.5;
+const SIZE_MIN = 7, SIZE_MAX = 30;
 const SIZE_KEY = 'abk-transfer-size';
 const LINE_RATIO = 1.18;
 const INK = [0.03, 0.09, 0.36];
@@ -317,13 +320,21 @@ function wrapLines(text, maxWidth, measure){
   return lines;
 }
 
-function fitText(text, boxW, boxH, measureAt){
+/* `maxLines` is for a blank inside running text, where a second line would print
+   over the sentence below: such a field shrinks instead of wrapping, and if even
+   the smallest size will not do it runs on past its gap rather than downwards. */
+function fitText(text, boxW, boxH, measureAt, maxLines){
   const maxW = boxW - PAD*2;
   for(let size = BASE_SIZE; size >= MIN_SIZE; size -= 0.25){
     const lines = wrapLines(text, maxW, s => measureAt(s, size));
+    if(maxLines && lines.length > maxLines) continue;
     if(lines.length * size * LINE_RATIO <= boxH - 2) return { size, lines };
   }
-  return { size: MIN_SIZE, lines: wrapLines(text, maxW, s => measureAt(s, MIN_SIZE)) };
+  const lines = wrapLines(text, maxW, s => measureAt(s, MIN_SIZE));
+  return {
+    size: MIN_SIZE,
+    lines: maxLines === 1 && lines.length > 1 ? [String(text).replace(/\s+/g, ' ').trim()] : lines,
+  };
 }
 
 /* ---------- state ---------- */
@@ -566,7 +577,7 @@ function render(){
     if(!text) continue;
     const [x0,y0,x1,y1] = f.box;
     const boxW = x1-x0, boxH = y1-y0;
-    const { size, lines } = fitText(text, boxW, boxH, measurePreview);
+    const { size, lines } = fitText(text, boxW, boxH, measurePreview, f.maxLines);
     const blockH = lines.length * size * LINE_RATIO;
     const topPdf = y0 + (boxH + blockH)/2;
 
@@ -651,7 +662,7 @@ async function buildFilledPdf(){
     const [x0,y0,x1,y1] = f.box;
     const boxW = x1-x0, boxH = y1-y0;
     const dir = baseDirOf(text);
-    const { size, lines } = fitText(text, boxW, boxH, (s,sz)=>measureText(s,sz,dir));
+    const { size, lines } = fitText(text, boxW, boxH, (s,sz)=>measureText(s,sz,dir), f.maxLines);
     const blockH = lines.length * size * LINE_RATIO;
     let cursor = y0 + (boxH + blockH)/2 - size;
 
@@ -877,7 +888,7 @@ function sizeKeyFor(preset){ return SIZE_KEY + ':' + (preset.id || 'form'); }
 function loadSize(preset){
   try{
     const v = parseFloat(localStorage.getItem(sizeKeyFor(preset)));
-    if(v >= 6 && v <= 24) return v;
+    if(v >= SIZE_MIN && v <= SIZE_MAX) return v;
   }catch(e){}
   return FORM_SIZE;
 }
@@ -885,7 +896,7 @@ function loadSize(preset){
 function buildSizePicker(preset){
   const sel = document.getElementById('fontSize');
   if(!sel) return;
-  for(let s = 7; s <= 20; s++){
+  for(let s = SIZE_MIN; s <= SIZE_MAX; s++){
     const o = new Option(s === FORM_SIZE ? s + ' pt (default)' : s + ' pt', String(s));
     if(s === Math.round(BASE_SIZE)) o.selected = true;
     sel.appendChild(o);
@@ -924,7 +935,6 @@ async function boot(){
   /* bind this form's definition before anything reads it */
   PAGE_W = preset.page.w; PAGE_H = preset.page.h;
   FORM_SIZE = preset.fontSize || 9;
-  MIN_SIZE  = Math.max(5.5, FORM_SIZE * 0.62);
   BASE_SIZE = loadSize(preset);
   FIELDS = preset.fields; CHECKS = preset.checks || []; FLAGS = preset.flags || [];
   GROUPS = preset.groups;

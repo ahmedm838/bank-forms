@@ -37,9 +37,12 @@ A cheque is its own ABK form, not the transfer one. Any form whose blank PDF is 
 in `assets/` is shown greyed out with an *awaiting PDF* tag, and opening it by URL
 refuses rather than rendering the wrong document.
 
-Text size: each form sets the size its printing suits, and a picker in the header
-lets the reader override it. The choice is remembered per form, and a long value
-still shrinks to fit its cell whatever is chosen.
+Text size: each form sets the size its printing suits — 20pt for the Payroll Debit
+Order, 9pt for the Bank Transfer — and a picker in the header overrides it between
+7 and 30pt, remembered per form. A long value still shrinks to fit whatever is
+chosen, down to 5.5pt. A field marked maxLines sits in a blank inside running
+text, where a second line would print over the sentence below: it shrinks rather
+than wrapping.
 
 ### Adding a form
 

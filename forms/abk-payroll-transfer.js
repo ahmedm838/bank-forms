@@ -26,7 +26,7 @@ window.FORM_DEFS['payroll-debit-order'] = {
   pdf:     'assets/payroll-debit-order.pdf',
   preview: 'assets/payroll-debit-order-preview.png',
   page: { w: 612, h: 792 },
-  fontSize: 13,            // the letter is set in 16pt; 13 sits inside the gaps
+  fontSize: 20,            // the letter is set in 16pt; filled values sit larger
 
   groups: [
     { id:'amount',  title:'المبلغ — Amount' },
@@ -36,34 +36,34 @@ window.FORM_DEFS['payroll-debit-order'] = {
 
   fields: [
     { id:'amount', label:'المبلغ بالأرقام — Amount in figures',
-      box:[377,523.8,439,543.8], group:'amount',
+      box:[377,514.8,439,552.8], group:'amount', maxLines:1,
       hint:'e.g. 125400', required:true, latin:true, thousands:true, arabicDigits:true },
 
     { id:'amountWords', label:'المبلغ بالحروف — Amount in words',
-      box:[78,523.8,313,543.8], group:'amount',
+      box:[78,514.8,313,552.8], group:'amount', maxLines:1,
       multi:true, required:true, wordsOf:'amount', wordsStyle:'bare' },
 
     { id:'month', label:'مرتبات شهر — Month, as it goes in the brackets',
-      box:[103,434.3,222,454.3], group:'detail',
+      box:[103,425.3,222,463.3], group:'detail', maxLines:1,
       hint:'مثال: أكتوبر ٢٠٢٦', required:true, arabicDigits:true },
 
     { id:'date', label:'التاريخ — Date',
-      box:[105,224.2,211,244.2], group:'detail',
+      box:[105,215.2,211,253.2], group:'detail', maxLines:1,
       hint:'dd/mm/yyyy', required:true, latin:true, arabicDigits:true, today:true },
 
     /* The template used to carry these three pre-printed. They were blanked so
        nothing private sits in a public repository; each browser remembers its
        own, and the printed letter comes out exactly as before. */
     { id:'accountNo', label:'رقم الحساب — Account no.',
-      box:[198,479.1,258,499.1], group:'company',
+      box:[198,470.1,258,508.1], group:'company', maxLines:1,
       hint:'9229017', required:true, latin:true, arabicDigits:true, remember:true },
 
     { id:'branch', label:'الفرع — Branch',
-      box:[64,479.1,156,499.1], group:'company',
+      box:[64,470.1,156,508.1], group:'company', maxLines:1,
       hint:'القرية الذكية', required:true, remember:true },
 
     { id:'signatory', label:'الاسم — Name of signatory',
-      box:[85,299.9,218,319.9], group:'company',
+      box:[85,290.9,218,328.9], group:'company', maxLines:1,
       required:true, remember:true, fileLabel:true },
   ],
 };
