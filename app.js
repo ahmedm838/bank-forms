@@ -660,7 +660,8 @@ function render(){
       continue;
     }
 
-    const { size, lines } = fitText(text, boxW, boxH, measurePreview, f.maxLines, f.pad);
+    const { size, lines } = f.noShrink ? {size:BASE_SIZE, lines:[text]}
+      : fitText(text, boxW, boxH, measurePreview, f.maxLines, f.pad);
     const topPdf = topOfLine(lineBaselines(f, size, lines.length, y0, boxH)[0], size);
 
     const d = el('div', 'ov center');
@@ -670,6 +671,10 @@ function render(){
     d.style.width = (boxW*S)+'px';
     d.style.fontSize = (size*S)+'px';
     d.style.lineHeight = (size*LINE_RATIO*S)+'px';
+    if(f.noShrink){ d.style.whiteSpace = 'pre'; d.style.overflow = 'visible'; }
+    if(f.align === 'right'){
+      d.style.textAlign = 'right'; d.style.paddingRight = ((f.pad ?? PAD)*S)+'px';
+    }
     d.textContent = lines.join('\n');
     overlayEl.appendChild(d);
   }
@@ -767,12 +772,14 @@ async function buildFilledPdf(){
       continue;
     }
 
-    const { size, lines } = fitText(text, boxW, boxH, (s,sz)=>measureText(s,sz,dir), f.maxLines, f.pad);
+    const { size, lines } = f.noShrink ? {size:BASE_SIZE, lines:[text]}
+      : fitText(text, boxW, boxH, (s,sz)=>measureText(s,sz,dir), f.maxLines, f.pad);
     const baselines = lineBaselines(f, size, lines.length, y0, boxH);
 
     lines.forEach((line, i) => {
       // every value sits centred in its cell, Arabic and English alike
-      const x = x0 + (boxW - measureText(line, size, dir))/2;
+      const x = f.align === 'right' ? x1 - (f.pad ?? PAD) - measureText(line, size, dir)
+        : x0 + (boxW - measureText(line, size, dir))/2;
       drawLine(page, fontKey, line, x, baselines[i], size, dir);
     });
   }

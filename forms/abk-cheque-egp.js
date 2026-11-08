@@ -25,7 +25,7 @@ window.FORM_DEFS['cheque-egp'] = {
   previewBand: [625, 841.68],              // the strip of the page the scan covers
   page: { w: 595.2, h: 841.68 },
   printPage: { w: 841.89, h: 595.28, x: 246.69, y: -625 }, // A4 landscape; strip flush bottom/right
-  fontSize: 11,
+  fontSize: 20,
 
   groups: [
     { id:'head', title:'التاريخ — Date' },
@@ -51,7 +51,8 @@ window.FORM_DEFS['cheque-egp'] = {
       maxLines:1, baseline:749, pad:2, required:true,
       wordsOf:'amount', currencyFixed:'EGP' },
 
-    { id:'name', label:'الاسم — Name', box:[300,700,465,716], group:'body',
-      maxLines:1, baseline:708, pad:2, arabic:true, required:true },
+    { id:'name', label:'الاسم — Name', box:[50,700,465,716], group:'body',
+      maxLines:1, baseline:708, pad:2, arabic:true, required:true,
+      noShrink:true, align:'right' },
   ],
 };
