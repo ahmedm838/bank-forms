@@ -18,6 +18,7 @@ const OUT = 'ABK-Transfer-Request.html';
 const FORM_FILES = [
   'forms/abk-transfer.js',
   'forms/abk-cheques.js',
+  'forms/abk-cheque-egp.js',
   'forms/abk-payroll.js',
   'forms/abk-tax.js',
   'forms/abk-payroll-transfer.js',

@@ -23,8 +23,11 @@ const INK = [0.03, 0.09, 0.36];
 
 /* bound to the chosen form at boot */
 let PAGE_W = 595.276, PAGE_H = 842;
+/* the slice of the page the preview image covers; a cheque sits in a band along
+   the top of the sheet, so showing the whole A4 would be mostly blank paper */
+let VIEW_TOP = 842, VIEW_BOT = 0;
 let FIELDS = [], CHECKS = [], FLAGS = [], GROUPS = [];
-let PAYEE_FIELDS = [];
+let CURRENT_FORM = {};   // the form definition in force
 
 
 /* ---------- amount in words (English) ---------- */
@@ -86,10 +89,20 @@ function toArabicDigits(s){
   return String(s).replace(/[0-9]/g, d => String.fromCharCode(0x0660 + Number(d)));
 }
 
+/* Arabic-only fields, the mirror of the English-only ones: a cheque's payee and
+   signatory are written in Arabic, so Latin letters are refused there. */
+const LATIN_LETTERS = /[A-Za-z]/;
+const LATIN_LETTERS_G = /[A-Za-z]/g;
+function toArabicOnly(s){ return String(s).replace(LATIN_LETTERS_G, ''); }
+
 /* what actually goes on the page for a field */
 function displayValue(f, raw){
-  const v = (raw || '').trim();
-  return f.arabicDigits ? toArabicDigits(v) : v;
+  let v = (raw || '').trim();
+  if(!v) return '';
+  if(f.arabicDigits) v = toArabicDigits(v);
+  // a cheque writes #1,000# so the figure cannot be extended afterwards
+  if(f.wrap) v = f.wrap + v + f.wrap;
+  return v;
 }
 
 /* ---------- amount formatting ----------
@@ -344,6 +357,16 @@ function lineBaselines(f, size, lineCount, y0, boxH){
 /* the top of a line's em box, which is how the preview positions text */
 const topOfLine = (baseline, size) => baseline + size * 0.78;
 
+/* A field printed into a row of little boxes, like the DDMMYYYY on a cheque:
+   one character to a box, each centred in its own. Returns the characters with
+   the centre of the cell each belongs in. */
+function cellPositions(f, text){
+  const [x0, , x1] = f.box;
+  const chars = String(text).replace(/\D/g, '').slice(0, f.cells).split('');
+  const w = (x1 - x0) / f.cells;
+  return chars.map((ch, i) => ({ ch, cx: x0 + w * (i + 0.5) }));
+}
+
 function fitText(text, boxW, boxH, measureAt, maxLines, pad){
   const maxW = boxW - (pad == null ? PAD : pad) * 2;
   for(let size = BASE_SIZE; size >= MIN_SIZE; size -= 0.25){
@@ -360,22 +383,14 @@ function fitText(text, boxW, boxH, measureAt, maxLines, pad){
 
 /* ---------- state ---------- */
 const state = { values:{}, checks:{}, flags:{} };
-const LS_KEY = 'abk-transfer-tool';
-const PAYEE_KEY = 'abk-transfer-payees';
-/* PAYEE_FIELDS comes from the form definition: the fields marked `payee:true` */
+/* Every form opens blank. Nothing typed into one is kept, so a value from last
+   time can never end up printed on this time's form. These are the keys older
+   versions wrote; they are cleared on load. */
+const STALE_KEYS = ['abk-transfer-tool', 'abk-transfer-payees'];
 
-function loadRemembered(){
-  try{ Object.assign(state.values, (JSON.parse(localStorage.getItem(LS_KEY)||'{}').values)||{}); }catch(e){}
+function clearStaleStorage(){
+  try{ STALE_KEYS.forEach(k => localStorage.removeItem(k)); }catch(e){}
 }
-function saveRemembered(){
-  try{
-    const values = {};
-    FIELDS.filter(f=>f.remember).forEach(f=>{ if(state.values[f.id]) values[f.id] = state.values[f.id]; });
-    localStorage.setItem(LS_KEY, JSON.stringify({ values }));
-  }catch(e){}
-}
-function getPayees(){ try{ return JSON.parse(localStorage.getItem(PAYEE_KEY)||'{}'); }catch(e){ return {}; } }
-function setPayees(p){ try{ localStorage.setItem(PAYEE_KEY, JSON.stringify(p)); }catch(e){} }
 
 /* ---------- form ---------- */
 const formEl = document.getElementById('form');
@@ -396,8 +411,6 @@ function buildForm(){
   for(const g of GROUPS){
     const sec = el('section','grp');
     sec.appendChild(el('h2',null,g.title));
-    if(PAYEE_FIELDS.length && FIELDS.some(f => f.payee && f.group === g.id) &&
-       !document.querySelector('.payeebar')) sec.appendChild(buildPayeeBar());
 
     for(const c of CHECKS.filter(c=>c.group===g.id)){
       const row = el('div','row');
@@ -447,7 +460,7 @@ function buildForm(){
           b.addEventListener('click', ()=>{
             const w = f.wordsStyle === 'bare' && fn === amountInWordsAr
               ? amountInWordsArBare(state.values[f.wordsOf])
-              : fn(state.values[f.wordsOf], state.values[f.currencyField]);
+              : fn(state.values[f.wordsOf], (f.currencyFixed || state.values[f.currencyField]));
             if(!w){ flash('Choose a currency and enter a numeric amount first.'); return; }
             state.values[f.id] = w;
             const n = document.getElementById('in-'+f.id);
@@ -494,6 +507,15 @@ function onEdit(f, inp){
         if(hadArabicLetters) flash(f.label + ' must be written in English.');
       }
     }
+    if(f.arabic){
+      const cleaned = toArabicOnly(v);
+      if(cleaned !== v){
+        const caret = inp.selectionStart, removed = v.length - cleaned.length;
+        v = cleaned; inp.value = cleaned;
+        if(caret != null){ try{ inp.setSelectionRange(caret - removed, caret - removed); }catch(e){} }
+        flash(f.label + ' must be written in Arabic.');
+      }
+    }
     if(f.thousands){
       const caret = inp.selectionStart;
       const digitsBefore = (v.slice(0, caret == null ? v.length : caret).match(/[\d.]/g) || []).length;
@@ -508,49 +530,10 @@ function onEdit(f, inp){
     if(f.upper) inp.value = state.values[f.id];
     const wf = wordsField();
     if(wf && (f.id === wf.wordsOf || f.id === wf.currencyField)) maybeAutoWords();
-    if(f.remember) saveRemembered();
     inp.classList.remove('bad');
     validate(f, inp);
     render();
   };
-}
-
-function buildPayeeBar(){
-  const bar = el('div','payeebar');
-  const sel = document.createElement('select');
-  const refresh = () => {
-    const p = getPayees();
-    sel.innerHTML = '';
-    sel.appendChild(new Option('— saved beneficiaries —',''));
-    Object.keys(p).sort().forEach(k=>sel.appendChild(new Option(k,k)));
-  };
-  refresh();
-  sel.addEventListener('change', ()=>{
-    const p = getPayees()[sel.value];
-    if(!p) return;
-    PAYEE_FIELDS.forEach(id=>{
-      state.values[id] = p[id] || '';
-      const n = document.getElementById('in-'+id);
-      if(n){ n.value = state.values[id]; n.classList.remove('bad'); }
-    });
-    render();
-  });
-  const save = el('button','mini','Save'); save.type='button';
-  save.addEventListener('click', ()=>{
-    const nameField = FIELDS.find(f => f.fileLabel) || FIELDS.find(f => f.payee);
-    const name = ((nameField && state.values[nameField.id])||'').trim();
-    if(!name){ flash("Fill the beneficiary's name before saving."); return; }
-    const p = getPayees();
-    p[name] = {}; PAYEE_FIELDS.forEach(id=>p[name][id] = state.values[id]||'');
-    setPayees(p); refresh(); sel.value = name; flash('Saved "'+name+'".');
-  });
-  const del = el('button','mini','Delete'); del.type='button';
-  del.addEventListener('click', ()=>{
-    if(!sel.value) return;
-    const p = getPayees(); delete p[sel.value]; setPayees(p); refresh(); flash('Deleted.');
-  });
-  bar.appendChild(sel); bar.appendChild(save); bar.appendChild(del);
-  return bar;
 }
 
 /* the field marked `wordsOf` spells out the amount it names, until typed over */
@@ -563,7 +546,7 @@ function maybeAutoWords(){
   if(!node || node.dataset.touched === '1') return;
   const w = f.wordsStyle === 'bare'
     ? amountInWordsArBare(state.values[f.wordsOf])
-    : amountInWordsAr(state.values[f.wordsOf], state.values[f.currencyField]);
+    : amountInWordsAr(state.values[f.wordsOf], (f.currencyFixed || state.values[f.currencyField]));
   if(w){ state.values[f.id] = w; node.value = w; }
 }
 
@@ -573,6 +556,8 @@ function validate(f, inp){
   if(f.swift && v)     bad = !/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(v);
   if(f.thousands && v) bad = !/^\d{1,3}(,\d{3})*(\.\d{1,2})?$/.test(v) || parseFloat(v.replace(/,/g,'')) <= 0;
   if(f.latin && v && RTL_LETTERS.test(v)) bad = true;
+  if(f.arabic && v && LATIN_LETTERS.test(v)) bad = true;
+  if(f.cells && v) bad = v.replace(/\D/g, '').length !== f.cells;
   inp.classList.toggle('bad', bad);
   return !bad;
 }
@@ -585,7 +570,7 @@ function measurePreview(text, size){ meas.font = size+'px ABKForm, Helvetica, Ar
 function layoutOverlay(){
   previewScale = previewWrap.clientWidth / PAGE_W;
   overlayEl.style.width = (PAGE_W*previewScale)+'px';
-  overlayEl.style.height = (PAGE_H*previewScale)+'px';
+  overlayEl.style.height = ((VIEW_TOP-VIEW_BOT)*previewScale)+'px';
   render();
 }
 
@@ -598,13 +583,29 @@ function render(){
     if(!text) continue;
     const [x0,y0,x1,y1] = f.box;
     const boxW = x1-x0, boxH = y1-y0;
+
+    if(f.cells){
+      const size = f.cellSize || BASE_SIZE;
+      const top = topOfLine(lineBaselines(f, size, 1, y0, boxH)[0], size);
+      for(const { ch, cx } of cellPositions(f, text)){
+        const d = el('div', 'ov center', ch);
+        d.style.left = ((cx - boxW/f.cells/2)*S)+'px';
+        d.style.top = ((VIEW_TOP - top)*S)+'px';
+        d.style.width = (boxW/f.cells*S)+'px';
+        d.style.fontSize = (size*S)+'px';
+        d.style.lineHeight = (size*LINE_RATIO*S)+'px';
+        overlayEl.appendChild(d);
+      }
+      continue;
+    }
+
     const { size, lines } = fitText(text, boxW, boxH, measurePreview, f.maxLines, f.pad);
     const topPdf = topOfLine(lineBaselines(f, size, lines.length, y0, boxH)[0], size);
 
     const d = el('div', 'ov center');
     d.dir = 'auto';
     d.style.left = (x0*S)+'px';
-    d.style.top = ((PAGE_H - topPdf)*S)+'px';
+    d.style.top = ((VIEW_TOP - topPdf)*S)+'px';
     d.style.width = (boxW*S)+'px';
     d.style.fontSize = (size*S)+'px';
     d.style.lineHeight = (size*LINE_RATIO*S)+'px';
@@ -616,7 +617,7 @@ function render(){
     const [x0,y0,x1,y1] = b;
     const d = el('div','ovcheck','✓');
     d.style.left = (x0*S)+'px';
-    d.style.top = ((PAGE_H - y1)*S)+'px';
+    d.style.top = ((VIEW_TOP - y1)*S)+'px';
     d.style.width = ((x1-x0)*S)+'px';
     d.style.height = ((y1-y0)*S)+'px';
     d.style.fontSize = ((y1-y0)*0.95*S)+'px';
@@ -669,9 +670,15 @@ function missingGlyphs(){
 }
 
 async function buildFilledPdf(){
-  const doc = await PDFDocument.load(pdfBytes.slice(0));
+  /* A form printed onto stationery that already exists — a cheque — must carry
+     the values and nothing else, or the printer would lay a picture of a cheque
+     over the real one. Those forms get a blank page of the same size instead of
+     the template. */
+  const doc = CURRENT_FORM.overlayOnly
+    ? await PDFDocument.create()
+    : await PDFDocument.load(pdfBytes.slice(0));
   doc.registerFontkit(fontkit);
-  const page = doc.getPages()[0];
+  const page = CURRENT_FORM.overlayOnly ? doc.addPage([PAGE_W, PAGE_H]) : doc.getPages()[0];
   const pdfFont = await doc.embedFont(fontBytes.slice(0), { subset: false });
   const fontKey = page.node.newFontDictionary('ABK', pdfFont.ref);
 
@@ -682,6 +689,16 @@ async function buildFilledPdf(){
     const [x0,y0,x1,y1] = f.box;
     const boxW = x1-x0, boxH = y1-y0;
     const dir = baseDirOf(text);
+
+    if(f.cells){
+      const size = f.cellSize || BASE_SIZE;
+      const baseline = lineBaselines(f, size, 1, y0, boxH)[0];
+      for(const { ch, cx } of cellPositions(f, text)){
+        drawLine(page, fontKey, ch, cx - measureText(ch, size, 'ltr')/2, baseline, size, 'ltr');
+      }
+      continue;
+    }
+
     const { size, lines } = fitText(text, boxW, boxH, (s,sz)=>measureText(s,sz,dir), f.maxLines, f.pad);
     const baselines = lineBaselines(f, size, lines.length, y0, boxH);
 
@@ -746,7 +763,7 @@ function checkRequired(){
 /* ---------- output ---------- */
 function fileName(){
   // keep Arabic and accented names; drop only what a filesystem refuses
-  const nameField = FIELDS.find(f => f.fileLabel) || FIELDS.find(f => f.payee);
+  const nameField = FIELDS.find(f => f.fileLabel);
   const dateField = FIELDS.find(f => f.today);
   const who = (((nameField && state.values[nameField.id])||'')).replace(/[\\/:*?"<>|.]/g,'').trim().replace(/\s+/g,'-').slice(0,40) || 'transfer';
   const d = (((dateField && state.values[dateField.id])||'')).replace(/[^\d]/g,'-') || new Date().toISOString().slice(0,10);
@@ -818,9 +835,7 @@ async function doSave(){
 
 function clearAll(){
   if(!confirm('Clear the whole form?')) return;
-  const keep = {};
-  FIELDS.filter(f=>f.remember).forEach(f=>{ if(state.values[f.id]) keep[f.id] = state.values[f.id]; });
-  state.values = keep; state.checks = {}; state.flags = {};
+  state.values = {}; state.checks = {}; state.flags = {};
   FIELDS.forEach(f=>{
     const n = document.getElementById('in-'+f.id);
     if(n){ n.value = state.values[f.id]||''; n.classList.remove('bad'); n.dataset.touched=''; }
@@ -952,23 +967,26 @@ async function boot(){
 
   /* bind this form's definition before anything reads it */
   PAGE_W = preset.page.w; PAGE_H = preset.page.h;
+  VIEW_BOT = preset.previewBand ? preset.previewBand[0] : 0;
+  VIEW_TOP = preset.previewBand ? preset.previewBand[1] : PAGE_H;
+  CURRENT_FORM = preset;
   FORM_SIZE = preset.fontSize || 9;
   BASE_SIZE = loadSize(preset);
   FIELDS = preset.fields; CHECKS = preset.checks || []; FLAGS = preset.flags || [];
   GROUPS = preset.groups;
-  PAYEE_FIELDS = FIELDS.filter(f => f.payee).map(f => f.id);
   document.getElementById('pageImg').src = preset.preview;
 
+  // an overlay-only form has no template to stamp, just a page size to print on
   const [pdfRes, fontRes] = await Promise.all([
-    fetch(preset.pdf),
+    preset.overlayOnly ? Promise.resolve(null) : fetch(preset.pdf),
     fetch('assets/IBMPlexSansArabic-Regular.ttf'),
   ]);
-  if(!pdfRes.ok || !fontRes.ok) throw new Error('could not load the form or the font');
-  pdfBytes  = new Uint8Array(await pdfRes.arrayBuffer());
+  if((pdfRes && !pdfRes.ok) || !fontRes.ok) throw new Error('could not load the form or the font');
+  pdfBytes  = pdfRes ? new Uint8Array(await pdfRes.arrayBuffer()) : null;
   fontBytes = new Uint8Array(await fontRes.arrayBuffer());
   fkFont = fontkit.create(fontBytes);
 
-  loadRemembered();
+  clearStaleStorage();
   buildForm();
   FIELDS.forEach(f=>{ const n = document.getElementById('in-'+f.id); if(n && state.values[f.id]) n.value = state.values[f.id]; });
   const wordsField = FIELDS.find(f => f.wordsOf);

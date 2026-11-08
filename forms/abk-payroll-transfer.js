@@ -31,7 +31,7 @@ window.FORM_DEFS['payroll-debit-order'] = {
   groups: [
     { id:'amount',  title:'المبلغ — Amount' },
     { id:'detail',  title:'التفاصيل — Month and date' },
-    { id:'company', title:'بيانات الشركة — Your account (remembered)' },
+    { id:'company', title:'بيانات الشركة — Your account' },
   ],
 
   fields: [
@@ -54,22 +54,22 @@ window.FORM_DEFS['payroll-debit-order'] = {
       hint:'dd/mm/yyyy', required:true, latin:true, arabicDigits:true, today:true },
 
     /* The template used to carry these three pre-printed. They were blanked so
-       nothing private sits in a public repository; each browser remembers its
-       own, and the printed letter comes out exactly as before. */
+       nothing private sits in a public repository; they are typed in like any
+       other field, and the printed letter comes out exactly as before. */
     { id:'accountNo', label:'رقم الحساب — Account no.',
       box:[198,470.1,258,508.1], group:'company', maxLines:1, baseline:486.6,
-      hint:'9229017', required:true, latin:true, arabicDigits:true, remember:true },
+      hint:'9229017', required:true, latin:true, arabicDigits:true },
 
     { id:'branch', label:'الفرع — Branch',
       box:[64,470.1,156,508.1], group:'company', maxLines:1, baseline:486.6,
-      hint:'القرية الذكية', required:true, remember:true },
+      hint:'القرية الذكية', required:true },
 
     /* Nothing is printed to the left of الاسم:, so the name may run out to the
        page margin. A long one still cannot reach 20pt across that width and
        shrinks to fit rather than colliding with the label. */
     { id:'signatory', label:'الاسم — Name of signatory',
       box:[50,290.9,219,328.9], group:'company', maxLines:1, baseline:307.4, pad:1,
-      required:true, remember:true, fileLabel:true },
+      required:true, fileLabel:true },
   ],
 };
 

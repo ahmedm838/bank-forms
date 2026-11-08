@@ -10,7 +10,7 @@
      latin                     English only; Arabic-Indic digits are converted
      thousands                 groups the number as it is typed
      upper                     forced to upper case
-     remember                  kept between sessions and across Clear
+     arabic                    Arabic only; Latin letters are refused
      hint                      placeholder text */
 window.FORM_DEFS = window.FORM_DEFS || {};
 
@@ -37,16 +37,17 @@ window.FORM_DEFS['transfer'] = {
     { id:'date',            label:'Date',                                box:[303,698.5,522,716.5], group:'head', hint:'dd/mm/yyyy', required:true, latin:true, today:true },
 
     { id:'currency',        label:'Currency (32A)',                      box:[61.3,618.4,114.2,635.8], group:'amount', type:'select', options:CURRENCIES, required:true, latin:true },
-    { id:'amountFigures',   label:'Amount in figures',                   box:[114.2,618.4,234.9,635.8], group:'amount', hint:'e.g. 125,400.50', required:true, latin:true, thousands:true },
+    // printed as #125,400.50# so the figure cannot be extended afterwards
+    { id:'amountFigures',   label:'Amount in figures',                   box:[114.2,618.4,234.9,635.8], group:'amount', hint:'e.g. 125,400.50', required:true, latin:true, thousands:true, wrap:'#' },
     { id:'amountWords',     label:'Amount in words',                     box:[234.9,618.4,553.6,635.8], group:'amount', multi:true, wordsOf:'amountFigures', currencyField:'currency' },
 
-    { id:'benName',         label:"Beneficiary's name (59)",             box:[176.4,604.6,459.4,618.4], group:'ben', required:true, payee:true, fileLabel:true },
-    { id:'benAddress',      label:"Beneficiary's address (or ID no. if paid in cash)", box:[176.4,586.6,459.4,604.6], group:'ben', multi:true, payee:true },
-    { id:'benAccount',      label:"Beneficiary's account no. / IBAN",    box:[176.4,569.5,459.4,586.6], group:'ben', multi:true, required:true, payee:true },
-    { id:'intermediaryBank',label:'Intermediary bank name & SWIFT code (56)', box:[176.4,552.2,459.4,569.5], group:'ben', multi:true, payee:true },
-    { id:'benBank',         label:"Beneficiary's bank (57)",             box:[176.4,539.4,459.4,552.2], group:'ben', required:true, payee:true },
-    { id:'benBankAddress',  label:"Beneficiary's bank address",          box:[176.4,521,459.4,539.4], group:'ben', multi:true, payee:true },
-    { id:'benBankSwift',    label:"Beneficiary's bank SWIFT code",       box:[176.4,504.4,459.4,521], group:'ben', upper:true, hint:'8 or 11 characters', swift:true, payee:true },
+    { id:'benName',         label:"Beneficiary's name (59)",             box:[176.4,604.6,459.4,618.4], group:'ben', required:true, fileLabel:true },
+    { id:'benAddress',      label:"Beneficiary's address (or ID no. if paid in cash)", box:[176.4,586.6,459.4,604.6], group:'ben', multi:true },
+    { id:'benAccount',      label:"Beneficiary's account no. / IBAN",    box:[176.4,569.5,459.4,586.6], group:'ben', multi:true, required:true },
+    { id:'intermediaryBank',label:'Intermediary bank name & SWIFT code (56)', box:[176.4,552.2,459.4,569.5], group:'ben', multi:true },
+    { id:'benBank',         label:"Beneficiary's bank (57)",             box:[176.4,539.4,459.4,552.2], group:'ben', required:true },
+    { id:'benBankAddress',  label:"Beneficiary's bank address",          box:[176.4,521,459.4,539.4], group:'ben', multi:true },
+    { id:'benBankSwift',    label:"Beneficiary's bank SWIFT code",       box:[176.4,504.4,459.4,521], group:'ben', upper:true, hint:'8 or 11 characters', swift:true },
     { id:'info70',          label:'Information for beneficiary (70)',    box:[176.4,491.1,459.4,504.4], group:'ben' },
 
     { id:'debitAccount',    label:'Payment value debited to account no.', box:[176.4,413.6,459.4,431.1], group:'debit', required:true },
@@ -54,10 +55,10 @@ window.FORM_DEFS['transfer'] = {
     { id:'commAccount',     label:'Commission & charges debited to account no.', box:[176.4,369.4,459.4,395.1], group:'debit', required:true },
     { id:'commCurrency',    label:'Currency',                            box:[176.4,351.9,459.4,369.4], group:'debit', type:'select', options:CURRENCIES, required:true, latin:true },
 
-    { id:'ordName',         label:"Ordering customer's name (50)",       box:[176.4,316.9,459.4,334.4], group:'ord', remember:true },
-    { id:'ordID',           label:"Ordering customer's ID (if paid in cash)", box:[176.4,299.4,459.4,316.9], group:'ord', remember:true },
-    { id:'ordAddress',      label:"Ordering customer's address",         box:[176.4,282.5,459.4,299.4], group:'ord', multi:true, remember:true },
-    { id:'ordPhone',        label:'Telephone no.',                       box:[176.4,265.2,459.4,282.5], group:'ord', remember:true, required:true },
+    { id:'ordName',         label:"Ordering customer's name (50)",       box:[176.4,316.9,459.4,334.4], group:'ord' },
+    { id:'ordID',           label:"Ordering customer's ID (if paid in cash)", box:[176.4,299.4,459.4,316.9], group:'ord' },
+    { id:'ordAddress',      label:"Ordering customer's address",         box:[176.4,282.5,459.4,299.4], group:'ord', multi:true },
+    { id:'ordPhone',        label:'Telephone no.',                       box:[176.4,265.2,459.4,282.5], group:'ord', required:true },
     { id:'purpose',         label:'Purpose of transfer (goods type & delivery terms)', box:[176.4,237.3,459.4,265.2], group:'ord', multi:true, required:true },
   ],
 

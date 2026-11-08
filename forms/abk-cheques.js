@@ -23,7 +23,7 @@ const cheque = (currency, words) => ({
   note:  'Cheque request in ' + words + '. Waiting on the blank PDF from the bank.',
 });
 
-window.FORM_DEFS['cheque-egp'] = cheque('EGP', 'Egyptian pounds');
+/* EGP is done — see forms/abk-cheque-egp.js */
 window.FORM_DEFS['cheque-usd'] = cheque('USD', 'US dollars');
 window.FORM_DEFS['cheque-eur'] = cheque('EUR', 'euro');
 })();

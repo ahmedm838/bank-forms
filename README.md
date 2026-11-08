@@ -19,8 +19,8 @@ The page asks for a password, remembered for the rest of the browser session.
 
 | Bank | Forms |
 |---|---|
-| **ABK** — Al Ahli Bank of Kuwait – Egypt | Bank Transfer · Payroll Debit Order · Payroll Transfer Sheet |
-| ABK, awaiting their blank PDFs | Cheque EGP · Cheque USD · Cheque EUR · Social Insurance Payment · Salary Taxes Payment · VAT Payment · Withholding Payment |
+| **ABK** — Al Ahli Bank of Kuwait – Egypt | Bank Transfer · Cheque EGP · Payroll Debit Order · Payroll Transfer Sheet |
+| ABK, awaiting their blank PDFs | Cheque USD · Cheque EUR · Social Insurance Payment · Salary Taxes Payment · VAT Payment · Withholding Payment |
 | CIB, NBE, QNB, NBK | none yet — the blank PDFs are needed |
 
 **Payroll Debit Order** is the company's own letter to the bank (خصم مرتبات),
@@ -204,3 +204,36 @@ Two things worth knowing:
 
 Nothing is uploaded anywhere: the workbooks are parsed in the page and the employee
 list stays in that browser's local storage.
+
+## Forms open blank
+
+Nothing typed into a form is kept. Earlier versions remembered the ordering
+customer's details and let beneficiaries be saved by name; both are gone, and
+what they stored is cleared on load. A value from last time can no longer be
+printed on this time's form by accident. The date still fills in today, which is
+a fresh default rather than something remembered.
+
+Two things that are not form values are still kept: the text size picked per
+form, and the employee list on the Payroll Transfer Sheet, which is uploaded
+reference data shown on screen with a *Forget employees* button.
+
+## Cheque — EGP
+
+This one prints onto a real cheque, so its output is a blank A4 page carrying the
+values and nothing else — printing a picture of a cheque onto a cheque would ruin
+it. The definition sets `overlayOnly` for that.
+
+The scan is used on screen only, to show where a value lands, and the copy in
+this repository has the cheque serial, the MICR line, the QR code and the account
+number painted out. None of those belong in a public repository.
+
+Positions were measured off the scan against a grid in PDF points, with the
+cheque lying along the top of an A4 sheet exactly as it was scanned. **Print one
+on plain paper and hold it against a real cheque before printing on stationery** —
+if it sits off, the boxes in `forms/abk-cheque-egp.js` move it.
+
+Field rules, as asked: the date is English digits laid out one to a box
+(`cells: 8`), pay-to and the name are Arabic only, the figure is English digits
+with thousands separators printed as `#125,400#`, and the sum in words is
+generated in Arabic. The Bank Transfer form's figure is wrapped in `#` the same
+way, so it cannot be extended after printing.
