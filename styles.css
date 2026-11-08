@@ -310,3 +310,15 @@ body.resizing{cursor:col-resize; user-select:none}
 }
 .editing-note a{color:var(--brand)}
 body.editing #btnSave{background:var(--brand); border-color:var(--brand); color:#fff; font-weight:600}
+
+.rowbtn{
+  font:inherit; font-size:11.5px; font-weight:500; line-height:1;
+  border:1px solid var(--line); background:#fff; color:var(--muted);
+  padding:5px 9px; border-radius:6px; cursor:pointer;
+  text-decoration:none; display:inline-flex; align-items:center;
+}
+.rowbtn:hover{background:#f1f5fb; border-color:#bcc7d6; color:var(--ink)}
+.rowbtn.danger:hover{background:#fdeceb; border-color:#f3c3bd; color:var(--bad)}
+.txtable .rowacts{width:124px; text-align:right; white-space:nowrap}
+.txtable .rowacts .rowbtn + .rowbtn{margin-left:5px}
+.rowacts-head{width:124px}

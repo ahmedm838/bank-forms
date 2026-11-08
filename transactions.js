@@ -47,6 +47,7 @@ const cellText = (row, col) => String(col.get ? col.get(row) : (row[col.key] == 
 /* ---------- column widths ----------
    The defaults add up to a laptop screen. Drag the right edge of a heading to
    change one, and the widths are remembered for next time. */
+const ACTS_W = 124;
 const WIDTH_KEY = 'abk-tx-widths';
 let widths = (() => {
   try { return JSON.parse(localStorage.getItem(WIDTH_KEY)) || {}; }
@@ -143,7 +144,7 @@ function render(){
     }
     const act = el('td', 'rowacts');
 
-    const edit = el('a', 'iconbtn', '✎');
+    const edit = el('a', 'rowbtn', 'Edit');
     edit.href = 'form.html?f=transfer&tx=' + encodeURIComponent(r.id);
     edit.title = 'Open this transfer on the form to change it';
     edit.addEventListener('click', e => {
@@ -151,15 +152,15 @@ function render(){
       if (!confirm('There are unsaved changes here. Leave them and open the transfer?')) e.preventDefault();
     });
 
-    const del = el('button', 'iconbtn danger', '✕');
-    del.type = 'button'; del.title = 'Remove this record';
+    const del = el('button', 'rowbtn danger', 'Delete');
+    del.type = 'button'; del.title = 'Delete this record';
     del.addEventListener('click', () => {
-      if (!confirm(`Remove the transfer to ${r.benName || 'this beneficiary'} of ${r.currency} ${r.amount}?`)) return;
+      if (!confirm(`Delete the transfer to ${r.benName || 'this beneficiary'} of ${r.currency} ${r.amount}?`)) return;
       rows = rows.filter(x => x.id !== r.id);
       unsaved.touch();
       render();
     });
-    act.appendChild(edit);
+    act.append(edit, del);
     tr.appendChild(act);
     tb.appendChild(tr);
   }

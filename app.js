@@ -951,44 +951,17 @@ function loadTransaction(id){
   render();
 }
 
-async function doSave(){
+/* Save writes the transfer down and nothing more — no PDF is made. Print is
+   what produces the document, and records it as well. */
+function doSave(){
   if(!checkRequired()) return;
-  const name = fileName();
-
-  // the picker must be opened while the click is still "fresh", so ask first and build after
-  let handle = null;
-  if(window.showSaveFilePicker){
-    try{
-      handle = await window.showSaveFilePicker({
-        suggestedName: name,
-        id: 'abk-transfer',
-        startIn: 'documents',
-        types: [{ description:'PDF document', accept:{ 'application/pdf':['.pdf'] } }],
-      });
-    }catch(e){
-      if(e && e.name === 'AbortError') return;   // user cancelled
-      handle = null;                              // not permitted here — fall back
-    }
+  if(!CURRENT_FORM.records){
+    flash('This form keeps no record, so there is nothing to save. Use Print.');
+    return;
   }
-
-  busy(true);
-  try{
-    const bytes = await buildFilledPdf();
-    if(handle){
-      const w = await handle.createWritable();
-      await w.write(bytes);
-      await w.close();
-      flash('Saved ' + handle.name);
-    } else {
-      const a = document.createElement('a');
-      a.href = blobUrl(bytes); a.download = name;
-      document.body.appendChild(a); a.click(); a.remove();
-      flash('Saved ' + name + ' to your downloads folder');
-    }
-    recordTransaction(name);
-  } catch(e){
-    flash('Could not save: ' + e.message);
-  } finally { busy(false); }
+  const was = EDITING_TX;
+  recordTransaction('');
+  if(!was) flash('Transfer saved to Transactions.');
 }
 
 function clearAll(){

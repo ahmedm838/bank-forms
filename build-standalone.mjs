@@ -78,7 +78,11 @@ html = html
   .replace(/<a class="back"[\s\S]*?<\/a>\s*/, '')
   .replace(/<nav class="pagenav">[\s\S]*?<\/nav>\s*/, '')
   // and no transactions list, so nothing here opens a saved transfer
-  .replace(/<div id="editing"[\s\S]*?<\/div>\s*/, '');
+  .replace(/<div id="editing"[\s\S]*?<\/div>\s*/, '')
+  /* Save only writes a transfer to the transactions list, which this copy has no
+     way to show, so it goes. Print still makes the PDF, and a print dialog will
+     save it to a file for anyone who wants one. */
+  .replace(/<button id="btnSave"[\s\S]*?<\/button>\s*/, '');
 
 /* nothing may still point at a file on disk, or the offline copy is not offline */
 const dangling = html.match(/(?:src|href)="(?!data:|#|https?:)[^"]+"/g);

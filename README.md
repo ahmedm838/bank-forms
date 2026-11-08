@@ -292,12 +292,12 @@ form in front of you.
 
 ## Transactions
 
-Every transfer made from the Bank Transfer form is written down — **Save** makes
-the PDF and records it, **Print** does the same and sends it to the printer.
+Every transfer made from the Bank Transfer form is written down. **Save** records
+it and makes no PDF; **Print** records it and produces the document.
 Alongside the columns on screen the record keeps the whole form, so a transfer
 opened again comes back exactly as it was.
 
-**Edit** on a row reopens that transfer on the form; saving overwrites the record
+**Edit** on a row reopens that transfer on the form, **Delete** removes it; saving overwrites the record
 it came from rather than leaving two, keeping when it was first written and
 noting when it was changed.
 
