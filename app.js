@@ -726,11 +726,18 @@ async function buildFilledPdf(){
     ? await PDFDocument.create()
     : await PDFDocument.load(pdfBytes.slice(0));
   doc.registerFontkit(fontkit);
-  const page = CURRENT_FORM.overlayOnly ? doc.addPage([PAGE_W, PAGE_H]) : doc.getPages()[0];
+  const printPage = CURRENT_FORM.overlayOnly ? CURRENT_FORM.printPage : null;
+  const page = CURRENT_FORM.overlayOnly
+    ? doc.addPage(printPage ? [printPage.w, printPage.h] : [PAGE_W, PAGE_H])
+    : doc.getPages()[0];
   const pdfFont = await doc.embedFont(fontBytes.slice(0), { subset: false });
   const fontKey = page.node.newFontDictionary('ABK', pdfFont.ref);
 
   page.pushOperators(op('q'));
+  // Translate only the PDF output; preview geometry and field sizing stay intact.
+  if(printPage){
+    page.pushOperators(op('cm', [1, 0, 0, 1, printPage.x, printPage.y].map(num)));
+  }
   for(const f of FIELDS){
     const text = displayValue(f, state.values[f.id]);
     if(!text) continue;

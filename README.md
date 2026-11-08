@@ -228,7 +228,11 @@ this repository has the cheque serial, the MICR line, the QR code and the accoun
 number painted out. None of those belong in a public repository.
 
 Positions were measured off the scan against a grid in PDF points, with the
-cheque lying along the top of an A4 sheet exactly as it was scanned. **Print one
+cheque lying along the top of an A4 sheet exactly as it was scanned. The on-screen
+preview keeps those coordinates; the PDF moves the cheque strip, at its original
+size, to the bottom-right corner of an A4 landscape page. Print at actual size
+(100%) on A4 landscape paper. The date defaults to today's local date whenever
+a blank cheque is opened or cleared, and remains editable. **Print one
 on plain paper and hold it against a real cheque before printing on stationery** —
 if it sits off, the boxes in `forms/abk-cheque-egp.js` move it.
 

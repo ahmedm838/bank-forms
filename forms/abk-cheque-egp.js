@@ -7,8 +7,8 @@
    number painted out, since none of those belong in a public repository.
 
    Positions were measured off the scan against a grid in PDF points, with the
-   cheque lying along the top of an A4 sheet exactly as it was scanned. Feed the
-   cheque the same way and the values land on the printed lines. Run one on plain
+   cheque lying along the top of an A4 sheet exactly as it was scanned. The print
+   output moves that strip to the bottom-right of landscape A4. Run one on plain
    paper first and hold it against a real cheque before printing on stationery.
 
    The date is eight little boxes rather than a line, so it is laid out a
@@ -23,6 +23,7 @@ window.FORM_DEFS['cheque-egp'] = {
   preview: 'assets/cheque-egp-preview.png',
   previewBand: [625, 841.68],              // the strip of the page the scan covers
   page: { w: 595.2, h: 841.68 },
+  printPage: { w: 841.89, h: 595.28, x: 246.69, y: -625 }, // A4 landscape; strip flush bottom/right
   fontSize: 11,
 
   groups: [
@@ -33,7 +34,7 @@ window.FORM_DEFS['cheque-egp'] = {
   fields: [
     /* DDMMYYYY, one digit to a box */
     { id:'date', label:'التاريخ — Date', box:[376,802,458,818], group:'head',
-      cells: 8, cellSize: 11, baseline: 809, latin:true, required:true,
+      cells: 8, cellSize: 11, baseline: 809, latin:true, required:true, today:true,
       hint:'dd/mm/yyyy — printed one digit per box' },
 
     { id:'payTo', label:'إدفعوا بموجب هذا الشيك إلى — Pay to', box:[62,760,366,776], group:'body',
