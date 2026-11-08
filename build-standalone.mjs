@@ -76,7 +76,9 @@ html = html
   .replace(...inlineScript('app.js',           app))
   // the offline file is one page: no hub to go back to and no list pages to visit
   .replace(/<a class="back"[\s\S]*?<\/a>\s*/, '')
-  .replace(/<nav class="pagenav">[\s\S]*?<\/nav>\s*/, '');
+  .replace(/<nav class="pagenav">[\s\S]*?<\/nav>\s*/, '')
+  // and no transactions list, so nothing here opens a saved transfer
+  .replace(/<div id="editing"[\s\S]*?<\/div>\s*/, '');
 
 /* nothing may still point at a file on disk, or the offline copy is not offline */
 const dangling = html.match(/(?:src|href)="(?!data:|#|https?:)[^"]+"/g);

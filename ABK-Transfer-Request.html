@@ -291,6 +291,34 @@ body.sheetpage{display:flex; flex-direction:column}
 }
 .filterrow input:focus{outline:none; border-color:var(--brand); box-shadow:0 0 0 2px #dbe8f8}
 
+/* ---------- transactions table ---------- */
+.txtable{table-layout:fixed}
+.txtable th{position:relative; user-select:none}
+.txtable .resizer{
+  position:absolute; top:0; right:-3px; width:7px; height:100%;
+  cursor:col-resize; z-index:2;
+}
+.txtable .resizer:hover::after, body.resizing .txtable .resizer::after{
+  content:''; position:absolute; top:4px; bottom:4px; left:3px;
+  width:2px; background:var(--brand); border-radius:1px;
+}
+body.resizing{cursor:col-resize; user-select:none}
+.rowacts-head{width:74px}
+.txtable .rowacts{width:74px}
+.iconbtn[href]{
+  display:inline-flex; align-items:center; justify-content:center;
+  text-decoration:none; font-size:14px;
+}
+
+/* a transfer opened from the transactions list */
+.editing-note{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  border:1px solid #cfe0f5; background:#eff5fd; color:#1b4a80;
+  border-radius:var(--radius); padding:9px 12px; margin-bottom:14px; font-size:13px;
+}
+.editing-note a{color:var(--brand)}
+body.editing #btnSave{background:var(--brand); border-color:var(--brand); color:#fff; font-weight:600}
+
 </style>
 </head>
 <body>
@@ -315,7 +343,7 @@ body.sheetpage{display:flex; flex-direction:column}
     <select id="fontSize" aria-label="Text size"></select>
   </label>
   <button id="btnClear" type="button">Clear</button>
-  <button id="btnSave" type="button">Save PDF&hellip;</button>
+  <button id="btnSave" type="button">Save</button>
   <button id="btnPrint" type="button" class="primary">Print</button>
 </header>
 
@@ -574,6 +602,25 @@ function addTransaction(entry){
   return write(TX_KEY, rows);
 }
 
+/* Saving a transfer opened for editing overwrites the record it came from
+   rather than leaving two. When it was first written is kept; when it was last
+   changed is noted beside it. */
+function updateTransaction(id, entry){
+  const rows = read(TX_KEY, []);
+  const i = rows.findIndex(r => r.id === id);
+  if (i === -1) return addTransaction(entry);
+  rows[i] = Object.assign({}, rows[i], entry, {
+    id: rows[i].id,
+    recordedAt: rows[i].recordedAt,
+    editedAt: new Date().toISOString(),
+  });
+  return write(TX_KEY, rows);
+}
+
+function getTransaction(id){
+  return read(TX_KEY, []).find(r => r.id === id) || null;
+}
+
 /* ---------- matching a written bank name to the list ----------
    An imported sheet names banks however whoever typed it felt that day — "cib",
    "CIB", "National Bank Egypt", "بنك مصر". This tries to land each on a row of
@@ -637,7 +684,7 @@ function payTo(supplier){
 return {
   banks, saveBanks, resetBanks,
   suppliers, saveSuppliers,
-  transactions, saveTransactions, addTransaction,
+  transactions, saveTransactions, addTransaction, updateTransaction, getTransaction,
   matchBank, matchBankBySwift, isBic, looksLikeIban, payTo, byOrder, normalise,
   BANKS_KEY, SUPPLIERS_KEY, TX_KEY,
 };
@@ -1882,6 +1929,7 @@ async function doPrint(){
     };
     frame.src = url;
     setTimeout(()=>{ if(!fired) window.open(url, '_blank'); }, 2500);
+    recordTransaction(fileName());   // printing records it too
   } finally { busy(false); }
 }
 
@@ -1890,13 +1938,16 @@ async function doPrint(){
    form is kept; nothing is inferred. */
 function recordTransaction(fileSaved){
   if(!CURRENT_FORM.records || !window.LISTS) return;
+  if(recordTransaction.busy) return;         // Print saves then prints; record once
+  recordTransaction.busy = true;
+  setTimeout(() => { recordTransaction.busy = false; }, 0);
   const v = id => (state.values[id] || '').trim();
   const labelOf = (groupId, value) => {
     const g = CHECKS.find(c => c.id === groupId);
     const o = g && g.options.find(o => o.v === value);
     return o ? o.v.toUpperCase() : '';
   };
-  const ok = LISTS.addTransaction({
+  const entry = {
     form: CURRENT_FORM.title,
     date: v('date'),
     issueType: labelOf('issueType', state.checks.issueType),
@@ -1911,10 +1962,83 @@ function recordTransaction(fileSaved){
     charges: labelOf('charges', state.checks.charges),
     debitAccount: v('debitAccount'),
     debitCurrency: v('debitCurrency'),
+    commAccount: v('commAccount'),
+    commCurrency: v('commCurrency'),
     ordName: v('ordName'),
     file: fileSaved,
-  });
-  if(!ok) flash('The PDF was saved, but the transfer could not be written to Transactions.');
+    /* every field as it stood, so a transfer opened again comes back whole —
+       including the ones the table does not show */
+    values: FIELDS.reduce((o, f) => { o[f.id] = state.values[f.id] || ''; return o; }, {}),
+    checks: Object.assign({}, state.checks),
+    flags: Object.assign({}, state.flags),
+  };
+  const ok = EDITING_TX
+    ? LISTS.updateTransaction(EDITING_TX, entry)
+    : LISTS.addTransaction(entry);
+  if(!ok) flash('The PDF was made, but the transfer could not be written to Transactions.');
+  else if(EDITING_TX) flash('Transaction updated.');
+}
+
+/* Opening a saved transfer puts its figures back on the form; saving then
+   overwrites that record rather than adding a second one. */
+let EDITING_TX = null;
+
+function loadTransaction(id){
+  const tx = LISTS.getTransaction(id);
+  if(!tx){ flash('That transaction is no longer on the list.'); return; }
+  EDITING_TX = id;
+
+  const put = (fieldId, value) => {
+    if(value == null || value === '') return;
+    state.values[fieldId] = value;
+    const n = document.getElementById('in-'+fieldId);
+    if(n) n.value = value;
+  };
+
+  if(tx.values){
+    for(const [id, value] of Object.entries(tx.values)) put(id, value);
+  } else {
+    // a record written before whole-form saving; restore what it has
+    put('date', tx.date);            put('currency', tx.currency);
+    put('amountFigures', tx.amount); put('amountWords', tx.amountWords);
+    put('benName', tx.benName);      put('benAccount', tx.benAccount);
+    put('benBank', tx.benBank);      put('benBankSwift', tx.benSwift);
+    put('purpose', tx.purpose);      put('ordName', tx.ordName);
+    put('debitAccount', tx.debitAccount); put('debitCurrency', tx.debitCurrency);
+    put('commAccount', tx.commAccount);   put('commCurrency', tx.commCurrency);
+  }
+
+  // a stored group is the option name, saved in capitals on older records
+  const pick = (groupId, stored) => {
+    if(!stored) return;
+    const g = CHECKS.find(c => c.id === groupId);
+    const o = g && g.options.find(o => o.v.toLowerCase() === String(stored).toLowerCase());
+    if(!o) return;
+    state.checks[groupId] = o.v;
+    const n = document.getElementById(groupId+'-'+o.v);
+    if(n) n.checked = true;
+  };
+  pick('issueType', (tx.checks && tx.checks.issueType) || tx.issueType);
+  pick('charges',   (tx.checks && tx.checks.charges)   || tx.charges);
+
+  for(const [id, on] of Object.entries(tx.flags || {})){
+    state.flags[id] = on;
+    const n = document.getElementById('in-'+id);
+    if(n) n.checked = !!on;
+  }
+
+  const words = document.getElementById('in-amountWords');
+  if(words) words.dataset.touched = '1';     // keep the wording that was saved
+
+  document.body.classList.add('editing');
+  const note = document.getElementById('editing');
+  if(note){
+    note.hidden = false;
+    note.querySelector('span').textContent =
+      'Editing the transfer to ' + (tx.benName || 'this beneficiary') + ' saved on ' +
+      new Date(tx.recordedAt).toLocaleDateString('en-GB') + '. Saving overwrites it.';
+  }
+  render();
 }
 
 async function doSave(){
@@ -2128,6 +2252,9 @@ async function boot(){
   }
   setToday();
   applyPreset(preset);
+
+  const txId = new URLSearchParams(location.search).get('tx');
+  if(txId && CURRENT_FORM.records && window.LISTS) loadTransaction(txId);
 
   buildFormSwitch(preset);
   buildSizePicker(preset);
