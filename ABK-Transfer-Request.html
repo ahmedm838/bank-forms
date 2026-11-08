@@ -144,16 +144,13 @@ body.hub{background:var(--bg)}
   font-size:11.5px; text-transform:uppercase; letter-spacing:.09em;
   color:var(--brand); margin:0 0 12px; padding-bottom:6px; border-bottom:1px solid var(--line);
 }
-/* Banks on one row, and the forms under them on one row too. Cards never go
-   below a readable width: once there are too many for the pane, the row scrolls
-   sideways rather than squeezing the names into slivers. */
+/* Five to a row: the five banks fill one row, and ten forms make two.
+   Everything stays in view, no sideways scrolling. */
 .cards{
-  display:grid; grid-auto-flow:column; grid-auto-columns:minmax(155px,1fr);
-  gap:12px; overflow-x:auto; overscroll-behavior-x:contain; padding-bottom:6px;
+  display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:12px;
 }
-.cards::-webkit-scrollbar{height:9px}
-.cards::-webkit-scrollbar-thumb{background:#c6cedb; border-radius:5px}
-.cards::-webkit-scrollbar-thumb:hover{background:#aab4c4}
+@media (max-width:900px){ .cards{grid-template-columns:repeat(3, minmax(0,1fr))} }
+@media (max-width:620px){ .cards{grid-template-columns:repeat(2, minmax(0,1fr))} }
 .card{
   display:flex; flex-direction:column; gap:3px; text-align:left; text-decoration:none;
   background:var(--panel); border:1px solid var(--line); border-radius:10px;
@@ -186,7 +183,7 @@ body.hub{background:var(--bg)}
 .wordsBtns .mini{margin-top:0}
 
 .pending{
-  align-self:flex-start; margin-top:6px; font-size:10.5px; font-weight:600;
+  align-self:flex-start; margin-top:auto; font-size:10.5px; font-weight:600;
   letter-spacing:.04em; text-transform:uppercase; color:#8a6d1f;
   background:#fdf4dd; border-radius:4px; padding:2px 6px;
 }
