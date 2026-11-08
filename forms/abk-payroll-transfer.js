@@ -35,8 +35,10 @@ window.FORM_DEFS['payroll-debit-order'] = {
   ],
 
   fields: [
+    /* The printed ( ) sit at 375.6 and 440.6, so the figure has that gap and no
+       more; pad:1 lets it use nearly all of it before it has to shrink. */
     { id:'amount', label:'المبلغ بالأرقام — Amount in figures',
-      box:[377,514.8,439,552.8], group:'amount', maxLines:1,
+      box:[376,514.8,440.5,552.8], group:'amount', maxLines:1, pad:2.5,
       hint:'e.g. 125400', required:true, latin:true, thousands:true, arabicDigits:true },
 
     { id:'amountWords', label:'المبلغ بالحروف — Amount in words',
@@ -62,8 +64,11 @@ window.FORM_DEFS['payroll-debit-order'] = {
       box:[64,470.1,156,508.1], group:'company', maxLines:1,
       hint:'القرية الذكية', required:true, remember:true },
 
+    /* Nothing is printed to the left of الاسم:, so the name may run out to the
+       page margin. A long one still cannot reach 20pt across that width and
+       shrinks to fit rather than colliding with the label. */
     { id:'signatory', label:'الاسم — Name of signatory',
-      box:[85,290.9,218,328.9], group:'company', maxLines:1,
+      box:[50,290.9,219,328.9], group:'company', maxLines:1, pad:1,
       required:true, remember:true, fileLabel:true },
   ],
 };

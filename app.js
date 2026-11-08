@@ -323,8 +323,8 @@ function wrapLines(text, maxWidth, measure){
 /* `maxLines` is for a blank inside running text, where a second line would print
    over the sentence below: such a field shrinks instead of wrapping, and if even
    the smallest size will not do it runs on past its gap rather than downwards. */
-function fitText(text, boxW, boxH, measureAt, maxLines){
-  const maxW = boxW - PAD*2;
+function fitText(text, boxW, boxH, measureAt, maxLines, pad){
+  const maxW = boxW - (pad == null ? PAD : pad) * 2;
   for(let size = BASE_SIZE; size >= MIN_SIZE; size -= 0.25){
     const lines = wrapLines(text, maxW, s => measureAt(s, size));
     if(maxLines && lines.length > maxLines) continue;
@@ -577,7 +577,7 @@ function render(){
     if(!text) continue;
     const [x0,y0,x1,y1] = f.box;
     const boxW = x1-x0, boxH = y1-y0;
-    const { size, lines } = fitText(text, boxW, boxH, measurePreview, f.maxLines);
+    const { size, lines } = fitText(text, boxW, boxH, measurePreview, f.maxLines, f.pad);
     const blockH = lines.length * size * LINE_RATIO;
     const topPdf = y0 + (boxH + blockH)/2;
 
@@ -662,7 +662,7 @@ async function buildFilledPdf(){
     const [x0,y0,x1,y1] = f.box;
     const boxW = x1-x0, boxH = y1-y0;
     const dir = baseDirOf(text);
-    const { size, lines } = fitText(text, boxW, boxH, (s,sz)=>measureText(s,sz,dir), f.maxLines);
+    const { size, lines } = fitText(text, boxW, boxH, (s,sz)=>measureText(s,sz,dir), f.maxLines, f.pad);
     const blockH = lines.length * size * LINE_RATIO;
     let cursor = y0 + (boxH + blockH)/2 - size;
 

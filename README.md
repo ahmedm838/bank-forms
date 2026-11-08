@@ -40,7 +40,10 @@ refuses rather than rendering the wrong document.
 Text size: each form sets the size its printing suits — 20pt for the Payroll Debit
 Order, 9pt for the Bank Transfer — and a picker in the header overrides it between
 7 and 30pt, remembered per form. A long value still shrinks to fit whatever is
-chosen, down to 5.5pt. A field marked maxLines sits in a blank inside running
+chosen, down to 5.5pt, so what a field reaches depends on the gap the printed
+text leaves it: the figure can only grow until it meets the ( ), and the
+signatory until it meets the label. A field may set `pad` to claim more of a
+tight gap than the usual 3.5pt margin. A field marked maxLines sits in a blank inside running
 text, where a second line would print over the sentence below: it shrinks rather
 than wrapping.
 
