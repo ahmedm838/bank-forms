@@ -87,40 +87,49 @@ function readTransferSheet(wb){
 
 /* The monthly report: this month's variable figures. */
 function readMonthlyReport(wb){
-  const name = wb.SheetNames.find(n => /month/i.test(n)) || wb.SheetNames[0];
-  const rows = grid(wb.Sheets[name]);
-
-  let period = '';
-  for (let i = 0; i < Math.min(rows.length, 8); i++){
-    const a = String(rows[i][0] || '').trim();
-    if (/^\d{4}-\d{2}-\d{2}\s+to\s+/.test(a)) period = a;
-  }
-
-  const head = rows.findIndex(r => String(r[0]).trim().toLowerCase() === 'name');
-  if (head === -1) throw new Error('no header row — is this the monthly report?');
-
-  const out = [];
-  for (let i = head + 1; i < rows.length; i++){
-    const r = rows[i];
-    const code = String(r[1] || '').trim();
-    if (!isCode(code)) continue;
-    out.push({
-      code,
-      nameEn: String(r[0] || '').trim(),
-      si: String(r[2] || '').trim(),
-      allowances:  num(r[7]),
-      incentive:   num(r[8]),
-      bonus:       num(r[9]),
-      adjustments: num(r[10]),
-      overtimeHrs: num(r[11]),
-      deductedHrs: num(r[12]),
-      advance:     num(r[13]),
-      union: 0,
-      medical: 0,
+  const normalise = value => String(value || '').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const aliases = {
+    code:['Code','Employee Code'], nameEn:['Name','Employee Name'], si:['S.I. No.','SI','SI Number','S.I. Number'],
+    allowances:['Total Allowances (EGP)','Total Allowances','Allowances','Allowances (EGP)'],
+    incentive:['Incentive (EGP)','Incentive'], bonus:['Bonus (EGP)','Bonus'],
+    adjustments:['Adjustments (EGP)','Adjustments'],
+    overtimeHrs:['Overtime (hrs)','Overtime Hours','Overtime Hrs'],
+    deductedHrs:['Total Deductions (hrs)','Deducted Hours','Deduction Hours','Deductions (hrs)'],
+    advance:['Salary Advance (EGP)','Salary Advance','Advance Loans','Advance','Advance (EGP)']
+  };
+  let found;
+  for(const name of wb.SheetNames){
+    const rows=grid(wb.Sheets[name]);
+    const head=rows.findIndex(row=>{
+      const labels=row.map(normalise);
+      return aliases.code.some(v=>labels.includes(normalise(v))) && aliases.nameEn.some(v=>labels.includes(normalise(v)));
     });
+    if(head!==-1){found={name,rows,head};break;}
   }
-  if (!out.length) throw new Error('no employee rows found in the monthly report');
-  return { people: out, period, sheet: name };
+  if(!found) throw new Error('No employee header row found. Upload a monthly or period report with Code and Name columns.');
+  const {name,rows,head}=found, labels=rows[head].map(normalise), columns={};
+  for(const [key,names] of Object.entries(aliases)){
+    columns[key]=labels.findIndex(label=>names.some(n=>normalise(n)===label));
+    if(columns[key]===-1) throw new Error('Monthly report is missing column: '+names[0]);
+  }
+  let period='';
+  for(const row of rows.slice(0,head)) for(const value of row){
+    const match=String(value).match(/\d{4}-\d{2}-\d{2}\s+to\s+\d{4}-\d{2}-\d{2}/i);
+    if(match) period=match[0];
+  }
+  const out=[];
+  for(const row of rows.slice(head+1)){
+    const code=String(row[columns.code] || '').trim();
+    if(!isCode(code)) continue;
+    const person={code,union:0,medical:0};
+    for(const [key,column] of Object.entries(columns)){
+      if(key==='code') continue;
+      person[key]=['nameEn','si'].includes(key)?String(row[column] || '').trim():num(row[column]);
+    }
+    out.push(person);
+  }
+  if(!out.length) throw new Error('No employee rows found in the monthly report.');
+  return {people:out,period,sheet:name};
 }
 
 /* ---------- putting a month together ---------- */

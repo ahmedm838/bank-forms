@@ -372,3 +372,4 @@ The EGP cheque Purpose field is transaction metadata only: it saves to the Purpo
 
 EGP cheque PDFs use a 177 × 83 mm landscape page, with the cheque fields mapped into that print area. Select the same custom paper size in the printer and print at Actual size / 100%.
 The cheque print overlay is positioned using its visible glyph bounds: 5 mm from the right edge and 9 mm from the top edge. The page and text sizes remain unchanged.
+`nMonthly report import supports the Period report layout with Code, Name, S.I. No., Total Allowances (EGP), Incentive (EGP), Bonus (EGP), Adjustments (EGP), Overtime (hrs), Total Deductions (hrs), and Salary Advance (EGP). Columns are matched by heading and may be reordered. Missing required columns produce an error.
