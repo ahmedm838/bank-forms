@@ -8,7 +8,7 @@
 
    Positions were measured off the scan against a grid in PDF points, with the
    cheque lying along the top of an A4 sheet exactly as it was scanned. The print
-   output maps that strip onto a 177 × 83 mm landscape cheque. Run one on plain
+   output maps that strip onto a 117 × 83 mm landscape cheque. Run one on plain
    paper first and hold it against a real cheque before printing on stationery.
 
    The date is eight little boxes rather than a line, so it is laid out a
@@ -24,7 +24,7 @@ window.FORM_DEFS['cheque-egp'] = {
   preview: 'assets/cheque-egp-preview.png',
   previewBand: [625, 841.68],              // the strip of the page the scan covers
   page: { w: 595.2, h: 841.68 },
-  printPage: { w: 177 * 72 / 25.4, h: 83 * 72 / 25.4, sourceBox: [0, 625, 595.2, 841.68], contentMargins: { right: 5 * 72 / 25.4, top: 9 * 72 / 25.4 } }, // Exact cheque size in PDF points
+  printPage: { w: 117 * 72 / 25.4, h: 83 * 72 / 25.4, sourceBox: [0, 625, 595.2, 841.68], contentMargins: { right: 5 * 72 / 25.4, top: 9 * 72 / 25.4 } }, // Exact cheque size in PDF points
   fontSize: 12,
 
   groups: [

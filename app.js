@@ -753,6 +753,9 @@ async function buildFilledPdf(){
     : await PDFDocument.load(pdfBytes.slice(0));
   doc.registerFontkit(fontkit);
   const printPage = CURRENT_FORM.overlayOnly ? CURRENT_FORM.printPage : null;
+  if(printPage && printPage.contentMargins){
+    doc.catalog.set(PDFLib.PDFName.of('ViewerPreferences'),doc.context.obj({PrintScaling:PDFLib.PDFName.of('None')}));
+  }
   const page = CURRENT_FORM.overlayOnly
     ? doc.addPage(printPage ? [printPage.w, printPage.h] : [PAGE_W, PAGE_H])
     : doc.getPages()[0];

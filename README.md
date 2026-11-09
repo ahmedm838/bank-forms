@@ -370,6 +370,8 @@ available for backups. Transaction workbooks retain full form metadata.
 
 The EGP cheque Purpose field is transaction metadata only: it saves to the Purpose column and is excluded from preview and print. Selecting a supplier bank always fills its current SWIFT code, replacing the previous bank code.
 
-EGP cheque PDFs use a 177 × 83 mm landscape page, with the cheque fields mapped into that print area. Select the same custom paper size in the printer and print at Actual size / 100%.
+EGP cheque PDFs use a 117 × 83 mm landscape page, with the cheque fields mapped into that print area. Select the same custom paper size in the printer and print at Actual size / 100%.
 The cheque print overlay is positioned using its visible glyph bounds: 5 mm from the right edge and 9 mm from the top edge. The page and text sizes remain unchanged.
 `nMonthly report import supports the Period report layout with Code, Name, S.I. No., Total Allowances (EGP), Incentive (EGP), Bonus (EGP), Adjustments (EGP), Overtime (hrs), Total Deductions (hrs), and Salary Advance (EGP). Columns are matched by heading and may be reordered. Missing required columns produce an error.
+
+Load the cheque short edge first (83 mm edge facing the printer). For drivers asking for feed dimensions, set width 83 mm and length 117 mm, choose landscape and Actual size / 100%. The PDF is 117 mm wide × 83 mm high and requests no print scaling.
