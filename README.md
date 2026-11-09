@@ -2,11 +2,24 @@
 
 ## Current workspace behavior
 
-All app data is temporary. The workspace holds lists, transactions, defaults,
-uploads and display preferences in memory across internal page navigation.
-Refreshing or closing clears everything. No app data is saved to localStorage,
-sessionStorage, cookies, or a database. App data saved by earlier versions is
-removed on startup. Export workbooks if a copy is needed later.
+Suppliers and transactions load automatically from data/Suppliers.xlsx and
+ data/Transactions.xlsx in the main branch. Save commits the Excel workbook
+through GitHub. On the first save per workspace, enter a fine-grained GitHub
+access token restricted to this repository with Contents read/write permission.
+Tokens stay in RAM and are cleared on refresh/close; never commit a token.
+The workbooks have the repository's visibility (this repository is public).
+Concurrent changes are rejected rather than overwriting a newer workbook.
+Export unsaved edits before reloading after a conflict. Load file stages an old
+export for review; press Save to persist it. Transaction workbooks include hidden
+form metadata so Edit restores the complete form.
+
+The available 40 commits contain no supplier/transaction workbooks or saved
+rows. The previous implementation saved rows only to browser localStorage.
+The initial repository workbooks contain headers only; import an existing export
+to recover old records. No historic rows have been fabricated.
+
+Banks, defaults, payroll uploads and display preferences remain temporary.
+No data or credentials are saved in browser storage.
 
 Default values exclude amounts in figures, amounts in words, dropdowns, radio
 choices and checkboxes. These always start blank/unselected on a new or cleared
@@ -228,7 +241,7 @@ list stays only in temporary memory and clears on refresh or close.
 ## Forms open blank
 
 Amounts and selection fields always start blank or unselected. Text defaults and
-dynamic dates can be set for the current workspace. No data survives refresh or
+dynamic dates can be set for the current workspace. Unsaved form data does not survive refresh or
 close. Opening a saved transaction within the workspace restores that record.
 
 ## Cheque — EGP
@@ -264,13 +277,13 @@ Two list pages, reachable from the bar at the top of every page.
 standard list of 25 — public reference data — which you can edit, reorder and
 add to, with *Restore the standard list* to go back.
 
-**Suppliers** holds who gets paid, into which account, and what for. It lives in
-temporary workspace memory only.
+**Suppliers** holds who gets paid, into which account, and what for. Save commits
+Suppliers.xlsx to GitHub; the page automatically loads it when opened.
 
 Edits on either page are held until **Save**: the page marks itself, the Save
 button lights, and closing the tab asks first. Nothing reaches the list the
 transfer form reads until you say so. **Export** writes the list to `.xlsx` —
-the only way back if the browser is ever cleared, since there is no import.
+a separate backup that can be restored with Load file.
 
 The bank on a supplier is chosen from the Banks list, so the SWIFT code comes
 with it, but stays editable because a branch code can differ from the bank's own.
@@ -298,7 +311,7 @@ is one and the account number otherwise, and it leaves a SWIFT out rather than
 write one the form would reject. Everything it writes stays editable — the
 purpose especially, since one supplier is paid for different things.
 
-Supplier accounts are held only in temporary workspace memory and are never uploaded.
+Saved supplier accounts are included in Suppliers.xlsx in the GitHub repository.
 
 ## Defaults on a blank form
 
@@ -351,9 +364,9 @@ existing PDF stamping and print placement.
 ## Restore Suppliers and Transactions
 
 Use Load file on either list page to restore its exported XLSX workbook into the
-current temporary workspace. Loading replaces that page's current list; existing
+editable table. Loading replaces that page's current list; existing
 unsaved edits prompt before replacement. Transactions skip repeated rows.
-Export again to keep changes before refreshing or closing the workspace.
+Press Save to commit the restored rows to GitHub before refreshing or closing.
 
 New Transactions exports include a hidden Record data sheet so complete forms
 can be reopened after restoring the workbook. Older exports also load; fields

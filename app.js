@@ -867,7 +867,7 @@ async function doPrint(){
   busy(true);
   try{
     const bytes = await buildFilledPdf();
-    if(recordTransaction(fileName()) === false) return;
+    if(await recordTransaction(fileName()) === false) return;
     const url = blobUrl(bytes);
     const frame = document.getElementById('printFrame');
     let fired = false;
@@ -884,11 +884,11 @@ async function doPrint(){
 /* A form that declares `records` writes down every transfer saved from it, so
    there is a record of what was sent and to whom. Only what was actually on the
    form is kept; nothing is inferred. */
-function recordTransaction(fileSaved){
+async function recordTransaction(fileSaved){
   if(!CURRENT_FORM.records || !window.LISTS) return;
   if(recordTransaction.busy) return false;
   recordTransaction.busy = true;
-  setTimeout(() => { recordTransaction.busy = false; }, 0);
+  try {
   const v = id => (state.values[id] || '').trim();
   const labelOf = (groupId, value) => {
     const g = CHECKS.find(c => c.id === groupId);
@@ -929,12 +929,14 @@ function recordTransaction(fileSaved){
     });
   }
   const ok = EDITING_TX
-    ? LISTS.updateTransaction(EDITING_TX, entry)
-    : LISTS.addTransaction(entry);
+    ? await LISTS.updateTransaction(EDITING_TX, entry)
+    : await LISTS.addTransaction(entry);
   if(ok === 'duplicate'){ flash('Already recorded.'); return 'duplicate'; }
   if(!ok) flash('Could not save to Transactions.');
   else if(EDITING_TX) flash('Transaction updated.');
   return ok;
+  } catch(e){ flash(e.message); return false; }
+  finally { recordTransaction.busy = false; }
 }
 
 /* Opening a saved transfer puts its figures back on the form; saving then
@@ -1006,14 +1008,14 @@ function loadTransaction(id){
 
 /* Save writes the transfer down and nothing more — no PDF is made. Print is
    what produces the document, and records it as well. */
-function doSave(){
+async function doSave(){
   if(!checkRequired()) return;
   if(!CURRENT_FORM.records){
     flash('This form keeps no record, so there is nothing to save. Use Print.');
     return;
   }
   const was = EDITING_TX;
-  const result = recordTransaction('');
+  const result = await recordTransaction('');
   if(result === 'duplicate') return;
   if(result === false) return;
   if(!was) flash('Transfer saved to Transactions.');
@@ -1182,6 +1184,7 @@ function buildFormSwitch(preset){
 /* ---------- boot ---------- */
 async function boot(){
   await setupGate();
+  await LISTS.loadRepository();
 
   const preset = currentPreset();
   if(preset.ready === false){ refuseUnavailable(preset); return; }

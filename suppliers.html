@@ -1,12 +1,12 @@
 <!doctype html>
 <html lang="en">
 <head>
-<script src="workspace.js?v=37"></script>
+<script src="workspace.js?v=40"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Suppliers List</title>
 <meta name="description" content="Suppliers, their accounts and what they are paid for.">
-<link rel="stylesheet" href="styles.css?v=37">
+<link rel="stylesheet" href="styles.css?v=40">
 </head>
 <body class="sheetpage">
 <div id="gate">
@@ -43,10 +43,10 @@
 
 <main class="sheetMain">
   <p class="hint" id="state"></p>
-  <p class="hint" id="loadedFile" role="status">Use Load file to restore an exported list. Export keeps a copy outside this temporary workspace.</p>
+  <p class="hint" id="loadedFile" role="status">Load file restores an exported list; press Save to keep it in GitHub.</p>
   <div id="table"></div>
   <p class="hint footnote">
-    Data is temporary, is never saved in browser storage, and clears on refresh or close.
+    Save writes this list to an Excel file in GitHub. It loads automatically when you open the page.
     The bank transfer form pays into the IBAN where there is one, otherwise the account number.
   </p>
 </main>
@@ -54,12 +54,14 @@
 <div id="toast"></div>
 
 <script src="vendor/xlsx.full.min.js"></script>
-<script src="list-files.js?v=39"></script>
-<script src="gate.js?v=37"></script>
-<script src="banks-seed.js?v=37"></script>
-<script src="data-lists.js?v=37"></script>
-<script src="list-table.js?v=39"></script>
-<script src="unsaved.js?v=37"></script>
-<script src="suppliers.js?v=39"></script>
+<script src="gate.js?v=40"></script>
+<script src="banks-seed.js?v=40"></script>
+<script src="list-files.js?v=40"></script>
+<script src="repo-workbooks.js?v=40"></script>
+<script src="repo-store.js?v=40"></script>
+<script src="data-lists.js?v=40"></script>
+<script src="list-table.js?v=40"></script>
+<script src="unsaved.js?v=40"></script>
+<script src="suppliers.js?v=40"></script>
 </body>
 </html>

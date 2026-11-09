@@ -63,6 +63,10 @@ html = html
   .replace(...inlineScript('vendor/bidi.min.js',        text('vendor/bidi.min.js')))
   .replace(...inlineScript('banks-seed.js',             text('banks-seed.js')))
   .replace(...inlineScript('data-lists.js',             text('data-lists.js')))
+  .replace(...inlineScript('vendor/xlsx.full.min.js', ''))
+  .replace(...inlineScript('list-files.js', ''))
+  .replace(...inlineScript('repo-workbooks.js', ''))
+  .replace(...inlineScript('repo-store.js', "window.RepoStore={load:async kind=>window.BankFormsMemory['abk-'+kind]||[],save:async()=>{}};"))
   .replace(...inlineScript('gate.js',                   text('gate.js')));
 
 let inlinedAssets = 0;

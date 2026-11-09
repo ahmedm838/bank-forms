@@ -218,12 +218,14 @@ function exportBook(){
 
 async function boot(){
   await setupGate();
+  await LISTS.loadRepository();
   rows = LISTS.transactions();
   unsaved = Unsaved({
     badge: $('dirty'), saveBtn: $('btnSave'),
-    commit: () => {
-      if (LISTS.saveTransactions(rows)) return true;
-      flashMsg('Could not save in this browser.'); return false;
+    commit: async () => {
+      try { if (await LISTS.saveTransactions(rows)) return true; }
+      catch(e){ flashMsg(e.message); return false; }
+      flashMsg('Could not save to GitHub.'); return false;
     },
     onSaved: () => flashMsg('Saved.'),
   });
@@ -234,12 +236,10 @@ async function boot(){
   $('btnClearFilters').addEventListener('click', () => { filters = {}; render(); });
   ListFiles.hook({button:$('btnLoad'),input:$('fileLoad'),load:ListFiles.transactions,error:flashMsg,apply:(loaded,name)=>{
     if(unsaved.dirty && !confirm('Replace the unsaved transaction edits with this file?'))return;
-    rows=[];LISTS.saveTransactions([]);
-    loaded.forEach(row=>LISTS.addTransaction(row));
-    rows=LISTS.transactions();filters={};unsaved.settled();render();
+    rows=loaded.filter((row,i,all)=>all.findIndex(other=>LISTS.transactionKey(other)===LISTS.transactionKey(row))===i);filters={};unsaved.touch();render();
     $('loadedFile').textContent=name+' — '+rows.length+' transactions loaded.';
-    flashMsg('Transactions loaded.');
+    flashMsg('Transactions loaded. Press Save to keep them in GitHub.');
   }});
 }
 
-boot().catch(e => flashMsg('Could not start: ' + e.message));
+boot().catch(e => { $('state').textContent='Could not load the repository list: '+e.message+' Reload to retry.'; flashMsg('Repository list could not be loaded.'); });

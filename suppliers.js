@@ -64,12 +64,14 @@ function exportBook(){
 
 async function boot(){
   await setupGate();
+  await LISTS.loadRepository();
   table = ListTable({ mount: $('table'), columns: COLUMNS, rows: LISTS.suppliers(), onChange: touched });
   unsaved = Unsaved({
     badge: $('dirty'), saveBtn: $('btnSave'),
-    commit: () => {
-      if (LISTS.saveSuppliers(table.rows)) return true;
-      flashMsg('Could not save in this browser.'); return false;
+    commit: async () => {
+      try { if (await LISTS.saveSuppliers(table.rows)) return true; }
+      catch(e){ flashMsg(e.message); return false; }
+      flashMsg('Could not save to GitHub.'); return false;
     },
     onSaved: () => flashMsg(table.rows.length + ' suppliers saved.'),
   });
@@ -82,10 +84,10 @@ async function boot(){
   $('btnExport').addEventListener('click', exportBook);
   ListFiles.hook({button:$('btnLoad'),input:$('fileLoad'),load:ListFiles.suppliers,error:flashMsg,apply:(loaded,name)=>{
     if(unsaved.dirty && !confirm('Replace the unsaved supplier edits with this file?'))return;
-    table.rows=loaded;LISTS.saveSuppliers(table.rows);unsaved.settled();refreshState();
+    table.rows=loaded;unsaved.touch();refreshState();
     $('loadedFile').textContent=name+' — '+loaded.length+' suppliers loaded.';
-    flashMsg('Suppliers loaded.');
+    flashMsg('Suppliers loaded. Press Save to keep them in GitHub.');
   }});
 }
 
-boot().catch(e => flashMsg('Could not start: ' + e.message));
+boot().catch(e => { $('state').textContent='Could not load the repository list: '+e.message+' Reload to retry.'; flashMsg('Repository list could not be loaded.'); });

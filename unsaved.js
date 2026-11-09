@@ -4,14 +4,14 @@
    of work that was never saved. */
 window.Unsaved = function Unsaved(opts){
   const { badge, saveBtn, commit, onSaved } = opts;
-  let dirty = false;
+  let dirty = false, revision = 0, saving = false;
 
   function paint(){
     if (badge) badge.hidden = !dirty;
     if (saveBtn){
       saveBtn.classList.toggle('primary', dirty);
-      saveBtn.disabled = !dirty;
-      saveBtn.textContent = dirty ? 'Save' : 'Saved';
+      saveBtn.disabled = !dirty || saving;
+      saveBtn.textContent = saving ? 'Saving…' : dirty ? 'Save' : 'Saved';
     }
   }
 
@@ -24,12 +24,16 @@ window.Unsaved = function Unsaved(opts){
   paint();
   return {
     get dirty(){ return dirty; },
-    touch(){ dirty = true; paint(); },
-    save(){
-      if (!commit()) return false;
-      dirty = false; paint();
-      if (onSaved) onSaved();
-      return true;
+    touch(){ revision++; dirty = true; paint(); },
+    async save(){
+      if(saving) return false;
+      const started=revision; saving=true; paint();
+      try {
+        if(!await commit()) return false;
+        if(revision===started) dirty=false;
+        if(onSaved) onSaved();
+        return true;
+      } finally {saving=false;paint();}
     },
     /* for an action that writes straight through, like restoring a seed */
     settled(){ dirty = false; paint(); },

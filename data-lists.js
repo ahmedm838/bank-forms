@@ -1,11 +1,3 @@
-/* The two reference lists — banks and suppliers — and the storage behind them.
-
-   Both live only in temporary workspace memory. The banks ship
-   with a seed, since bank names and SWIFT codes are public; suppliers start
-   empty and are imported from your own spreadsheet, because their account
-   numbers are not something to keep in a public repository.
-
-   These are reference data, not form values: a form still opens blank. */
 window.LISTS = (function(){
 
 const BANKS_KEY = 'abk-banks';
@@ -30,7 +22,7 @@ function resetBanks(){ delete memory[BANKS_KEY]; }
 
 /* ---------- suppliers ---------- */
 function suppliers(){ return byOrder(read(SUPPLIERS_KEY, [])); }
-function saveSuppliers(rows){ return write(SUPPLIERS_KEY, rows); }
+async function saveSuppliers(rows){ rows=clone(rows); await RepoStore.save('suppliers', rows); return write(SUPPLIERS_KEY, rows); }
 
 /* Defaults are kept separately from transaction history and reference lists. */
 function allFormDefaults(){ return clone(memory['abk-form-defaults'] || {}); }
@@ -51,13 +43,12 @@ function saveFormDefaults(id, settings){
 
 /* ---------- transfers made ----------
    Every transfer saved from the Bank Transfer form is written down here, so
-   there is a record of what was sent and to whom. Like the other lists it is
-   temporary workspace data; export it to keep a copy. */
+   there is a record of what was sent and to whom. Records persist in GitHub Excel files. */
 function transactions(){
   return read(TX_KEY, []).slice().sort((a, b) =>
     String(b.recordedAt || '').localeCompare(String(a.recordedAt || '')));
 }
-function saveTransactions(rows){ return write(TX_KEY, rows); }
+async function saveTransactions(rows){ rows=clone(rows).filter((row,i,all)=>all.findIndex(other=>transactionKey(other)===transactionKey(row))===i); await RepoStore.save('transactions', rows); return write(TX_KEY, rows); }
 // Compare the transaction columns, excluding save times and PDF filenames.
 function transactionKey(row){
   return JSON.stringify(['date','benName','benAccount','benBank','currency','amount','purpose','issueType']
@@ -73,30 +64,34 @@ function transactionKey(row){
 function alreadyRecorded(rows, entry){
   return rows.some(row => transactionKey(row) === transactionKey(entry));
 }
-function addTransaction(entry){
-  const rows = read(TX_KEY, []);
+async function addTransaction(entry){
+  const rows=await RepoStore.load('transactions'); write(TX_KEY,rows);
   if(alreadyRecorded(rows, entry)) return 'duplicate';
   rows.push(Object.assign({
     id: 'tx' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     recordedAt: new Date().toISOString(),
   }, entry));
-  return write(TX_KEY, rows);
+  return saveTransactions(rows);
 }
 
 /* Saving a transfer opened for editing overwrites the record it came from
    rather than leaving two. When it was first written is kept; when it was last
    changed is noted beside it. */
-function updateTransaction(id, entry){
-  const rows = read(TX_KEY, []);
-  if(alreadyRecorded(rows, entry)) return 'duplicate';
+async function updateTransaction(id, entry){
+  const previous=getTransaction(id);
+  const rows=await RepoStore.load('transactions');
+  const current=rows.find(row=>row.id===id);
+  if(JSON.stringify(previous)!==JSON.stringify(current)) throw new Error('This transaction changed in GitHub. Reload before editing it.');
+  write(TX_KEY,rows);
+  if(alreadyRecorded(rows.filter(row=>row.id!==id), entry)) return 'duplicate';
   const i = rows.findIndex(r => r.id === id);
-  if (i === -1) return addTransaction(entry);
+  if (i === -1) throw new Error('This transaction was removed. Reload before saving.');
   rows[i] = Object.assign({}, rows[i], entry, {
     id: rows[i].id,
     recordedAt: rows[i].recordedAt,
     editedAt: new Date().toISOString(),
   });
-  return write(TX_KEY, rows);
+  return saveTransactions(rows);
 }
 
 function getTransaction(id){
@@ -163,8 +158,14 @@ function payTo(supplier){
   return iban || acct;
 }
 
+async function loadRepository(){
+  if(window.BANK_FORMS_STANDALONE) return;
+  const suppliers=await RepoStore.load('suppliers');
+  const transactions=await RepoStore.load('transactions');
+  write(SUPPLIERS_KEY,suppliers);write(TX_KEY,transactions);
+}
 return {
-  banks, saveBanks, resetBanks,
+  loadRepository, transactionKey, banks, saveBanks, resetBanks,
   suppliers, saveSuppliers, formDefaults, saveFormDefaults, canDefault,
   transactions, saveTransactions, addTransaction, updateTransaction, getTransaction,
   matchBank, matchBankBySwift, isBic, looksLikeIban, payTo, byOrder, normalise,

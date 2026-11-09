@@ -24,7 +24,6 @@ window.ListFiles = (function(){
     const map={nameAr:['Supplier Name (Arabic)','اسم المورد (عربي)'],nameEn:['Supplier Name (English)','Supplier (English)'],iban:['IBAN'],account:['Account No.','Account Number'],bank:['Bank'],swift:['SWIFT','SWIFT code'],reason:['Reason','سبب التحويل — Reason']};
     const positions=Object.fromEntries(Object.entries(map).map(([key,names])=>[key,column(header,names)]));
     const rows=grid.slice(index+1).map(row=>Object.fromEntries(Object.entries(positions).map(([key,i])=>[key,text(row[i])]))).filter(row=>row.nameAr || row.nameEn);
-    if(!rows.length)throw new Error('No suppliers found in that workbook.');
     return rows.map((row,i)=>({...row,order:i+1}));
   }
   function savedDate(value){
