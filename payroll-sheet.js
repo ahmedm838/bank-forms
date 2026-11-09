@@ -309,7 +309,7 @@ function styleExport(ws, rowCount, columnCount, headerRows, centered){
       border:{bottom:{style:total?'double':'thin',color:{rgb:'D8DEE8'}}}
     };
   }
-  ws['!rows']=Array.from({length:rowCount},(_,r)=>({hpt:r<headerRows?30:22}));
+  ws['!rows']=Array.from({length:rowCount},(_,r)=>({hpt:18}));
 }
 
 function exportPayroll(){
