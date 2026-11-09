@@ -26,10 +26,10 @@ const bankOptions = () => LISTS.banks().map(b => ({
   label: [b.en, b.ar].filter(Boolean).join('  ·  '),
 }));
 
-/* choosing a bank brings its SWIFT with it, unless one is already written */
+/* Selecting a bank replaces the previous bank SWIFT. */
 function onBankPicked(row, value){
   const b = LISTS.banks().find(x => (x.en || x.ar) === value);
-  if (b && b.swift && !row.swift) row.swift = b.swift;
+  row.swift = b ? b.swift || '' : '';
 }
 
 const COLUMNS = [

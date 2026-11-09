@@ -17,12 +17,12 @@ rows. The previous implementation saved rows only to browser localStorage.
 Suppliers.xlsx was replaced with the supplied 25-row workbook. Its Arabic and
 English columns map to the supplier fields without changing account identifiers.
 
-Banks, defaults, payroll uploads and display preferences remain temporary.
+Form defaults persist in data/FormDefaults.json and are shared across devices. Banks, payroll uploads and display preferences remain temporary.
 No data or credentials are saved in browser storage.
 
 Default values exclude amounts in figures, amounts in words, dropdowns, radio
 choices and checkboxes. These always start blank/unselected on a new or cleared
-form. Other defaults last only for the current workspace; dates can use Today.
+form. Text defaults are saved to GitHub; dates can use Today.
 
 Payroll uploads show filenames and employee counts. Employee mismatches are
 listed separately and excluded from the transfer output. The transfer salary is
@@ -70,7 +70,7 @@ when printing. Figures and dates print in Arabic-Indic digits. The amount in
 words goes in bare because the surrounding currency wording is in the letter.
 
 Account number, branch and signatory are fields. Personal values can be set on
-the Default values page for the temporary workspace.
+the Default values page, shared across devices.
 
 A cheque is its own ABK form, not the transfer one. Any form whose blank PDF is not
 in `assets/` is shown greyed out with an *awaiting PDF* tag, and opening it by URL
@@ -354,7 +354,7 @@ Save applies changes across forms; Reset this form restores its built-in default
 when saved. A custom empty value clears a built-in default. Today stays dynamic
 for date fields. Defaults apply when opening or clearing a form, remain editable
 on that form, and do not overwrite values restored from a saved transaction.
-They last only in temporary workspace memory, never in browser storage or the repository.
+Save writes defaults to data/FormDefaults.json in GitHub, and forms load them when opened on any device. The offline standalone file retains defaults only for its open session.
 
 Payroll Debit Order uses a flowing letter preview and browser printing, rather
 than stamping text onto a fixed PDF background. Its reference PDF and preview
@@ -367,3 +367,5 @@ Suppliers and Transactions load their Excel files automatically from GitHub.
 The Load file buttons have been removed. Use Add supplier and Save to add rows,
 or edit the table and Save to update the repository workbook. Export remains
 available for backups. Transaction workbooks retain full form metadata.
+
+The EGP cheque Purpose field is transaction metadata only: it saves to the Purpose column and is excluded from preview and print. Selecting a supplier bank always fills its current SWIFT code, replacing the previous bank code.

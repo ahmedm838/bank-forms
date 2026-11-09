@@ -36,9 +36,18 @@ function formDefaults(id){
   });
   return {values};
 }
-function saveFormDefaults(id, settings){
-  const all = allFormDefaults(); all[id] = settings;
-  return write('abk-form-defaults', all);
+async function saveAllFormDefaults(settings){
+  const snapshot=clone(settings);
+  await RepoStore.save('defaults',snapshot);
+  return write('abk-form-defaults',snapshot);
+}
+async function saveFormDefaults(id,settings){
+  const all=allFormDefaults();all[id]=settings;
+  return saveAllFormDefaults(all);
+}
+async function loadFormDefaults(){
+  if(window.BANK_FORMS_STANDALONE) return;
+  write('abk-form-defaults',await RepoStore.load('defaults'));
 }
 
 /* ---------- transfers made ----------
@@ -160,13 +169,14 @@ function payTo(supplier){
 
 async function loadRepository(){
   if(window.BANK_FORMS_STANDALONE) return;
+  await loadFormDefaults();
   const suppliers=await RepoStore.load('suppliers');
   const transactions=await RepoStore.load('transactions');
   write(SUPPLIERS_KEY,suppliers);write(TX_KEY,transactions);
 }
 return {
   loadRepository, transactionKey, banks, saveBanks, resetBanks,
-  suppliers, saveSuppliers, formDefaults, saveFormDefaults, canDefault,
+  suppliers, saveSuppliers, formDefaults, saveFormDefaults, saveAllFormDefaults, loadFormDefaults, canDefault,
   transactions, saveTransactions, addTransaction, updateTransaction, getTransaction,
   matchBank, matchBankBySwift, isBic, looksLikeIban, payTo, byOrder, normalise,
   BANKS_KEY, SUPPLIERS_KEY, TX_KEY,

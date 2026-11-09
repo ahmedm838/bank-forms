@@ -3,7 +3,7 @@ window.RepoStore = (() => {
   const base='https://api.github.com/repos/ahmedm838/bank-forms/contents/data/';
   const memory=window.BankFormsMemory;
   const shas={};
-  const names={suppliers:'Suppliers.xlsx',transactions:'Transactions.xlsx'};
+  const names={suppliers:'Suppliers.xlsx',transactions:'Transactions.xlsx',defaults:'FormDefaults.json'};
   const headers=()=>({Accept:'application/vnd.github+json', ...(memory.githubToken?{Authorization:'Bearer '+memory.githubToken}:{})});
   function connect(){
     if(memory.githubToken) return Promise.resolve();
@@ -38,7 +38,7 @@ window.RepoStore = (() => {
       const raw=await checked(await fetch('https://api.github.com/repos/ahmedm838/bank-forms/git/blobs/'+file.sha,{headers:{...headers(),Accept:'application/vnd.github.raw+json'},cache:'no-store'}));
       bytes=new Uint8Array(await raw.arrayBuffer());
     }
-    const rows=await ListFiles[kind](new Blob([bytes]));
+    const rows=kind==='defaults' ? JSON.parse(new TextDecoder().decode(bytes)) : await ListFiles[kind](new Blob([bytes]));
     shas[kind]=file.sha;
     return rows;
   }
@@ -49,7 +49,7 @@ window.RepoStore = (() => {
     try {
       if(!shas[kind])throw new Error('The repository list has not loaded. Reload before saving.');
       await connect();
-      const content=XLSX.write(RepoWorkbooks[kind](rows),{type:'base64',bookType:'xlsx',compression:true});
+      const content=kind==='defaults' ? btoa(Array.from(new TextEncoder().encode(JSON.stringify(rows,null,2)),byte=>String.fromCharCode(byte)).join('')) : XLSX.write(RepoWorkbooks[kind](rows),{type:'base64',bookType:'xlsx',compression:true});
       const response=await checked(await fetch(base+names[kind],{
         method:'PUT',headers:{...headers(),'Content-Type':'application/json'},
         body:JSON.stringify({message:'Update '+names[kind]+' from Bank Forms',branch:'main',sha:shas[kind],content})

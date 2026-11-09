@@ -1,16 +1,18 @@
-/* Personal defaults for each available form; never written to the repository. */
+/* Shared form defaults persisted in the repository. */
 (async function(){
   await setupGate();
+  await LISTS.loadFormDefaults();
   const $ = id => document.getElementById(id);
   const forms = Object.entries(window.FORM_DEFS).filter(([,f]) => f.ready && !f.alias && f.fields);
   const drafts = Object.fromEntries(forms.map(([id]) => [id,LISTS.formDefaults(id)]));
   const el = (tag,text) => {const n=document.createElement(tag);if(text)n.textContent=text;return n;};
   let current = forms[0][0];
-  const unsaved = Unsaved({badge:$('dirty'),saveBtn:$('btnSave'),commit:()=>{
+  const unsaved = Unsaved({badge:$('dirty'),saveBtn:$('btnSave'),commit:async ()=>{
     collect();
-    const ok = forms.every(([id]) => LISTS.saveFormDefaults(id,drafts[id]));
-    $('status').textContent = ok ? 'Default values saved.' : 'Could not save in this browser.';
-    return ok;
+    try {
+      await LISTS.saveAllFormDefaults(drafts);
+      $('status').textContent='Default values saved for all devices.'; return true;
+    } catch(e){ $('status').textContent=e.message; return false; }
   }});
   function collect(){
     const settings = {values:{},checks:{},flags:{}};
@@ -27,7 +29,7 @@
   function render(){
     const f=window.FORM_DEFS[current], saved=drafts[current];
     const mount=$('defaultsFields');mount.replaceChildren();
-    $('formNote').textContent = 'Defaults last only while this workspace is open and clear on refresh. Amounts and selections always start blank.';
+    $('formNote').textContent = 'Saved defaults are shared across devices through GitHub. Amounts and selections always start blank.';
     for(const [kind,fields] of [['values',f.fields.filter(LISTS.canDefault)]]){
       for(const field of fields){
         const row=el('div');row.className='row default-row';row.dataset.defaultRow='';row.dataset.kind=kind;row.dataset.key=field.id;

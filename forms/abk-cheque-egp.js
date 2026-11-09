@@ -51,6 +51,8 @@ window.FORM_DEFS['cheque-egp'] = {
       maxLines:1, baseline:753, pad:2, required:true,
       wordsOf:'amount', currencyFixed:'EGP' },
 
+    { id:'purpose', label:'الغرض — Purpose (transaction only)', group:'body', multi:true, screenOnly:true },
+
     { id:'name', label:'الاسم — Name', box:[48,704,463,720], group:'body',
       maxLines:1, baseline:712, pad:2, arabic:true, required:true,
       noShrink:true, align:'right' },

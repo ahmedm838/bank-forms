@@ -639,6 +639,7 @@ function render(){
   const S = previewScale;
 
   for(const f of FIELDS){
+    if(f.screenOnly) continue;
     const text = displayValue(f, state.values[f.id]);
     if(!text) continue;
     const [x0,y0,x1,y1] = f.box;
@@ -726,6 +727,7 @@ function drawLine(page, fontKey, text, x, y, size, baseDir){
 function missingGlyphs(){
   const out = new Set();
   for(const f of FIELDS){
+    if(f.screenOnly) continue;
     for(const ch of (state.values[f.id]||'')){
       const cp = ch.codePointAt(0);
       if(ch !== '\n' && !fkFont.hasGlyphForCodePoint(cp)) out.add(ch);
@@ -756,6 +758,7 @@ async function buildFilledPdf(){
     page.pushOperators(op('cm', [1, 0, 0, 1, printPage.x, printPage.y].map(num)));
   }
   for(const f of FIELDS){
+    if(f.screenOnly) continue;
     const text = displayValue(f, state.values[f.id]);
     if(!text) continue;
     const [x0,y0,x1,y1] = f.box;
@@ -924,7 +927,7 @@ async function recordTransaction(fileSaved){
     Object.assign(entry, {
       date: v('date'), benName: v('payTo'), benAccount: '', benBank: 'ABK',
       currency: 'EGP', amount: v('amount'), amountWords: v('sumWords'),
-      purpose: '', issueType: 'CHQ-EGP',
+      purpose: v('purpose'), issueType: 'CHQ-EGP',
     });
   }
   const ok = EDITING_TX
