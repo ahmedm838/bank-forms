@@ -1,1 +1,19 @@
-{}
+{
+  "transfer": {
+    "values": {},
+    "checks": {},
+    "flags": {}
+  },
+  "cheque-egp": {
+    "values": {
+      "name": {
+        "value": "احمد مصطفي محمد حسن            دعاء رمضان محمد أحمد"
+      }
+    },
+    "checks": {},
+    "flags": {}
+  },
+  "payroll-debit-order": {
+    "values": {}
+  }
+}
