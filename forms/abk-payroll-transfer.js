@@ -46,7 +46,7 @@ window.payrollLetterHtml = function(values, size = 16){
   <p class="center">تحية طيبة وبعد،،</p>
   <p class="center double">الحاقاً بعقد المرتبات المبرم بيننا وبين بنككم الموقر ..</p>
   <p style="height:16pt;margin-bottom:6pt"></p>
-  <p class="body double">برجاء التكرم بخصم مبلغ اجمالي قدره ( ${field('amount')} ) فقط ( ${field('amountWords')} ) جنيهاً مصرياً فقط لا غير من حسابنا طرفكم رقم ( ${field('accountNo')} ) فرع ( ${field('branch')} ) وذلك لتحويله لحسابات العاملين بالشركة ( كما بالكشف المرفق ) كمرتبات شهر ( ${field('month')} ).</p>
+  <p class="body double">برجاء التكرم بخصم مبلغ اجمالي قدره (${field('amount')}) فقط (${field('amountWords')}) جنيهاً مصرياً فقط لا غير من حسابنا طرفكم رقم (${field('accountNo')}) فرع (${field('branch')}) وذلك لتحويله لحسابات العاملين بالشركة (كما بالكشف المرفق) كمرتبات شهر (${field('month')}).</p>
   <p class="center double">برجاء التكرم بتحويل المبلغ وإخطارنا بالإشعارات الدالة على ذلك.</p>
   <p class="center double">وتفضلوا بقبول فائق الاحترام ،،،</p>
   <p class="sign">الاســم: ${field('signatory')}</p>
