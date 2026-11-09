@@ -704,7 +704,7 @@ const op = (n,a) => PDFOperator.of(n,a);
 const num = n => String(Math.round(n*1000)/1000);
 const hex4 = n => n.toString(16).padStart(4,'0').toUpperCase();
 
-function drawLine(page, fontKey, text, x, y, size, baseDir){
+function drawLine(page, fontKey, text, x, y, size, baseDir, printOffset = {x:0,y:0}){
   const runs = visualOrder(splitRuns(text, baseDir));
   const k = size / fkFont.unitsPerEm;
   let cx = x;
@@ -722,7 +722,7 @@ function drawLine(page, fontKey, text, x, y, size, baseDir){
           page.chequeInkBounds.bottom=Math.min(page.chequeInkBounds.bottom,gy+b.minY*k);
         }
       }
-      ops.push(op('Tm', ['1','0','0','1', num(cx + (cursor + (p.xOffset||0))*k), num(y + (p.yOffset||0)*k)]));
+      ops.push(op('Tm', ['1','0','0','1', num(cx + (cursor + (p.xOffset||0))*k + printOffset.x), num(y + (p.yOffset||0)*k + printOffset.y)]));
       ops.push(op('Tj', ['<'+hex4(gl.id)+'>']));
       cursor += p.xAdvance;
     });
@@ -781,13 +781,21 @@ async function buildFilledPdf(){
     const [x0,y0,x1,y1] = f.box;
     const boxW = x1-x0, boxH = y1-y0;
     const dir = baseDirOf(text);
+    // Field calibration is applied after measuring the original layout so it
+    // cannot move the other fields through the page-level alignment.
+    const source=printPage && printPage.sourceBox;
+    const scaleX=source?(printPage.contentWidth || printPage.w)/(source[2]-source[0]):1;
+    const scaleY=source?(printPage.contentHeight || printPage.h)/(source[3]-source[1]):1;
+    const offset={x:(f.printMoveMm?.right || 0)*72/25.4/scaleX,y:(f.printMoveMm?.up || 0)*72/25.4/scaleY};
 
     if(f.cells){
       const size = f.cellSize || BASE_SIZE;
       const baseline = lineBaselines(f, size, 1, y0, boxH)[0];
-      for(const { ch, cx } of cellPositions(f, text)){
-        drawLine(page, fontKey, ch, cx - measureText(ch, size, 'ltr')/2, baseline, size, 'ltr');
-      }
+      const positions=cellPositions(f,text);
+      positions.forEach(({ch,cx},index)=>{
+        const calibrated=f.printDigitSpacingMm ? positions[0].cx+index*f.printDigitSpacingMm*72/25.4/scaleX : cx;
+        drawLine(page,fontKey,ch,cx-measureText(ch,size,'ltr')/2,baseline,size,'ltr',{x:offset.x+calibrated-cx,y:offset.y});
+      });
       continue;
     }
 
@@ -799,7 +807,7 @@ async function buildFilledPdf(){
       // every value sits centred in its cell, Arabic and English alike
       const x = f.align === 'right' ? x1 - (f.pad ?? PAD) - measureText(line, size, dir)
         : x0 + (boxW - measureText(line, size, dir))/2;
-      drawLine(page, fontKey, line, x, baselines[i], size, dir);
+      drawLine(page, fontKey, line, x, baselines[i], size, dir, offset);
     });
   }
 
