@@ -23,7 +23,7 @@ function touched(){
 
 const bankOptions = () => LISTS.banks().map(b => ({
   value: b.en || b.ar,
-  label: (b.en || b.ar) + (b.swift ? '  ·  ' + b.swift : ''),
+  label: [b.en, b.ar].filter(Boolean).join('  ·  '),
 }));
 
 /* choosing a bank brings its SWIFT with it, unless one is already written */

@@ -31,7 +31,8 @@ Net Salary. Monetary cells in exported payroll, transfer and transaction sheets
 remain numeric and use thousands separators. Both payroll export buttons use
 the same style.
 
-The Debit Order wording follows the updated Payroll Debit Order.docx. Its date
+The Debit Order follows the supplied A4 Payroll Debit Order.docx, including its
+updated amount wording and half-inch margins. Its date
 reads day/month/year from right to left, with each numeric component kept in its
 normal digit order.
 

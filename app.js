@@ -629,9 +629,11 @@ function render(){
       frame = document.createElement('iframe'); frame.id = 'letterPreview';
       frame.title = 'Payroll Debit Order preview'; previewWrap.appendChild(frame);
     }
-    const scale = previewWrap.clientWidth / 816;
-    frame.style.cssText = `position:absolute;left:0;top:0;width:816px;height:1056px;border:0;display:block;transform:scale(${scale});transform-origin:top left`;
-    previewWrap.style.height = (1056*scale)+'px';
+    const width = CURRENT_FORM.page.w * 4 / 3;
+    const height = CURRENT_FORM.page.h * 4 / 3;
+    const scale = previewWrap.clientWidth / width;
+    frame.style.cssText = `position:absolute;left:0;top:0;width:${width}px;height:${height}px;border:0;display:block;transform:scale(${scale});transform-origin:top left`;
+    previewWrap.style.height = (height*scale)+'px';
     const html = payrollLetterHtml(state.values, BASE_SIZE);
     if(frame.srcdoc !== html) frame.srcdoc = html;
     return;

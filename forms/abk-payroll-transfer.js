@@ -4,7 +4,7 @@ window.FORM_DEFS = window.FORM_DEFS || {};
 window.FORM_DEFS['payroll-debit-order'] = {
   title:'Payroll Debit Order', bank:'Al Ahli Bank of Kuwait – Egypt', ready:true,
   flowingLetter:true, overlayOnly:true,
-  preview:'assets/payroll-debit-order-preview.png', page:{w:612,h:792}, fontSize:16,
+  preview:'assets/payroll-debit-order-preview.png', page:{w:595.3,h:841.9}, fontSize:16,
   groups:[{id:'letter',title:'خصم مرتبات — Debit order'}],
   fields:[
     {id:'amount',label:'المبلغ بالأرقام — Amount in figures',group:'letter',latin:true,thousands:true,arabicDigits:true,required:true},
@@ -33,11 +33,11 @@ window.payrollLetterHtml = function(values, size = 16){
   };
   const pt = Math.max(7, Math.min(30, Number(size) || 16));
   return `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>Payroll Debit Order</title>
-  <style>@page{size:letter portrait;margin:36pt}*{box-sizing:border-box}html{background:#fff;color:#000}
-  body{font-family:Arial,sans-serif;font-size:${pt}pt;line-height:1.15;margin:36pt;width:540pt}
+  <style>@page{size:A4 portrait;margin:36pt}*{box-sizing:border-box}html{background:#fff;color:#000}
+  body{font-family:Arial,sans-serif;font-size:${pt}pt;line-height:1.15;margin:36pt;width:523.3pt}
   p{margin:0 0 8pt;white-space:normal;overflow-wrap:anywhere;break-inside:avoid}
   .blank{height:26.4pt}.center{text-align:center}.double{line-height:2}
-  .body{text-align:justify}.sign{width:216pt;margin-right:324pt;margin-bottom:18pt}
+  .body{text-align:justify}.sign{width:calc(100% - 324pt);margin-right:324pt;margin-bottom:18pt}
   .signature{line-height:2;margin-bottom:24pt}
   .date-value{display:inline-flex;direction:rtl;unicode-bidi:isolate;white-space:nowrap}
   @media print{body{margin:0;width:auto}html{width:auto}}</style></head><body>
@@ -46,7 +46,7 @@ window.payrollLetterHtml = function(values, size = 16){
   <p class="center">تحية طيبة وبعد،،</p>
   <p class="center double">الحاقاً بعقد المرتبات المبرم بيننا وبين بنككم الموقر ..</p>
   <p style="height:16pt;margin-bottom:6pt"></p>
-  <p class="body double">برجاء التكرم بخصم مبلغ اجمالي و قدره ( ${field('amount')} ) فقط و ( ${field('amountWords')} ) جنيهاً مصرياً فقط لا غير وذلك خصماً من حسابنا طرفكم رقم ( ${field('accountNo')} ) فرع ( ${field('branch')} ) وذلك لتحويله لحسابات العاملين بالشركة ( كما بالكشف المرفق ) كمرتبات شهر ( ${field('month')} ).</p>
+  <p class="body double">برجاء التكرم بخصم مبلغ اجمالي قدره ( ${field('amount')} ) فقط ( ${field('amountWords')} ) جنيهاً مصرياً فقط لا غير وذلك خصماً من حسابنا طرفكم رقم ( ${field('accountNo')} ) فرع ( ${field('branch')} ) وذلك لتحويله لحسابات العاملين بالشركة ( كما بالكشف المرفق ) كمرتبات شهر ( ${field('month')} ).</p>
   <p class="center double">برجاء التكرم بتحويل المبلغ وإخطارنا بالإشعارات الدالة على ذلك.</p>
   <p class="center double">وتفضلوا بقبول فائق الاحترام ،،،</p>
   <p class="sign">الاســم: ${field('signatory')}</p>
