@@ -660,7 +660,7 @@ function render(){
       continue;
     }
 
-    const { size, lines } = f.noShrink ? {size:BASE_SIZE, lines:[text]}
+    const { size, lines } = (f.noShrink || f.fontSizeOffset) ? {size:BASE_SIZE+(f.fontSizeOffset || 0), lines:[text]}
       : fitText(text, boxW, boxH, measurePreview, f.maxLines, f.pad);
     const topPdf = topOfLine(lineBaselines(f, size, lines.length, y0, boxH)[0], size);
 
@@ -799,8 +799,17 @@ async function buildFilledPdf(){
       continue;
     }
 
-    const { size, lines } = f.noShrink ? {size:BASE_SIZE, lines:[text]}
+    const { size, lines } = (f.noShrink || f.fontSizeOffset) ? {size:BASE_SIZE+(f.fontSizeOffset || 0), lines:[text]}
       : fitText(text, boxW, boxH, (s,sz)=>measureText(s,sz,dir), f.maxLines, f.pad);
+    // Keep page alignment based on the original layout when a field font grows.
+    const inkBounds=page.chequeInkBounds;
+    if(f.fontSizeOffset && inkBounds){
+      const original=fitText(text,boxW,boxH,(s,sz)=>measureText(s,sz,dir),f.maxLines,f.pad);
+      const baseLines=lineBaselines(f,original.size,original.lines.length,y0,boxH);
+      original.lines.forEach((line,i)=>drawLine({chequeInkBounds:inkBounds,pushOperators(){}},fontKey,line,
+        x0+(boxW-measureText(line,original.size,dir))/2,baseLines[i],original.size,dir));
+      page.chequeInkBounds=null;
+    }
     const baselines = lineBaselines(f, size, lines.length, y0, boxH);
 
     lines.forEach((line, i) => {
@@ -819,6 +828,7 @@ async function buildFilledPdf(){
         });
       }else drawLine(page, fontKey, line, x, baselines[i], size, dir, offset);
     });
+    page.chequeInkBounds=inkBounds;
   }
 
   for(const [x0,y0,x1,y1] of markedBoxes()){

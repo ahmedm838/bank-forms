@@ -1003,7 +1003,7 @@ window.FORM_DEFS['cheque-egp'] = {
   fields: [
     /* DDMMYYYY, one digit to a box */
     { id:'date', label:'التاريخ — Date', box:[376,802,458,818], group:'head',
-      cells: 8, cellSize: 11, printDigitSpacingMm: 3.5, printMoveMm: {right:2}, baseline: 809, latin:true, required:true, today:true,
+      cells: 8, cellSize: 11, printDigitSpacingMm: 3.5, printMoveMm: {right:2,up:1}, baseline: 809, latin:true, required:true, today:true,
       hint:'dd/mm/yyyy — printed one digit per box' },
 
     { id:'payTo', label:'إدفعوا بموجب هذا الشيك إلى — Pay to', box:[62,764,366,780], group:'body',
@@ -1012,17 +1012,17 @@ window.FORM_DEFS['cheque-egp'] = {
 
     /* the printed EGP box; #...# so the figure cannot be extended */
     { id:'amount', label:'المبلغ بالأرقام — EGP', box:[399,737,486,753], group:'body',
-      printMoveMm: {right:10,up:1.5}, printCharacterSpacingMm: 2, maxLines:1, baseline:745, pad:1, latin:true, thousands:true, wrap:'#', required:true,
+      printMoveMm: {right:10,up:1.5}, printCharacterSpacingMm: 2, fontSizeOffset: 3, maxLines:1, baseline:745, pad:1, latin:true, thousands:true, wrap:'#', required:true,
       hint:'e.g. 125400' },
 
     { id:'sumWords', label:'مبلغاً وقدره — The sum of', box:[78,745,320,761], group:'body',
-      printMoveMm: {right:-15,up:1.5}, maxLines:1, baseline:753, pad:2, required:true,
+      printMoveMm: {right:-15,up:2.5}, maxLines:1, baseline:753, pad:2, required:true,
       wordsOf:'amount', currencyFixed:'EGP' },
 
     { id:'purpose', label:'الغرض — Purpose (transaction only)', group:'body', multi:true, screenOnly:true },
 
     { id:'name', label:'الاسم — Name', box:[48,704,463,720], group:'body',
-      printMoveMm: {right:10,up:2.5}, maxLines:1, baseline:712, pad:2, arabic:true, required:true,
+      printMoveMm: {right:12.5,up:2.5}, maxLines:1, baseline:712, pad:2, arabic:true, required:true,
       noShrink:true, align:'right' },
   ],
 };
@@ -1837,7 +1837,7 @@ function render(){
       continue;
     }
 
-    const { size, lines } = f.noShrink ? {size:BASE_SIZE, lines:[text]}
+    const { size, lines } = (f.noShrink || f.fontSizeOffset) ? {size:BASE_SIZE+(f.fontSizeOffset || 0), lines:[text]}
       : fitText(text, boxW, boxH, measurePreview, f.maxLines, f.pad);
     const topPdf = topOfLine(lineBaselines(f, size, lines.length, y0, boxH)[0], size);
 
@@ -1976,8 +1976,17 @@ async function buildFilledPdf(){
       continue;
     }
 
-    const { size, lines } = f.noShrink ? {size:BASE_SIZE, lines:[text]}
+    const { size, lines } = (f.noShrink || f.fontSizeOffset) ? {size:BASE_SIZE+(f.fontSizeOffset || 0), lines:[text]}
       : fitText(text, boxW, boxH, (s,sz)=>measureText(s,sz,dir), f.maxLines, f.pad);
+    // Keep page alignment based on the original layout when a field font grows.
+    const inkBounds=page.chequeInkBounds;
+    if(f.fontSizeOffset && inkBounds){
+      const original=fitText(text,boxW,boxH,(s,sz)=>measureText(s,sz,dir),f.maxLines,f.pad);
+      const baseLines=lineBaselines(f,original.size,original.lines.length,y0,boxH);
+      original.lines.forEach((line,i)=>drawLine({chequeInkBounds:inkBounds,pushOperators(){}},fontKey,line,
+        x0+(boxW-measureText(line,original.size,dir))/2,baseLines[i],original.size,dir));
+      page.chequeInkBounds=null;
+    }
     const baselines = lineBaselines(f, size, lines.length, y0, boxH);
 
     lines.forEach((line, i) => {
@@ -1996,6 +2005,7 @@ async function buildFilledPdf(){
         });
       }else drawLine(page, fontKey, line, x, baselines[i], size, dir, offset);
     });
+    page.chequeInkBounds=inkBounds;
   }
 
   for(const [x0,y0,x1,y1] of markedBoxes()){
