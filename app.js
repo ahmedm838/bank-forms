@@ -795,6 +795,14 @@ async function buildFilledPdf(){
       positions.forEach(({ch,cx},index)=>{
         const calibrated=f.printDigitSpacingMm ? positions[0].cx+index*f.printDigitSpacingMm*72/25.4/scaleX : cx;
         drawLine(page,fontKey,ch,cx-measureText(ch,size,'ltr')/2,baseline,size,'ltr',{x:offset.x+calibrated-cx,y:offset.y});
+        if(f.printDateSeparators && (index===1 || index===3) && positions[index+1]){
+          const next=f.printDigitSpacingMm ? positions[0].cx+(index+1)*f.printDigitSpacingMm*72/25.4/scaleX : positions[index+1].cx;
+          // Separators occupy the existing gap; keep digit spacing and page anchoring.
+          const inkBounds=page.chequeInkBounds;
+          page.chequeInkBounds=null;
+          drawLine(page,fontKey,'/',(calibrated+next)/2-measureText('/',size,'ltr')/2,baseline,size,'ltr',offset);
+          page.chequeInkBounds=inkBounds;
+        }
       });
       continue;
     }
