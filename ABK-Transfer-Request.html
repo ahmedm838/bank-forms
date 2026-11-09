@@ -50,12 +50,17 @@
 :root{
   --bg:#eef1f5; --panel:#fff; --ink:#1a2233; --muted:#64748b;
   --line:#d8dee8; --brand:#1f5fa9; --bad:#c0392b; --radius:8px;
+  /* The interface is set in Arial throughout, Arabic and English alike — it
+     carries both scripts, so one family covers the lot. The print preview is
+     the exception: it has to look like what the PDF will print, so it stays on
+     the font the PDF embeds. */
+  --ui-font: Arial, "Helvetica Neue", Helvetica, sans-serif;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
   margin:0; background:var(--bg); color:var(--ink);
-  font:14px/1.45 "Segoe UI",system-ui,-apple-system,sans-serif;
+  font:14px/1.45 var(--ui-font);
   display:flex; flex-direction:column;
 }
 body.busy{cursor:progress}
@@ -99,7 +104,7 @@ main{flex:1; display:grid; grid-template-columns:minmax(380px,42%) 1fr; min-heig
 input[type=text], textarea, select{
   width:100%; font:inherit; padding:6px 8px;
   border:1px solid var(--line); border-radius:6px; background:#fcfdff; color:var(--ink);
-  font-family:'ABKForm',"Segoe UI",system-ui,sans-serif;
+  font-family:var(--ui-font);
 }
 textarea{resize:vertical; min-height:42px}
 input:focus, textarea:focus, select:focus{outline:2px solid #bcd6f5; outline-offset:-1px; border-color:var(--brand)}
@@ -264,10 +269,10 @@ body.sheetpage{display:flex; flex-direction:column}
   position:sticky; top:0; z-index:1; background:#f3f6fb; text-align:center;
   font-weight:600; font-size:11px; vertical-align:bottom;
 }
-.tablewrap th .ar{display:block; font-family:'ABKForm',sans-serif; color:var(--brand); font-weight:500}
+.tablewrap th .ar{display:block; font-family:var(--ui-font); color:var(--brand); font-weight:500}
 .tablewrap th .en{display:block; color:var(--ink)}
 .tablewrap td.n{text-align:right; font-variant-numeric:tabular-nums}
-.tablewrap td.ar-cell{font-family:'ABKForm',sans-serif; text-align:right}
+.tablewrap td.ar-cell{font-family:var(--ui-font); text-align:right}
 .tablewrap tbody tr:nth-child(even){background:#fafcff}
 .tablewrap tbody tr:hover{background:#eef4fc}
 .tablewrap tfoot td{position:sticky; bottom:0; background:#f3f6fb; font-weight:650; border-top:2px solid var(--line)}
@@ -297,7 +302,7 @@ body.sheetpage{display:flex; flex-direction:column}
 .listtable input, .listtable select{
   width:100%; font:inherit; font-size:12.5px; padding:5px 7px;
   border:1px solid transparent; border-radius:5px; background:transparent; color:var(--ink);
-  font-family:'ABKForm',"Segoe UI",system-ui,sans-serif;
+  font-family:var(--ui-font);
 }
 .listtable input:hover, .listtable select:hover{border-color:var(--line); background:#fff}
 .listtable input:focus, .listtable select:focus{
@@ -1003,7 +1008,7 @@ window.FORM_DEFS['cheque-egp'] = {
   fields: [
     /* DDMMYYYY, one digit to a box */
     { id:'date', label:'التاريخ — Date', box:[376,802,458,818], group:'head',
-      cells: 8, cellSize: 11, printDigitSpacingMm: 2, printDateSeparators: true, printMoveMm: {right:6,up:1}, baseline: 809, latin:true, required:true, today:true,
+      cells: 8, cellSize: 11, printDigitSpacingMm: 2, printDateSeparators: true, printMoveMm: {right:6.25,up:1}, baseline: 809, latin:true, required:true, today:true,
       hint:'dd/mm/yyyy — printed DD / MM / YYYY' },
 
     { id:'payTo', label:'إدفعوا بموجب هذا الشيك إلى — Pay to', box:[62,764,366,780], group:'body',
