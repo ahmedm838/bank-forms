@@ -767,8 +767,8 @@ async function buildFilledPdf(){
   // Translate only the PDF output; preview geometry and field sizing stay intact.
   if(printPage){
     const box = printPage.sourceBox;
-    const sx = box ? printPage.w / (box[2] - box[0]) : 1;
-    const sy = box ? printPage.h / (box[3] - box[1]) : 1;
+    const sx = box ? (printPage.contentWidth || printPage.w) / (box[2] - box[0]) : 1;
+    const sy = box ? (printPage.contentHeight || printPage.h) / (box[3] - box[1]) : 1;
     const x = (box ? -box[0] * sx : printPage.x) + (printPage.offsetX || 0);
     const y = box ? -box[1] * sy : printPage.y;
     page.pushOperators(op('cm', [sx, 0, 0, sy, x, y].map(num)));
@@ -812,7 +812,7 @@ async function buildFilledPdf(){
   }
   page.pushOperators(op('Q'));
   if(page.chequeInkBounds && Number.isFinite(page.chequeInkBounds.right)){
-    const box=printPage.sourceBox, sx=printPage.w/(box[2]-box[0]), sy=printPage.h/(box[3]-box[1]);
+    const box=printPage.sourceBox, sx=(printPage.contentWidth || printPage.w)/(box[2]-box[0]), sy=(printPage.contentHeight || printPage.h)/(box[3]-box[1]);
     const right=page.chequeInkBounds.right*sx-box[0]*sx+(printPage.offsetX||0);
     const top=page.chequeInkBounds.top*sy-box[1]*sy;
     page.translateContent(printPage.w-printPage.contentMargins.right-right,
