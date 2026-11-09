@@ -35,20 +35,20 @@ window.FORM_DEFS['cheque-egp'] = {
   fields: [
     /* DDMMYYYY, one digit to a box */
     { id:'date', label:'التاريخ — Date', box:[376,802,458,818], group:'head',
-      cells: 8, cellSize: 11, printDigitSpacingMm: 3.5, printMoveMm: {right:15}, baseline: 809, latin:true, required:true, today:true,
+      cells: 8, cellSize: 11, printDigitSpacingMm: 3.5, printMoveMm: {right:2}, baseline: 809, latin:true, required:true, today:true,
       hint:'dd/mm/yyyy — printed one digit per box' },
 
     { id:'payTo', label:'إدفعوا بموجب هذا الشيك إلى — Pay to', box:[62,764,366,780], group:'body',
-      type:'select', supplierNames:true,
+      type:'select', supplierNames:true, printMoveMm: {up:1.5},
       maxLines:1, baseline:772, pad:2, arabic:true, required:true },
 
     /* the printed EGP box; #...# so the figure cannot be extended */
     { id:'amount', label:'المبلغ بالأرقام — EGP', box:[399,737,486,753], group:'body',
-      printMoveMm: {right:15}, maxLines:1, baseline:745, pad:1, latin:true, thousands:true, wrap:'#', required:true,
+      printMoveMm: {right:10,up:1.5}, printCharacterSpacingMm: 2, maxLines:1, baseline:745, pad:1, latin:true, thousands:true, wrap:'#', required:true,
       hint:'e.g. 125400' },
 
     { id:'sumWords', label:'مبلغاً وقدره — The sum of', box:[78,745,320,761], group:'body',
-      printMoveMm: {right:-15}, maxLines:1, baseline:753, pad:2, required:true,
+      printMoveMm: {right:-15,up:1.5}, maxLines:1, baseline:753, pad:2, required:true,
       wordsOf:'amount', currencyFixed:'EGP' },
 
     { id:'purpose', label:'الغرض — Purpose (transaction only)', group:'body', multi:true, screenOnly:true },

@@ -807,7 +807,17 @@ async function buildFilledPdf(){
       // every value sits centred in its cell, Arabic and English alike
       const x = f.align === 'right' ? x1 - (f.pad ?? PAD) - measureText(line, size, dir)
         : x0 + (boxW - measureText(line, size, dir))/2;
-      drawLine(page, fontKey, line, x, baselines[i], size, dir, offset);
+      if(f.printCharacterSpacingMm && dir==='ltr'){
+        const chars=Array.from(line), pitch=f.printCharacterSpacingMm*72/25.4/scaleX;
+        const center=x+measureText(line,size,dir)/2;
+        let cursor=x;
+        chars.forEach((ch,index)=>{
+          const width=measureText(ch,size,dir);
+          const target=center+(index-(chars.length-1)/2)*pitch-width/2;
+          drawLine(page,fontKey,ch,cursor,baselines[i],size,dir,{x:offset.x+target-cursor,y:offset.y});
+          cursor+=width;
+        });
+      }else drawLine(page, fontKey, line, x, baselines[i], size, dir, offset);
     });
   }
 
