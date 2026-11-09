@@ -36,8 +36,29 @@ function exportBook(){
   flashMsg('Saved Banks.xlsx');
 }
 
+// Older cached page markup may not include the repository scripts yet.
+async function ensureBankStorage(){
+  const dependencies = [
+    ['XLSX', 'vendor/xlsx.full.min.js'],
+    ['ListFiles', 'list-files.js'],
+    ['RepoWorkbooks', 'repo-workbooks.js'],
+    ['RepoStore', 'repo-store.js'],
+  ];
+  for(const [name, file] of dependencies){
+    if(window[name]) continue;
+    await new Promise((resolve,reject)=>{
+      const script=document.createElement('script');
+      script.src=file+'?v=47';
+      script.onload=()=>window[name] ? resolve() : reject(new Error('Could not initialize '+file+'. Please reload.'));
+      script.onerror=()=>reject(new Error('Could not load '+file+'. Check your connection and reload.'));
+      document.head.appendChild(script);
+    });
+  }
+}
+
 async function boot(){
   await setupGate();
+  await ensureBankStorage();
   if(!window.BANK_FORMS_STANDALONE) window.BankFormsMemory['abk-banks']=await RepoStore.load('banks');
   table = ListTable({ mount: $('table'), columns: COLUMNS, rows: LISTS.banks(), onChange: touched });
   unsaved = Unsaved({
