@@ -820,7 +820,7 @@ async function buildFilledPdf(){
     const verticalShift=printPage.contentMargins.vertical==='center'
       ? (printPage.h-top-bottom)/2
       : printPage.h-printPage.contentMargins.top-top;
-    page.translateContent(printPage.w-printPage.contentMargins.right-right,verticalShift);
+    page.translateContent(printPage.w-printPage.contentMargins.right-right,verticalShift+(printPage.contentMargins.offsetUp || 0));
   }
 
   const missing = missingGlyphs();

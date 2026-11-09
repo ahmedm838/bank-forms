@@ -24,7 +24,7 @@ window.FORM_DEFS['cheque-egp'] = {
   preview: 'assets/cheque-egp-preview.png',
   previewBand: [625, 841.68],              // the strip of the page the scan covers
   page: { w: 595.2, h: 841.68 },
-  printPage: { w: 297 * 72 / 25.4, h: 210 * 72 / 25.4, contentWidth: 117 * 72 / 25.4, contentHeight: 83 * 72 / 25.4, sourceBox: [0, 625, 595.2, 841.68], contentMargins: { right: 10 * 72 / 25.4, vertical: 'center' } }, // A4 landscape with cheque-sized content
+  printPage: { w: 297 * 72 / 25.4, h: 210 * 72 / 25.4, contentWidth: 117 * 72 / 25.4, contentHeight: 83 * 72 / 25.4, sourceBox: [0, 625, 595.2, 841.68], contentMargins: { right: 25 * 72 / 25.4, vertical: 'center', offsetUp: 10 * 72 / 25.4 } }, // A4 landscape with cheque-sized content
   fontSize: 12,
 
   groups: [
