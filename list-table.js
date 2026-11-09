@@ -38,7 +38,7 @@ window.ListTable = function ListTable(opts){
       }
       // a value that matches nothing on the list is still shown, so an import
       // that could not be placed stays visible instead of silently emptying
-      if (row[col.key] && ![...sel.options].some(o => o.selected)){
+      if (row[col.key] && ![...sel.options].some(o => o.value === String(row[col.key]))){
         const opt = new Option(row[col.key] + '  (not on the list)', row[col.key]);
         opt.selected = true;
         sel.appendChild(opt);

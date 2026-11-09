@@ -82,12 +82,6 @@ async function boot(){
     table.add({ nameAr:'', nameEn:'', iban:'', account:'', bank:'', swift:'', reason:'' }));
   $('btnSave').addEventListener('click', () => unsaved.save());
   $('btnExport').addEventListener('click', exportBook);
-  ListFiles.hook({button:$('btnLoad'),input:$('fileLoad'),load:ListFiles.suppliers,error:flashMsg,apply:(loaded,name)=>{
-    if(unsaved.dirty && !confirm('Replace the unsaved supplier edits with this file?'))return;
-    table.rows=loaded;unsaved.touch();refreshState();
-    $('loadedFile').textContent=name+' — '+loaded.length+' suppliers loaded.';
-    flashMsg('Suppliers loaded. Press Save to keep them in GitHub.');
-  }});
 }
 
 boot().catch(e => { $('state').textContent='Could not load the repository list: '+e.message+' Reload to retry.'; flashMsg('Repository list could not be loaded.'); });

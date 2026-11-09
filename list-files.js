@@ -21,7 +21,7 @@ window.ListFiles = (function(){
     const index=headerIndex(grid,['suppliernamearabic','suppliernameenglish','اسمالموردعربي','supplierenglish']);
     if(index<0)throw new Error('Choose an exported Suppliers workbook.');
     const header=grid[index];
-    const map={nameAr:['Supplier Name (Arabic)','اسم المورد (عربي)'],nameEn:['Supplier Name (English)','Supplier (English)'],iban:['IBAN'],account:['Account No.','Account Number'],bank:['Bank'],swift:['SWIFT','SWIFT code'],reason:['Reason','سبب التحويل — Reason']};
+    const map={nameAr:['Supplier Name (Arabic)','اسم المورد (عربي)'],nameEn:['Supplier Name (English)','Supplier (English)'],iban:['IBAN','رقم الحساب IBAN'],account:['Account No.','Account Number','رقم الحساب'],bank:['Bank','البنك'],swift:['SWIFT','SWIFT code','كود السوفت'],reason:['Reason','سبب التحويل — Reason','سبب التحويل']};
     const positions=Object.fromEntries(Object.entries(map).map(([key,names])=>[key,column(header,names)]));
     const rows=grid.slice(index+1).map(row=>Object.fromEntries(Object.entries(positions).map(([key,i])=>[key,text(row[i])]))).filter(row=>row.nameAr || row.nameEn);
     return rows.map((row,i)=>({...row,order:i+1}));

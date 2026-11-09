@@ -9,14 +9,13 @@ access token restricted to this repository with Contents read/write permission.
 Tokens stay in RAM and are cleared on refresh/close; never commit a token.
 The workbooks have the repository's visibility (this repository is public).
 Concurrent changes are rejected rather than overwriting a newer workbook.
-Export unsaved edits before reloading after a conflict. Load file stages an old
-export for review; press Save to persist it. Transaction workbooks include hidden
+Export unsaved edits before reloading after a conflict. Transaction workbooks include hidden
 form metadata so Edit restores the complete form.
 
 The available 40 commits contain no supplier/transaction workbooks or saved
 rows. The previous implementation saved rows only to browser localStorage.
-The initial repository workbooks contain headers only; import an existing export
-to recover old records. No historic rows have been fabricated.
+Suppliers.xlsx was replaced with the supplied 25-row workbook. Its Arabic and
+English columns map to the supplier fields without changing account identifiers.
 
 Banks, defaults, payroll uploads and display preferences remain temporary.
 No data or credentials are saved in browser storage.
@@ -283,7 +282,7 @@ Suppliers.xlsx to GitHub; the page automatically loads it when opened.
 Edits on either page are held until **Save**: the page marks itself, the Save
 button lights, and closing the tab asks first. Nothing reaches the list the
 transfer form reads until you say so. **Export** writes the list to `.xlsx` —
-a separate backup that can be restored with Load file.
+a separate backup.
 
 The bank on a supplier is chosen from the Banks list, so the SWIFT code comes
 with it, but stays editable because a branch code can differ from the bank's own.
@@ -361,14 +360,9 @@ than stamping text onto a fixed PDF background. Its reference PDF and preview
 were regenerated from the supplied Word document. Other forms retain their
 existing PDF stamping and print placement.
 
-## Restore Suppliers and Transactions
+## Repository lists
 
-Use Load file on either list page to restore its exported XLSX workbook into the
-editable table. Loading replaces that page's current list; existing
-unsaved edits prompt before replacement. Transactions skip repeated rows.
-Press Save to commit the restored rows to GitHub before refreshing or closing.
-
-New Transactions exports include a hidden Record data sheet so complete forms
-can be reopened after restoring the workbook. Older exports also load; fields
-that those older files never included must be filled again before printing.
-Previously cleared rows cannot be recovered without an exported copy.
+Suppliers and Transactions load their Excel files automatically from GitHub.
+The Load file buttons have been removed. Use Add supplier and Save to add rows,
+or edit the table and Save to update the repository workbook. Export remains
+available for backups. Transaction workbooks retain full form metadata.

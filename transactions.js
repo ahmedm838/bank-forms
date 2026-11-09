@@ -234,12 +234,6 @@ async function boot(){
   $('btnSave').addEventListener('click', () => unsaved.save());
   $('btnExport').addEventListener('click', exportBook);
   $('btnClearFilters').addEventListener('click', () => { filters = {}; render(); });
-  ListFiles.hook({button:$('btnLoad'),input:$('fileLoad'),load:ListFiles.transactions,error:flashMsg,apply:(loaded,name)=>{
-    if(unsaved.dirty && !confirm('Replace the unsaved transaction edits with this file?'))return;
-    rows=loaded.filter((row,i,all)=>all.findIndex(other=>LISTS.transactionKey(other)===LISTS.transactionKey(row))===i);filters={};unsaved.touch();render();
-    $('loadedFile').textContent=name+' — '+rows.length+' transactions loaded.';
-    flashMsg('Transactions loaded. Press Save to keep them in GitHub.');
-  }});
 }
 
 boot().catch(e => { $('state').textContent='Could not load the repository list: '+e.message+' Reload to retry.'; flashMsg('Repository list could not be loaded.'); });
