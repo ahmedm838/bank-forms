@@ -1003,7 +1003,7 @@ window.FORM_DEFS['cheque-egp'] = {
   fields: [
     /* DDMMYYYY, one digit to a box */
     { id:'date', label:'التاريخ — Date', box:[376,802,458,818], group:'head',
-      cells: 8, cellSize: 11, printDigitSpacingMm: 3.5, printDateSeparators: true, printMoveMm: {right:6,up:1}, baseline: 809, latin:true, required:true, today:true,
+      cells: 8, cellSize: 11, printDigitSpacingMm: 2, printDateSeparators: true, printMoveMm: {right:6,up:1}, baseline: 809, latin:true, required:true, today:true,
       hint:'dd/mm/yyyy — printed DD / MM / YYYY' },
 
     { id:'payTo', label:'إدفعوا بموجب هذا الشيك إلى — Pay to', box:[62,764,366,780], group:'body',
@@ -1825,7 +1825,15 @@ function render(){
     if(f.cells){
       const size = f.cellSize || BASE_SIZE;
       const top = topOfLine(lineBaselines(f, size, 1, y0, boxH)[0], size);
-      for(const { ch, cx } of cellPositions(f, text)){
+      const previewCells=cellPositions(f,text);
+      if(f.printDateSeparators){
+        const width=boxW/f.cells, digitCount=previewCells.length;
+        for(const count of [2,4]){
+          if(digitCount>=count) previewCells.push({ch:'/',cx:x0+width*count});
+        }
+        previewCells.sort((a,b)=>a.cx-b.cx);
+      }
+      for(const { ch, cx } of previewCells){
         const d = el('div', 'ov center', ch);
         d.style.left = ((cx - boxW/f.cells/2)*S)+'px';
         d.style.top = ((VIEW_TOP - top)*S)+'px';

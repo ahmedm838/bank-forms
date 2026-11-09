@@ -648,7 +648,15 @@ function render(){
     if(f.cells){
       const size = f.cellSize || BASE_SIZE;
       const top = topOfLine(lineBaselines(f, size, 1, y0, boxH)[0], size);
-      for(const { ch, cx } of cellPositions(f, text)){
+      const previewCells=cellPositions(f,text);
+      if(f.printDateSeparators){
+        const width=boxW/f.cells, digitCount=previewCells.length;
+        for(const count of [2,4]){
+          if(digitCount>=count) previewCells.push({ch:'/',cx:x0+width*count});
+        }
+        previewCells.sort((a,b)=>a.cx-b.cx);
+      }
+      for(const { ch, cx } of previewCells){
         const d = el('div', 'ov center', ch);
         d.style.left = ((cx - boxW/f.cells/2)*S)+'px';
         d.style.top = ((VIEW_TOP - top)*S)+'px';
