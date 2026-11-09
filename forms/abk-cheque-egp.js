@@ -24,7 +24,7 @@ window.FORM_DEFS['cheque-egp'] = {
   preview: 'assets/cheque-egp-preview.png',
   previewBand: [625, 841.68],              // the strip of the page the scan covers
   page: { w: 595.2, h: 841.68 },
-  printPage: { w: 177 * 72 / 25.4, h: 83 * 72 / 25.4, sourceBox: [0, 625, 595.2, 841.68] }, // Exact cheque size in PDF points
+  printPage: { w: 177 * 72 / 25.4, h: 83 * 72 / 25.4, sourceBox: [0, 625, 595.2, 841.68], offsetX: -5 * 72 / 25.4 }, // Exact cheque size in PDF points
   fontSize: 12,
 
   groups: [

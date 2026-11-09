@@ -371,3 +371,4 @@ available for backups. Transaction workbooks retain full form metadata.
 The EGP cheque Purpose field is transaction metadata only: it saves to the Purpose column and is excluded from preview and print. Selecting a supplier bank always fills its current SWIFT code, replacing the previous bank code.
 
 EGP cheque PDFs use a 177 × 83 mm landscape page, with the cheque fields mapped into that print area. Select the same custom paper size in the printer and print at Actual size / 100%.
+The cheque print overlay is offset 5 mm left from the right-edge alignment, without changing the page or text size.
