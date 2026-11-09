@@ -755,7 +755,12 @@ async function buildFilledPdf(){
   page.pushOperators(op('q'));
   // Translate only the PDF output; preview geometry and field sizing stay intact.
   if(printPage){
-    page.pushOperators(op('cm', [1, 0, 0, 1, printPage.x, printPage.y].map(num)));
+    const box = printPage.sourceBox;
+    const sx = box ? printPage.w / (box[2] - box[0]) : 1;
+    const sy = box ? printPage.h / (box[3] - box[1]) : 1;
+    const x = box ? -box[0] * sx : printPage.x;
+    const y = box ? -box[1] * sy : printPage.y;
+    page.pushOperators(op('cm', [sx, 0, 0, sy, x, y].map(num)));
   }
   for(const f of FIELDS){
     if(f.screenOnly) continue;
