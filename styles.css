@@ -335,3 +335,9 @@ body.editing #btnSave{background:var(--brand); border-color:var(--brand); color:
 .default-mode{flex:0 0 190px}.default-input{flex:1;width:100%}
 .default-controls [hidden]{display:none}
 @media(max-width:700px){.default-controls{flex-direction:column}.default-mode{flex:auto;width:100%}}
+
+/* Payroll and transfer output alignment and bands. */
+#tblPayroll :is(th,td):is(:nth-child(1),:nth-child(2),:nth-child(4),:nth-child(5)),
+#tblTransfer :is(th,td):nth-child(-n+3){text-align:center}
+:is(#tblPayroll,#tblTransfer) thead th{background:#1f5fa9;color:#fff}
+:is(#tblPayroll,#tblTransfer) tfoot td{background:#dce8f5;color:#1a2233}

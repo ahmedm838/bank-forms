@@ -194,6 +194,9 @@ const PAYROLL_COLS = [
   ['الراتب النقدي', 'Paid Salary',   r => r.paid,     'num'],
 ];
 
+const WHOLE_COLUMNS = new Set(['Allowances','Incentive','Bonus','Adjustments','Advance Loans','S.I. Basic Wage','S.I. Gross Wage','Net Salary','Paid Salary']);
+const payrollNumber = (value, heading) => WHOLE_COLUMNS.has(heading) ? whole(value) : money(value);
+
 const SUMMED = new Set(PAYROLL_COLS.map((c, i) => i).filter(i => {
   const h = PAYROLL_COLS[i][1];
   return !['Code','Employee Name','Title','S.I. No.','Bank Acc. No.','Taxable Salary'].includes(h);
@@ -216,9 +219,9 @@ function renderPayroll(){
   const tb = el('tbody');
   for (const r of state.rows){
     const tr = el('tr');
-    PAYROLL_COLS.forEach(([, , get, kind]) => {
+    PAYROLL_COLS.forEach(([, head, get, kind]) => {
       const v = get(r);
-      const td = el('td', kind === 'num' ? 'n' : null, kind === 'num' ? (v ? money(v) : '–') : v);
+      const td = el('td', kind === 'num' ? 'n' : null, kind === 'num' ? (v ? payrollNumber(v, head) : '–') : v);
       tr.appendChild(td);
     });
     tb.appendChild(tr);
@@ -233,7 +236,7 @@ function renderPayroll(){
     if (i === 2){ fr.appendChild(el('td', 'n', String(state.rows.length))); return; }
     if (kind === 'num' && SUMMED.has(i)){
       const total = state.rows.reduce((s, r) => s + (get(r) || 0), 0);
-      fr.appendChild(el('td', 'n', total ? money(total) : '–'));
+      fr.appendChild(el('td', 'n', total ? payrollNumber(total, head) : '–'));
     } else fr.appendChild(el('td', null, ''));
   });
   tf.appendChild(fr);
@@ -268,7 +271,7 @@ function renderTransfer(){
     const nm = el('td', 'ar-cell', r.name); nm.dir = 'auto';
     tr.appendChild(nm);
     tr.appendChild(el('td', 'n', r.bank));
-    tr.appendChild(el('td', 'n', money(r.salary)));
+    tr.appendChild(el('td', 'n', whole(r.salary)));
     tb.appendChild(tr);
   }
   t.appendChild(tb);
@@ -278,7 +281,7 @@ function renderTransfer(){
   fr.appendChild(el('td', null, ''));
   fr.appendChild(el('td', 'n', String(rows.length)));
   fr.appendChild(el('td', null, 'Total'));
-  fr.appendChild(el('td', 'n', money(rows.reduce((s, r) => s + r.salary, 0))));
+  fr.appendChild(el('td', 'n', whole(rows.reduce((s, r) => s + r.salary, 0))));
   tf.appendChild(fr);
   t.appendChild(tf);
 
@@ -292,6 +295,21 @@ function monthLabel(){
   if (!m) return 'payroll';
   const names = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   return names[Number(m[2]) - 1] + ' ' + m[1];
+}
+
+function styleExport(ws, rowCount, columnCount, headerRows, centered){
+  for(let r=0;r<rowCount;r++) for(let c=0;c<columnCount;c++){
+    const address=XLSX.utils.encode_cell({r,c});
+    const cell=ws[address] || (ws[address]={t:'s',v:''});
+    const header=r<headerRows, total=r===rowCount-1;
+    cell.s={
+      font:{name:'Arial',sz:11,bold:header || total,color:{rgb:header?'FFFFFF':'1A2233'}},
+      alignment:{horizontal:header || centered.includes(c)?'center':cell.t==='n'?'right':'left',vertical:'center',wrapText:header},
+      fill:{patternType:'solid',fgColor:{rgb:header?'1F5FA9':total?'DCE8F5':r%2?'F3F6FB':'FFFFFF'}},
+      border:{bottom:{style:total?'double':'thin',color:{rgb:'D8DEE8'}}}
+    };
+  }
+  ws['!rows']=Array.from({length:rowCount},(_,r)=>({hpt:r<headerRows?30:22}));
 }
 
 function exportPayroll(){
@@ -317,8 +335,9 @@ function exportPayroll(){
   const ws = XLSX.utils.aoa_to_sheet(aoa);
   for(let row=2;row<aoa.length;row++) PAYROLL_COLS.forEach((col,index)=>{
     const cell=ws[XLSX.utils.encode_cell({r:row,c:index})];
-    if(col[3]==='num' && cell && cell.t==='n')cell.z='#,##0.00';
+    if(col[3]==='num' && cell && cell.t==='n')cell.z=WHOLE_COLUMNS.has(col[1])?'#,##0':'#,##0.00';
   });
+  styleExport(ws, aoa.length, PAYROLL_COLS.length, 2, [0,1,3,4]);
   ws['!cols'] = PAYROLL_COLS.map((c, i) => ({ wch: i === 1 ? 28 : i === 2 ? 24 : 14 }));
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Payroll');
@@ -333,7 +352,8 @@ function exportTransfer(){
   aoa.push(['', rows.length, 'Total', Number(rows.reduce((s, r) => s + r.salary, 0).toFixed(2))]);
 
   const ws = XLSX.utils.aoa_to_sheet(aoa);
-  for(let row=1;row<aoa.length;row++){const cell=ws['D'+(row+1)];if(cell && cell.t==='n')cell.z='#,##0.00';}
+  for(let row=1;row<aoa.length;row++){const cell=ws['D'+(row+1)];if(cell && cell.t==='n')cell.z='#,##0';}
+  styleExport(ws, aoa.length, 4, 1, [0,1,2]);
   ws['!cols'] = [{ wch: 8 }, { wch: 30 }, { wch: 18 }, { wch: 14 }];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Transfer');
