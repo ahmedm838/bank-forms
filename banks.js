@@ -26,46 +26,35 @@ function refreshState(){
 const COLUMNS = [
   { key:'order', label:'#',                  width:'62px',  type:'order' },
   { key:'en',    label:'Bank name (English)', width:'32%',  dir:'ltr' },
+  { key:'acronym', label:'Acronym', width:'140px', dir:'ltr' },
   { key:'ar',    label:'اسم البنك (عربي)',    width:'32%',  dir:'rtl' },
   { key:'swift', label:'SWIFT code',          width:'150px', dir:'ltr', upper:true, live:true },
 ];
 
 function exportBook(){
-  const aoa = [['#', 'Bank Name (English)', 'Bank Name (Arabic)', 'SWIFT Code']];
-  table.rows.forEach(b => aoa.push([b.order, b.en, b.ar, b.swift]));
-  const ws = XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols'] = [{ wch:5 }, { wch:42 }, { wch:34 }, { wch:16 }];
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Banks');
-  XLSX.writeFile(wb, 'Banks.xlsx');
+  XLSX.writeFile(RepoWorkbooks.banks(table.rows), 'Banks.xlsx');
   flashMsg('Saved Banks.xlsx');
 }
 
 async function boot(){
   await setupGate();
+  if(!window.BANK_FORMS_STANDALONE) window.BankFormsMemory['abk-banks']=await RepoStore.load('banks');
   table = ListTable({ mount: $('table'), columns: COLUMNS, rows: LISTS.banks(), onChange: touched });
   unsaved = Unsaved({
     badge: $('dirty'), saveBtn: $('btnSave'),
-    commit: () => {
-      if (LISTS.saveBanks(table.rows)) return true;
-      flashMsg('Could not save in this browser.'); return false;
+    commit: async () => {
+      try { return await LISTS.saveBanks(table.rows); }
+      catch(e){ flashMsg(e.message); return false; }
     },
     onSaved: () => flashMsg(table.rows.length + ' banks saved.'),
   });
   table.render();
   refreshState();
 
-  $('btnAdd').addEventListener('click', () => table.add({ en:'', ar:'', swift:'' }));
+  $('btnAdd').addEventListener('click', () => table.add({ en:'', acronym:'', ar:'', swift:'' }));
   $('btnSave').addEventListener('click', () => unsaved.save());
   $('btnExport').addEventListener('click', exportBook);
-  $('btnReset').addEventListener('click', () => {
-    if (!confirm('Throw away your changes and go back to the standard list of Egyptian banks?')) return;
-    LISTS.resetBanks();
-    table.rows = LISTS.banks();
-    unsaved.settled();
-    refreshState();
-    flashMsg('Standard list restored.');
-  });
+
 }
 
 boot().catch(e => flashMsg('Could not start: ' + e.message));

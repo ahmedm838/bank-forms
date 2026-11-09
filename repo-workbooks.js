@@ -1,4 +1,8 @@
-window.RepoWorkbooks={suppliers(rows){
+window.RepoWorkbooks={banks(rows){
+ const ws=XLSX.utils.aoa_to_sheet([["#","Bank Name (English)","Acronym","Bank Name (Arabic)","SWIFT Code"],...rows.map(b=>[b.order,b.en,b.acronym||"",b.ar,b.swift])]);
+ ws["!cols"]=[{wch:5},{wch:45},{wch:16},{wch:35},{wch:16}];
+ const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Banks");return wb;
+},suppliers(rows){
   const aoa = [['#','Supplier Name (Arabic)','Supplier Name (English)','IBAN','Account No.','Bank','SWIFT','Reason']];
   rows.forEach(s => aoa.push([s.order, s.nameAr, s.nameEn, s.iban, s.account, s.bank, s.swift, s.reason]));
   const ws = XLSX.utils.aoa_to_sheet(aoa);

@@ -17,7 +17,7 @@ function banks(){
   if (stored) return byOrder(stored);
   return byOrder((window.BANKS_SEED || []).map(b => Object.assign({}, b)));
 }
-function saveBanks(rows){ return write(BANKS_KEY, rows); }
+async function saveBanks(rows){ rows=clone(rows); await RepoStore.save('banks',rows); return write(BANKS_KEY,rows); }
 function resetBanks(){ delete memory[BANKS_KEY]; }
 
 /* ---------- suppliers ---------- */
@@ -124,7 +124,7 @@ function matchBank(text, list){
   const rows = list || banks();
 
   for (const b of rows){
-    if (normalise(b.en) === q || normalise(b.ar) === q) return b;
+    if (normalise(b.en) === q || normalise(b.ar) === q || normalise(b.acronym) === q) return b;
   }
   // an abbreviation in brackets, like (CIB) or (NBE)
   for (const b of rows){
@@ -169,6 +169,7 @@ function payTo(supplier){
 
 async function loadRepository(){
   if(window.BANK_FORMS_STANDALONE) return;
+  write(BANKS_KEY,await RepoStore.load('banks'));
   await loadFormDefaults();
   const suppliers=await RepoStore.load('suppliers');
   const transactions=await RepoStore.load('transactions');

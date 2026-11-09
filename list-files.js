@@ -75,5 +75,9 @@ window.ListFiles = (function(){
       finally{button.disabled=false;input.value='';}
     });
   }
-  return {suppliers,transactions,hook};
+  async function banks(file){
+ const wb=XLSX.read(await file.arrayBuffer(),{type:'array'});
+ return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''}).slice(1).filter(r=>r.some(v=>v!=='')).map(r=>({order:r[0],en:r[1],acronym:r[2],ar:r[3],swift:r[4]}));
+ }
+ return {banks,suppliers,transactions,hook};
 })();

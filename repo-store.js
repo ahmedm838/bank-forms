@@ -3,7 +3,7 @@ window.RepoStore = (() => {
   const base='https://api.github.com/repos/ahmedm838/bank-forms/contents/data/';
   const memory=window.BankFormsMemory;
   const shas={};
-  const names={suppliers:'Suppliers.xlsx',transactions:'Transactions.xlsx',defaults:'FormDefaults.json'};
+  const names={banks:'Banks.xlsx',suppliers:'Suppliers.xlsx',transactions:'Transactions.xlsx',defaults:'FormDefaults.json'};
   const headers=()=>({Accept:'application/vnd.github+json', ...(memory.githubToken?{Authorization:'Bearer '+memory.githubToken}:{})});
   function connect(){
     if(memory.githubToken) return Promise.resolve();
@@ -43,7 +43,7 @@ window.RepoStore = (() => {
     return rows;
   }
   async function save(kind,rows){
-    if(window.BANK_FORMS_STANDALONE) return;
+    if(window.BANK_FORMS_STANDALONE) throw new Error('Open the hosted app to save changes to GitHub.');
     if(memory.repoSaving) throw new Error('Another save is in progress. Please try again when it finishes.');
     memory.repoSaving=true;
     try {
