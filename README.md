@@ -6,7 +6,7 @@ Suppliers and transactions load automatically from data/Suppliers.xlsx and
  data/Transactions.xlsx in the main branch. Save commits the Excel workbook
 through GitHub. On the first save per workspace, enter a fine-grained GitHub
 access token restricted to this repository with Contents read/write permission.
-Tokens stay in RAM and are cleared on refresh/close; never commit a token.
+The token is saved in this browser and reused app-wide, including after refresh. Use GitHub connection to save or forget it; never commit a token. Amount-in-words fields are read-only and follow the figures in the selected English or Arabic language.
 The workbooks have the repository's visibility (this repository is public).
 Concurrent changes are rejected rather than overwriting a newer workbook.
 Export unsaved edits before reloading after a conflict. Transaction workbooks include hidden

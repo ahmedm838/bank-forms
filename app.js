@@ -495,6 +495,7 @@ function buildForm(){
       if(f.hint) inp.placeholder = f.hint;
       if(f.upper) inp.style.textTransform = 'uppercase';
       inp.value = state.values[f.id] || '';
+      inp.readOnly = !!f.wordsOf;
       inp.addEventListener('input', onEdit(f, inp));
       inp.addEventListener('change', onEdit(f, inp));
       row.appendChild(inp);
@@ -504,13 +505,8 @@ function buildForm(){
         const gen = (fn, label) => {
           const b = el('button','mini',label); b.type='button';
           b.addEventListener('click', ()=>{
-            const w = f.wordsStyle === 'bare' && fn === amountInWordsAr
-              ? amountInWordsArBare(state.values[f.wordsOf])
-              : fn(state.values[f.wordsOf], (f.currencyFixed || state.values[f.currencyField]));
-            if(!w){ flash('Choose a currency and enter a numeric amount first.'); return; }
-            state.values[f.id] = w;
-            const n = document.getElementById('in-'+f.id);
-            n.value = w; n.dataset.touched = '';
+            inp.dataset.language = fn === amountInWords ? 'en' : 'ar';
+            maybeAutoWords();
             render();
           });
           return b;
@@ -539,6 +535,7 @@ function buildForm(){
 
 function onEdit(f, inp){
   return () => {
+    if(f.wordsOf){ inp.value = state.values[f.id] || ''; return; }
     let v = inp.value;
     if(f.latin){
       const hadArabicLetters = RTL_LETTERS.test(v);
@@ -582,18 +579,18 @@ function onEdit(f, inp){
   };
 }
 
-/* the field marked `wordsOf` spells out the amount it names, until typed over */
+/* Wording always follows the figures in the selected language. */
 function wordsField(){ return FIELDS.find(f => f.wordsOf); }
-
 function maybeAutoWords(){
-  const f = wordsField();
-  if(!f) return;
-  const node = document.getElementById('in-'+f.id);
-  if(!node || node.dataset.touched === '1') return;
-  const w = f.wordsStyle === 'bare'
-    ? amountInWordsArBare(state.values[f.wordsOf])
-    : amountInWordsAr(state.values[f.wordsOf], (f.currencyFixed || state.values[f.currencyField]));
-  if(w){ state.values[f.id] = w; node.value = w; }
+  for(const f of FIELDS.filter(f=>f.wordsOf)){
+    const node=document.getElementById('in-'+f.id);
+    if(!node) continue;
+    const english=node.dataset.language==='en';
+    const currency=f.currencyFixed || state.values[f.currencyField] || (f.wordsStyle==='bare'?'EGP':'');
+    const w=english ? amountInWords(state.values[f.wordsOf],currency) : f.wordsStyle==='bare' ? amountInWordsArBare(state.values[f.wordsOf]) : amountInWordsAr(state.values[f.wordsOf],currency);
+    state.values[f.id]=w; node.value=w;
+    node.parentElement.querySelectorAll('.wordsBtns button').forEach((button,index)=>button.setAttribute('aria-pressed',String(index===(english?1:0))));
+  }
 }
 
 function validate(f, inp){
@@ -994,8 +991,10 @@ function loadTransaction(id){
     if(n) n.checked = !!on;
   }
 
-  const words = document.getElementById('in-amountWords');
-  if(words) words.dataset.touched = '1';     // keep the wording that was saved
+  const wf=wordsField();
+  const words=wf && document.getElementById('in-'+wf.id);
+  if(words) words.dataset.language=/[A-Za-z]/.test(state.values[wf.id] || '')?'en':'ar';
+  maybeAutoWords();
 
   document.body.classList.add('editing');
   const note = document.getElementById('editing');
@@ -1050,7 +1049,7 @@ function applyDefaults(){
     if(!LISTS.canDefault(f)){
       state.values[f.id] = '';
       const n = document.getElementById('in-'+f.id);
-      if(n){ n.value=''; n.dataset.touched=''; }
+      if(n){ n.value=''; n.dataset.language='ar'; }
       continue;
     }
     const custom = saved.values && saved.values[f.id];
@@ -1215,11 +1214,6 @@ async function boot(){
 
   buildForm();
   FIELDS.forEach(f=>{ const n = document.getElementById('in-'+f.id); if(n && state.values[f.id]) n.value = state.values[f.id]; });
-  const wordsField = FIELDS.find(f => f.wordsOf);
-  if(wordsField){
-    document.getElementById('in-'+wordsField.id)
-      .addEventListener('input', e => { e.target.dataset.touched = '1'; });
-  }
   setToday();
   applyPreset(preset);
 

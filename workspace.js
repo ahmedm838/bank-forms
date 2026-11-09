@@ -1,14 +1,21 @@
 /* Keep a temporary workspace in RAM across internal page navigation.
-   Nothing is written to localStorage, sessionStorage, cookies or a database. */
+   Only the shared GitHub token is saved in localStorage. */
 (function(){
   function freshMemory(){
     for(const storage of [() => localStorage, () => sessionStorage]){
       try{
         const store=storage();
-        Object.keys(store).filter(key=>key.startsWith('abk-')).forEach(key=>store.removeItem(key));
+        Object.keys(store).filter(key=>key.startsWith('abk-') && key !== 'abk-github-token').forEach(key=>store.removeItem(key));
       }catch(e){}
     }
-    return Object.create(null);
+    const memory=Object.create(null);
+    let fallback='';
+    Object.defineProperty(memory,'githubToken',{
+      enumerable:true,configurable:true,
+      get(){try{return localStorage.getItem('abk-github-token') || fallback;}catch(e){return fallback;}},
+      set(value){fallback=value || '';try{if(value)localStorage.setItem('abk-github-token',value);else localStorage.removeItem('abk-github-token');}catch(e){}}
+    });
+    return memory;
   }
   if(window.BANK_FORMS_WORKSPACE || window.BANK_FORMS_STANDALONE){
     window.BankFormsMemory=freshMemory();

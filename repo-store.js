@@ -1,4 +1,4 @@
-/* Persist only reference lists and transactions. Credentials stay in workspace RAM. */
+/* Persist only reference lists and transactions. The token is shared app-wide. */
 window.RepoStore = (() => {
   const base='https://api.github.com/repos/ahmedm838/bank-forms/contents/data/';
   const memory=window.BankFormsMemory;
@@ -10,7 +10,7 @@ window.RepoStore = (() => {
     return new Promise((resolve,reject)=>{
       const dialog=document.createElement('dialog');
       dialog.style.cssText='max-width:460px;padding:24px;border:1px solid #ccd4df;border-radius:12px;font:16px Arial,sans-serif';
-      dialog.innerHTML='<form method="dialog"><h2>Save to GitHub</h2><p>Enter a fine-grained GitHub token for <b>ahmedm838/bank-forms</b> with <b>Contents: Read and write</b>. It stays only in this open workspace.</p><p>Saved workbooks have the same visibility as the repository.</p><label>GitHub access token<input type="password" autocomplete="off" required style="display:block;width:100%;box-sizing:border-box;margin:12px 0;padding:10px"></label><p><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer">Create a token in GitHub</a></p><button value="cancel" formnovalidate>Cancel</button> <button value="save">Connect and save</button></form>';
+      dialog.innerHTML='<form method="dialog"><h2>Save to GitHub</h2><p>Enter a fine-grained GitHub token for <b>ahmedm838/bank-forms</b> with <b>Contents: Read and write</b>. It is saved in this browser for all Bank Forms pages until you forget it.</p><p>Saved workbooks have the same visibility as the repository.</p><label>GitHub access token<input type="password" autocomplete="off" required style="display:block;width:100%;box-sizing:border-box;margin:12px 0;padding:10px"></label><p><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer">Create a token in GitHub</a></p><button value="cancel" formnovalidate>Cancel</button> <button value="save">Connect and save</button></form>';
       dialog.addEventListener('close',()=>{
         const token=dialog.querySelector('input').value.trim();
         dialog.querySelector('input').value='';dialog.remove();
@@ -22,8 +22,8 @@ window.RepoStore = (() => {
   }
   async function checked(response){
     if(response.ok)return response;
-    if(response.status===401){delete memory.githubToken;throw new Error('GitHub connection expired. Press Save to connect again.');}
-    if(response.status===403) delete memory.githubToken;
+    if(response.status===401){memory.githubToken='';throw new Error('GitHub connection expired. Press Save to connect again.');}
+
     if(response.status===409||response.status===422)throw new Error('The GitHub file changed. Export your edits, then reload and apply them to the latest list.');
     throw new Error('GitHub request failed ('+response.status+'). Check your connection and token permissions. Your changes have not been saved.');
   }
@@ -57,5 +57,5 @@ window.RepoStore = (() => {
       const result=await response.json();shas[kind]=result.content.sha;
     }finally{memory.repoSaving=false;}
   }
-  return {load,save};
+  return {load,save,connect};
 })();
