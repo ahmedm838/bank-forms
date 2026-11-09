@@ -15,6 +15,15 @@
    character to a box with `cells`. */
 window.FORM_DEFS = window.FORM_DEFS || {};
 
+/* Field boxes are in the scan's own coordinates, and the print squeezes that
+   whole layout onto a 117mm-wide cheque — so a point in a box is not a point on
+   the paper. `cm()` converts a width on the finished cheque into the box units
+   that produce it, which is why widening a field reads in centimetres here. */
+const MM = 72 / 25.4;
+const SOURCE_W = 595.2;                       // sourceBox width below
+const PRINT_SCALE_X = (117 * MM) / SOURCE_W;  // contentWidth ÷ source width
+const cm = n => n * 10 * MM / PRINT_SCALE_X;
+
 window.FORM_DEFS['cheque-egp'] = {
   title: 'Cheque — EGP',
   bank:  'Al Ahli Bank of Kuwait – Egypt',
@@ -35,7 +44,7 @@ window.FORM_DEFS['cheque-egp'] = {
   fields: [
     /* DDMMYYYY, one digit to a box */
     { id:'date', label:'التاريخ — Date', box:[376,802,458,818], group:'head',
-      cells: 8, cellSize: 11, printDigitSpacingMm: 2, printDateSeparators: true, printMoveMm: {right:6.25,up:1}, baseline: 809, latin:true, required:true, today:true,
+      cells: 8, cellSize: 11, printDigitSpacingMm: 2, printDateSeparators: true, printMoveMm: {right:9.25,up:1}, baseline: 809, latin:true, required:true, today:true,
       hint:'dd/mm/yyyy — printed DD / MM / YYYY' },
 
     { id:'payTo', label:'إدفعوا بموجب هذا الشيك إلى — Pay to', box:[62,764,366,780], group:'body',
@@ -47,7 +56,11 @@ window.FORM_DEFS['cheque-egp'] = {
       printMoveMm: {right:10,up:1.5}, printCharacterSpacingMm: 2, fontSizeOffset: 3, maxLines:1, baseline:745, pad:1, latin:true, thousands:true, wrap:'#', required:true,
       hint:'e.g. 125400' },
 
-    { id:'sumWords', label:'مبلغاً وقدره — The sum of', box:[78,745,320,761], group:'body',
+    /* A centimetre of extra room at each end, so a long amount shrinks less.
+       The box grows about its own centre, so a short amount sits where it did;
+       only a long one reaches further, and to the right that heads towards the
+       printed مبلغاً وقدره. */
+    { id:'sumWords', label:'مبلغاً وقدره — The sum of', box:[78 - cm(1), 745, 320 + cm(1), 761], group:'body',
       printMoveMm: {right:-15,up:2.5}, maxLines:1, baseline:753, pad:2, required:true,
       wordsOf:'amount', currencyFixed:'EGP' },
 
