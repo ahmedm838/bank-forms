@@ -371,7 +371,7 @@ available for backups. Transaction workbooks retain full form metadata.
 The EGP cheque Purpose field is transaction metadata only: it saves to the Purpose column and is excluded from preview and print. Selecting a supplier bank always fills its current SWIFT code, replacing the previous bank code.
 
 EGP cheque PDFs default to A4 landscape (297 × 210 mm), retaining the 117 × 83 mm cheque content scale. Print at Actual size / 100%.
-The visible cheque content sits 8 mm from the right edge and 19 mm from the top edge of the A4 landscape sheet.
+The visible cheque content sits 10 mm from the right edge and is centered vertically on the A4 landscape sheet.
 `nMonthly report import supports the Period report layout with Code, Name, S.I. No., Total Allowances (EGP), Incentive (EGP), Bonus (EGP), Adjustments (EGP), Overtime (hrs), Total Deductions (hrs), and Salary Advance (EGP). Columns are matched by heading and may be reordered. Missing required columns produce an error.
 
 Select A4, Landscape and Actual size / 100% in the printer dialog.
