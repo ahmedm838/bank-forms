@@ -714,6 +714,13 @@ function drawLine(page, fontKey, text, x, y, size, baseDir){
     let cursor = 0;
     g.glyphs.forEach((gl,i)=>{
       const p = g.positions[i];
+      if(page.chequeInkBounds){
+        const b=gl.bbox, gx=cx+(cursor+(p.xOffset||0))*k, gy=y+(p.yOffset||0)*k;
+        if(b.maxX>b.minX && b.maxY>b.minY){
+          page.chequeInkBounds.right=Math.max(page.chequeInkBounds.right,gx+b.maxX*k);
+          page.chequeInkBounds.top=Math.max(page.chequeInkBounds.top,gy+b.maxY*k);
+        }
+      }
       ops.push(op('Tm', ['1','0','0','1', num(cx + (cursor + (p.xOffset||0))*k), num(y + (p.yOffset||0)*k)]));
       ops.push(op('Tj', ['<'+hex4(gl.id)+'>']));
       cursor += p.xAdvance;
@@ -752,6 +759,7 @@ async function buildFilledPdf(){
   const pdfFont = await doc.embedFont(fontBytes.slice(0), { subset: false });
   const fontKey = page.node.newFontDictionary('ABK', pdfFont.ref);
 
+  if(printPage && printPage.contentMargins) page.chequeInkBounds={right:-Infinity,top:-Infinity};
   page.pushOperators(op('q'));
   // Translate only the PDF output; preview geometry and field sizing stay intact.
   if(printPage){
@@ -800,6 +808,13 @@ async function buildFilledPdf(){
     page.pushOperators(...stroke);
   }
   page.pushOperators(op('Q'));
+  if(page.chequeInkBounds && Number.isFinite(page.chequeInkBounds.right)){
+    const box=printPage.sourceBox, sx=printPage.w/(box[2]-box[0]), sy=printPage.h/(box[3]-box[1]);
+    const right=page.chequeInkBounds.right*sx-box[0]*sx+(printPage.offsetX||0);
+    const top=page.chequeInkBounds.top*sy-box[1]*sy;
+    page.translateContent(printPage.w-printPage.contentMargins.right-right,
+      printPage.h-printPage.contentMargins.top-top);
+  }
 
   const missing = missingGlyphs();
   if(missing.length) flash('These characters are not in the form font and were left blank: ' + missing.join(' '));
