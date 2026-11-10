@@ -356,3 +356,6 @@ body.editing #btnSave{background:var(--brand); border-color:var(--brand); color:
 /* a list column that is filled from elsewhere rather than typed into */
 .listtable input[readonly]{background:#f3f5f9; color:#5b6472; cursor:default}
 .listtable input[readonly]:hover{border-color:transparent; background:#f3f5f9}
+
+/* the iEnergy mark, as it sits in the portal's own page bar */
+.page-bar-logo{height:24px; width:auto; flex:none; display:block}

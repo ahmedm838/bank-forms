@@ -58,6 +58,11 @@ html = html
   .replace(/<link rel="stylesheet" href="styles\.css(\?v=\d+)?">/, () => `<style>\n${css}\n</style>`)
   .replace(/<img id="pageImg"([^>]*?)src="assets\/[^"]+">/,
            (m, attrs) => `<img id="pageImg"${attrs}src="${dataUrl('assets/preview.png')}">`)
+  // the tab icon and the page-bar mark travel with the file too
+  .replace(/<link rel="icon"([^>]*?)href="favicon\.png(\?v=\d+)?">/,
+           (m, attrs) => `<link rel="icon"${attrs}href="${dataUrl('favicon.png')}">`)
+  .replace(/<img class="page-bar-logo"([^>]*?)src="assets\/logo-mark\.png(\?v=\d+)?"([^>]*)>/,
+           (m, before, v, after) => `<img class="page-bar-logo"${before}src="${dataUrl('assets/logo-mark.png')}"${after}>`)
   .replace(...inlineScript('vendor/pdf-lib.min.js',     text('vendor/pdf-lib.min.js')))
   .replace(...inlineScript('vendor/fontkit.umd.min.js', text('vendor/fontkit.umd.min.js')))
   .replace(...inlineScript('vendor/bidi.min.js',        text('vendor/bidi.min.js')))
