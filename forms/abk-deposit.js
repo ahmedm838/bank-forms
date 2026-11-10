@@ -91,8 +91,8 @@ window.depositLetterHtml = function(values, size = 14, flags = {}){
   <p class="center">تحية طيبة وبعد،،،</p>
   <p>برجاء التكرم بعمل ايداع بنكي في حساب ${field('account')}</p>
   <p>بمبلغ قدره (${field('amount')}) فقط (${field('amountWords')})</p>
-  ${optional('showClaimNo', `رقم المطالبة: (${field('claimNo')})`)}
   <p>اسم المنشأة : أي انيرجي لصناعة العدادات</p>
+  ${optional('showClaimNo', `رقم المطالبة: (${field('claimNo')})`)}
   ${optional('showEstNo', `رقم المنشأة: (${field('estNo')})`)}
   ${optional('showTaxNo', `الرقم الضريبي: (${field('taxNo')})`)}
   <p>رقم الحساب البنكي : (${field('accountNo')})</p>
