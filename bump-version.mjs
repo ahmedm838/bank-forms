@@ -25,8 +25,8 @@ for (const f of pages){
   const before = fs.readFileSync(file, 'utf8');
   // only local assets carry a version; vendor files are pinned by name
   const after = before
-    .replace(/href="([\w./-]+\.css)(\?v=\d+)?"/g, (m, p) => `href="${p}?v=${next}"`)
-    .replace(/src="((?!vendor\/)[\w./-]+\.js)(\?v=\d+)?"/g, (m, p) => `src="${p}?v=${next}"`);
+    .replace(/href="([\w./-]+\.(?:css|png))(\?v=\d+)?"/g, (m, p) => `href="${p}?v=${next}"`)
+    .replace(/src="((?!vendor\/)[\w./-]+\.(?:js|png))(\?v=\d+)?"/g, (m, p) => `src="${p}?v=${next}"`);
   if (after !== before){ fs.writeFileSync(file, after); touched++; }
 }
 
