@@ -82,7 +82,7 @@ window.BANKS_SEED = [
     "en": "Suez Canal Bank",
     "ar": "بنك قناة السويس",
     "swift": "SUCAEGCX",
-    "acronym": ""
+    "acronym": "SCB"
   },
   {
     "order": 13,
@@ -110,7 +110,7 @@ window.BANKS_SEED = [
     "en": "Emirates NBD Egypt",
     "ar": "بنك الإمارات دبي الوطني مصر",
     "swift": "EBILEGCX",
-    "acronym": "Emirates NBD"
+    "acronym": "NBD"
   },
   {
     "order": 17,
@@ -124,7 +124,7 @@ window.BANKS_SEED = [
     "en": "Al Baraka Bank Egypt",
     "ar": "بنك البركة مصر",
     "swift": "ABRKEGCA",
-    "acronym": ""
+    "acronym": "BB"
   },
   {
     "order": 19,
@@ -152,14 +152,14 @@ window.BANKS_SEED = [
     "en": "Arab Bank",
     "ar": "البنك العربي",
     "swift": "ARABEGCX",
-    "acronym": ""
+    "acronym": "AB"
   },
   {
     "order": 23,
     "en": "Mashreq Bank",
     "ar": "بنك المشرق",
     "swift": "MSHQEGCA",
-    "acronym": ""
+    "acronym": "MB"
   },
   {
     "order": 24,
@@ -173,6 +173,90 @@ window.BANKS_SEED = [
     "en": "Attijariwafa Bank Egypt",
     "ar": "بنك التجاري وفا مصر",
     "swift": "BCBIEGCX",
-    "acronym": "AWB Egypt"
+    "acronym": "AWB"
+  },
+  {
+    "order": 26,
+    "en": "Central Bank of Egypt",
+    "ar": "البنك المركزي المصري",
+    "swift": "CBEGEGCX",
+    "acronym": "CBE"
+  },
+  {
+    "order": 27,
+    "en": "Egyptian Arab Land Bank",
+    "ar": "البنك العقاري المصري العربي",
+    "swift": "ARLBEGCA",
+    "acronym": "EALB"
+  },
+  {
+    "order": 28,
+    "en": "Industrial Development Bank",
+    "ar": "بنك التنمية الصناعية",
+    "swift": "DIBBEGCA",
+    "acronym": "IDB"
+  },
+  {
+    "order": 29,
+    "en": "Export Development Bank of Egypt",
+    "ar": "البنك المصري لتنمية الصادرات",
+    "swift": "EXDEEGCX",
+    "acronym": "EBE"
+  },
+  {
+    "order": 30,
+    "en": "The United Bank",
+    "ar": "المصرف المتحد",
+    "swift": "UBOEEGCX",
+    "acronym": "UB"
+  },
+  {
+    "order": 31,
+    "en": "Arab Investment Bank – Bank NXT",
+    "ar": "المصرف العربي للاستثمار والتجارة الخارجية (بنك إن إكس تي)",
+    "swift": "AINBEGCA",
+    "acronym": "NXT"
+  },
+  {
+    "order": 32,
+    "en": "Citibank N.A. Egypt",
+    "ar": "سيتي بنك مصر",
+    "swift": "CITIEGCX",
+    "acronym": "CITI"
+  },
+  {
+    "order": 33,
+    "en": "SAIB Bank",
+    "ar": "بنك سايب",
+    "swift": "SBNKEGCX",
+    "acronym": "SAIB"
+  },
+  {
+    "order": 34,
+    "en": "Kuwait Finance House – Egypt",
+    "ar": "بيت التمويل الكويتي – مصر",
+    "swift": "DEIBEGCX",
+    "acronym": "KFH"
+  },
+  {
+    "order": 35,
+    "en": "Bank ABC Egypt",
+    "ar": "بنك إيه بي سي مصر",
+    "swift": "EAABEGCX",
+    "acronym": "ABC"
+  },
+  {
+    "order": 36,
+    "en": "onebank",
+    "ar": "ون بنك",
+    "swift": "ONBKEGCC",
+    "acronym": "ONEBANK"
+  },
+  {
+    "order": 37,
+    "en": "American Express Egypt",
+    "ar": "أمريكان إكسبريس مصر",
+    "swift": "",
+    "acronym": "AMEX"
   }
 ];
