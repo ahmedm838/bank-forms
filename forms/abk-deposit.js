@@ -88,7 +88,7 @@ window.depositLetterHtml = function(values, size = 14, flags = {}){
   <p class="blank"></p>
   <p>السادة/&nbsp;&nbsp; البنك الأهلي الكويتي – مصر</p>
   <p class="center">تحية طيبة وبعد،،،</p>
-  <p>برجاء التكرم بعمل ايداع بنكي في حساب (${field('account')})</p>
+  <p>برجاء التكرم بعمل ايداع بنكي في حساب ${field('account')}</p>
   <p>بمبلغ قدره (${field('amount')}) فقط (${field('amountWords')})</p>
   ${claimLine}
   <p>اسم المنشأة : أي انيرجي لصناعة العدادات</p>
