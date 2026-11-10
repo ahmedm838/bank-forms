@@ -389,6 +389,13 @@ body.editing #btnSave{background:var(--brand); border-color:var(--brand); color:
 #tblTransfer :is(th,td):nth-child(-n+3){text-align:center}
 :is(#tblPayroll,#tblTransfer) thead th{background:#1f5fa9;color:#fff}
 :is(#tblPayroll,#tblTransfer) tfoot td{background:#dce8f5;color:#1a2233}
+/* a field that is only asked for when its box is ticked */
+.lbl.optional{display:flex; align-items:center; gap:6px; cursor:pointer}
+.lbl.optional input[type=checkbox]{margin:0; flex:none}
+.row input:disabled, .row select:disabled, .row textarea:disabled{
+  background:#f3f5f9; color:#9aa3b2; cursor:not-allowed}
+.lbl.optional.off .req{visibility:hidden}
+
 </style>
 </head>
 <body>
@@ -1162,7 +1169,7 @@ window.FORM_DEFS = window.FORM_DEFS || {};
 const DEPOSIT_ACCOUNTS = [
   'مصلحة الضرائب المصرية (ضريبة كسب عمل)',
   'مصلحة الضرائب المصرية (مساهمه تكافليه)',
-  'مصلحة الضرائب المصرية (ضريبة خصم وتحصيل-خصم من المنبع-موردين)',
+  'مصلحة الضرائب المصرية (ضريبة خصم وتحصيل)',
   'الهيئة العامة للتأمينات الاجتماعية',
   'نافذة',
 ];
@@ -1182,18 +1189,19 @@ window.FORM_DEFS['bank-deposit'] = {
     { id:'amountWords', label:'المبلغ بالحروف — Amount in words', group:'letter',
       multi:true, wordsOf:'amount', currencyFixed:'EGP', wordsStyle:'amountOnly',
       arabicOnly:true, required:true },
+    /* Three lines the letter carries only when they are ticked. Ticked, they
+       must be filled before it will print; left alone, they are not on the
+       letter at all. */
     { id:'claimNo', label:'رقم المطالبة — Claim no.', group:'letter',
-      arabicDigits:true, required:true, unless:'noClaim' },
+      toggle:'showClaimNo', arabicDigits:true, required:true },
+    { id:'estNo', label:'رقم المنشأة — Establishment no.', group:'letter',
+      toggle:'showEstNo', arabicDigits:true, required:true },
     { id:'taxNo', label:'الرقم الضريبي — Tax registration no.', group:'letter',
-      latin:true, arabicDigits:true, required:true },
+      toggle:'showTaxNo', latin:true, arabicDigits:true, required:true },
     { id:'accountNo', label:'رقم الحساب البنكي — Bank account no.', group:'letter',
       latin:true, arabicDigits:true, required:true },
     { id:'date', label:'التاريخ — Date', group:'letter',
       latin:true, arabicDigits:true, today:true, required:true, hint:'dd/mm/yyyy' },
-  ],
-  flags: [
-    /* ticked, the claim-number line comes off the letter altogether */
-    { id:'noClaim', label:'No claim number — leave the line off', group:'letter' },
   ],
 };
 
@@ -1212,8 +1220,8 @@ window.depositLetterHtml = function(values, size = 14, flags = {}){
     return '<bdi>' + escape(value || '…………') + '</bdi>';
   };
   const pt = Math.max(7, Math.min(30, Number(size) || 14));
-  const claimLine = flags.noClaim ? ''
-    : `<p>رقم المطالبة: (${field('claimNo')})</p>`;
+  /* a line only appears once its box is ticked */
+  const optional = (flag, text) => flags[flag] ? `<p>${text}</p>` : '';
   return `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>Bank Deposit</title>
   <style>@page{size:A4 portrait;margin:72pt 54pt}*{box-sizing:border-box}html{background:#fff;color:#000}
   body{font-family:Arial,sans-serif;font-size:${pt}pt;line-height:1.08;margin:72pt 54pt;width:487.3pt;text-align:right}
@@ -1232,11 +1240,12 @@ window.depositLetterHtml = function(values, size = 14, flags = {}){
   <p class="blank"></p>
   <p>السادة/&nbsp;&nbsp; البنك الأهلي الكويتي – مصر</p>
   <p class="center">تحية طيبة وبعد،،،</p>
-  <p>برجاء التكرم بعمل ايداع بنكي في حساب (${field('account')})</p>
+  <p>برجاء التكرم بعمل ايداع بنكي في حساب ${field('account')}</p>
   <p>بمبلغ قدره (${field('amount')}) فقط (${field('amountWords')})</p>
-  ${claimLine}
+  ${optional('showClaimNo', `رقم المطالبة: (${field('claimNo')})`)}
   <p>اسم المنشأة : أي انيرجي لصناعة العدادات</p>
-  <p>الرقم الضريبي: (${field('taxNo')})</p>
+  ${optional('showEstNo', `رقم المنشأة: (${field('estNo')})`)}
+  ${optional('showTaxNo', `الرقم الضريبي: (${field('taxNo')})`)}
   <p>رقم الحساب البنكي : (${field('accountNo')})</p>
   <p class="blank"></p>
   <p class="center">برجاء التكرم بتحويل المبلغ وإخطارنا بالإشعارات الدالة على ذلك.</p>
@@ -1660,6 +1669,25 @@ const previewWrap = document.getElementById('previewWrap');
 const errorsEl = document.getElementById('errors');
 
 function el(tag, cls, text){ const n=document.createElement(tag); if(cls)n.className=cls; if(text!=null)n.textContent=text; return n; }
+/* Some lines of a letter are there only when they are wanted: a claim number,
+   a tax registration number. Such a field carries `toggle`, the name of the
+   flag its checkbox sets. Off, the line is left off the letter and the field
+   is not asked for; on, it is required like any other. */
+const toggleFields = () => FIELDS.filter(f => f.toggle);
+const isOn = f => !f.toggle || !!state.flags[f.toggle];
+
+function syncToggles(){
+  for(const f of toggleFields()){
+    const box = document.getElementById('in-'+f.toggle);
+    const inp = document.getElementById('in-'+f.id);
+    const on  = isOn(f);
+    if(box) box.checked = on;
+    // the asterisk belongs to a line that is actually being asked for
+    if(box) box.closest('.lbl').classList.toggle('off', !on);
+    if(inp){ inp.disabled = !on; if(!on) inp.classList.remove('bad'); }
+  }
+}
+
 function labelFor(f){
   const n = el('label','lbl');
   n.appendChild(document.createTextNode(f.label));
@@ -1740,7 +1768,18 @@ function buildForm(){
 
     for(const f of FIELDS.filter(f=>f.group===g.id)){
       const row = el('div','row');
-      const lab = labelFor(f); lab.htmlFor = 'in-'+f.id;
+      const lab = labelFor(f);
+      if(f.toggle){
+        /* the box goes in front of the label, and the whole label works it */
+        const box = document.createElement('input');
+        box.type = 'checkbox'; box.id = 'in-'+f.toggle;
+        box.addEventListener('change', () => {
+          state.flags[f.toggle] = box.checked;
+          syncToggles(); render();
+        });
+        lab.insertBefore(box, lab.firstChild);
+        lab.classList.add('optional');
+      } else lab.htmlFor = 'in-'+f.id;
       row.appendChild(lab);
 
       let inp;
@@ -2164,7 +2203,7 @@ function checkRequired(){
   for(const f of FIELDS){
     const inp = document.getElementById('in-'+f.id);
     // a field whose line the form has dropped is not missing, it is not there
-    const needed = f.required && !(f.unless && state.flags[f.unless]);
+    const needed = f.required && isOn(f);
     if(needed && !(state.values[f.id]||'').trim()){
       problems.push(f.label); inp.classList.add('bad');
     } else if(inp && !validate(f, inp)){
@@ -2350,6 +2389,7 @@ function loadTransaction(id){
     if(n) n.checked = !!on;
   }
 
+  syncToggles();
   for(const wf of wordsFields()){
     const words = document.getElementById('in-'+wf.id);
     if(words) words.dataset.language=/[A-Za-z]/.test(state.values[wf.id] || '')?'en':'ar';
@@ -2432,6 +2472,8 @@ function applyDefaults(){
     state.flags[f.id] = false;
     const n = document.getElementById('in-'+f.id); if(n) n.checked = false;
   }
+  for(const f of toggleFields()) state.flags[f.toggle] = false;
+  syncToggles();
   for(const words of wordsFields()){
     const node = document.getElementById('in-'+words.id);
     if(node) node.dataset.touched = saved.values && saved.values[words.id] ? '1' : '';

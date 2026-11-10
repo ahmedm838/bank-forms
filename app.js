@@ -391,6 +391,25 @@ const previewWrap = document.getElementById('previewWrap');
 const errorsEl = document.getElementById('errors');
 
 function el(tag, cls, text){ const n=document.createElement(tag); if(cls)n.className=cls; if(text!=null)n.textContent=text; return n; }
+/* Some lines of a letter are there only when they are wanted: a claim number,
+   a tax registration number. Such a field carries `toggle`, the name of the
+   flag its checkbox sets. Off, the line is left off the letter and the field
+   is not asked for; on, it is required like any other. */
+const toggleFields = () => FIELDS.filter(f => f.toggle);
+const isOn = f => !f.toggle || !!state.flags[f.toggle];
+
+function syncToggles(){
+  for(const f of toggleFields()){
+    const box = document.getElementById('in-'+f.toggle);
+    const inp = document.getElementById('in-'+f.id);
+    const on  = isOn(f);
+    if(box) box.checked = on;
+    // the asterisk belongs to a line that is actually being asked for
+    if(box) box.closest('.lbl').classList.toggle('off', !on);
+    if(inp){ inp.disabled = !on; if(!on) inp.classList.remove('bad'); }
+  }
+}
+
 function labelFor(f){
   const n = el('label','lbl');
   n.appendChild(document.createTextNode(f.label));
@@ -471,7 +490,18 @@ function buildForm(){
 
     for(const f of FIELDS.filter(f=>f.group===g.id)){
       const row = el('div','row');
-      const lab = labelFor(f); lab.htmlFor = 'in-'+f.id;
+      const lab = labelFor(f);
+      if(f.toggle){
+        /* the box goes in front of the label, and the whole label works it */
+        const box = document.createElement('input');
+        box.type = 'checkbox'; box.id = 'in-'+f.toggle;
+        box.addEventListener('change', () => {
+          state.flags[f.toggle] = box.checked;
+          syncToggles(); render();
+        });
+        lab.insertBefore(box, lab.firstChild);
+        lab.classList.add('optional');
+      } else lab.htmlFor = 'in-'+f.id;
       row.appendChild(lab);
 
       let inp;
@@ -895,7 +925,7 @@ function checkRequired(){
   for(const f of FIELDS){
     const inp = document.getElementById('in-'+f.id);
     // a field whose line the form has dropped is not missing, it is not there
-    const needed = f.required && !(f.unless && state.flags[f.unless]);
+    const needed = f.required && isOn(f);
     if(needed && !(state.values[f.id]||'').trim()){
       problems.push(f.label); inp.classList.add('bad');
     } else if(inp && !validate(f, inp)){
@@ -1081,6 +1111,7 @@ function loadTransaction(id){
     if(n) n.checked = !!on;
   }
 
+  syncToggles();
   for(const wf of wordsFields()){
     const words = document.getElementById('in-'+wf.id);
     if(words) words.dataset.language=/[A-Za-z]/.test(state.values[wf.id] || '')?'en':'ar';
@@ -1163,6 +1194,8 @@ function applyDefaults(){
     state.flags[f.id] = false;
     const n = document.getElementById('in-'+f.id); if(n) n.checked = false;
   }
+  for(const f of toggleFields()) state.flags[f.toggle] = false;
+  syncToggles();
   for(const words of wordsFields()){
     const node = document.getElementById('in-'+words.id);
     if(node) node.dataset.touched = saved.values && saved.values[words.id] ? '1' : '';

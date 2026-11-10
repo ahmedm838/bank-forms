@@ -38,18 +38,19 @@ window.FORM_DEFS['bank-deposit'] = {
     { id:'amountWords', label:'المبلغ بالحروف — Amount in words', group:'letter',
       multi:true, wordsOf:'amount', currencyFixed:'EGP', wordsStyle:'amountOnly',
       arabicOnly:true, required:true },
+    /* Three lines the letter carries only when they are ticked. Ticked, they
+       must be filled before it will print; left alone, they are not on the
+       letter at all. */
     { id:'claimNo', label:'رقم المطالبة — Claim no.', group:'letter',
-      arabicDigits:true, required:true, unless:'noClaim' },
+      toggle:'showClaimNo', arabicDigits:true, required:true },
+    { id:'estNo', label:'رقم المنشأة — Establishment no.', group:'letter',
+      toggle:'showEstNo', arabicDigits:true, required:true },
     { id:'taxNo', label:'الرقم الضريبي — Tax registration no.', group:'letter',
-      latin:true, arabicDigits:true, required:true },
+      toggle:'showTaxNo', latin:true, arabicDigits:true, required:true },
     { id:'accountNo', label:'رقم الحساب البنكي — Bank account no.', group:'letter',
       latin:true, arabicDigits:true, required:true },
     { id:'date', label:'التاريخ — Date', group:'letter',
       latin:true, arabicDigits:true, today:true, required:true, hint:'dd/mm/yyyy' },
-  ],
-  flags: [
-    /* ticked, the claim-number line comes off the letter altogether */
-    { id:'noClaim', label:'No claim number — leave the line off', group:'letter' },
   ],
 };
 
@@ -68,8 +69,8 @@ window.depositLetterHtml = function(values, size = 14, flags = {}){
     return '<bdi>' + escape(value || '…………') + '</bdi>';
   };
   const pt = Math.max(7, Math.min(30, Number(size) || 14));
-  const claimLine = flags.noClaim ? ''
-    : `<p>رقم المطالبة: (${field('claimNo')})</p>`;
+  /* a line only appears once its box is ticked */
+  const optional = (flag, text) => flags[flag] ? `<p>${text}</p>` : '';
   return `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>Bank Deposit</title>
   <style>@page{size:A4 portrait;margin:72pt 54pt}*{box-sizing:border-box}html{background:#fff;color:#000}
   body{font-family:Arial,sans-serif;font-size:${pt}pt;line-height:1.08;margin:72pt 54pt;width:487.3pt;text-align:right}
@@ -90,9 +91,10 @@ window.depositLetterHtml = function(values, size = 14, flags = {}){
   <p class="center">تحية طيبة وبعد،،،</p>
   <p>برجاء التكرم بعمل ايداع بنكي في حساب ${field('account')}</p>
   <p>بمبلغ قدره (${field('amount')}) فقط (${field('amountWords')})</p>
-  ${claimLine}
+  ${optional('showClaimNo', `رقم المطالبة: (${field('claimNo')})`)}
   <p>اسم المنشأة : أي انيرجي لصناعة العدادات</p>
-  <p>الرقم الضريبي: (${field('taxNo')})</p>
+  ${optional('showEstNo', `رقم المنشأة: (${field('estNo')})`)}
+  ${optional('showTaxNo', `الرقم الضريبي: (${field('taxNo')})`)}
   <p>رقم الحساب البنكي : (${field('accountNo')})</p>
   <p class="blank"></p>
   <p class="center">برجاء التكرم بتحويل المبلغ وإخطارنا بالإشعارات الدالة على ذلك.</p>

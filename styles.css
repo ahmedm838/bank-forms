@@ -346,3 +346,9 @@ body.editing #btnSave{background:var(--brand); border-color:var(--brand); color:
 #tblTransfer :is(th,td):nth-child(-n+3){text-align:center}
 :is(#tblPayroll,#tblTransfer) thead th{background:#1f5fa9;color:#fff}
 :is(#tblPayroll,#tblTransfer) tfoot td{background:#dce8f5;color:#1a2233}
+/* a field that is only asked for when its box is ticked */
+.lbl.optional{display:flex; align-items:center; gap:6px; cursor:pointer}
+.lbl.optional input[type=checkbox]{margin:0; flex:none}
+.row input:disabled, .row select:disabled, .row textarea:disabled{
+  background:#f3f5f9; color:#9aa3b2; cursor:not-allowed}
+.lbl.optional.off .req{visibility:hidden}
