@@ -21,9 +21,12 @@ function touched(){
   refreshState();
 }
 
+/* The English name and its acronym, nothing else — the Arabic name and the
+   SWIFT code made the list hard to scan, and the SWIFT arrives with the pick
+   anyway. */
 const bankOptions = () => LISTS.banks().map(b => ({
   value: b.en || b.ar,
-  label: [b.en, b.ar].filter(Boolean).join('  ·  '),
+  label: [b.en || b.ar, b.acronym && `(${b.acronym})`].filter(Boolean).join(' '),
 }));
 
 /* Selecting a bank replaces the previous bank SWIFT. */

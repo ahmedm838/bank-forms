@@ -96,6 +96,11 @@ const LATIN_LETTERS_G = /[A-Za-z]/g;
 function toArabicOnly(s){ return String(s).replace(LATIN_LETTERS_G, ''); }
 
 /* what actually goes on the page for a field */
+/* A value printed in more than one place — the same date heads both sheets of
+   the salary-taxes letter — is declared once and mirrored with `sameAs`, so the
+   form shows one input and the copy can sit in its own box. */
+const rawOf = f => state.values[f.sameAs || f.id];
+
 function displayValue(f, raw){
   let v = (raw || '').trim();
   if(!v) return '';
@@ -468,7 +473,7 @@ function buildForm(){
       sec.appendChild(row);
     }
 
-    for(const f of FIELDS.filter(f=>f.group===g.id)){
+    for(const f of FIELDS.filter(f=>f.group===g.id && !f.sameAs)){
       const row = el('div','row');
       const lab = labelFor(f); lab.htmlFor = 'in-'+f.id;
       row.appendChild(lab);
@@ -571,8 +576,9 @@ function onEdit(f, inp){
     }
     state.values[f.id] = f.upper ? v.toUpperCase() : v;
     if(f.upper) inp.value = state.values[f.id];
-    const wf = wordsField();
-    if(wf && (f.id === wf.wordsOf || f.id === wf.currencyField)) maybeAutoWords();
+    /* a letter can carry more than one amount, so every wording field that
+       watches this one is refreshed, not just the first */
+    if(FIELDS.some(w => w.wordsOf && (w.wordsOf === f.id || w.currencyField === f.id))) maybeAutoWords();
     inp.classList.remove('bad');
     validate(f, inp);
     render();
@@ -580,7 +586,7 @@ function onEdit(f, inp){
 }
 
 /* Wording always follows the figures in the selected language. */
-function wordsField(){ return FIELDS.find(f => f.wordsOf); }
+const wordsFields = () => FIELDS.filter(f => f.wordsOf);
 function maybeAutoWords(){
   for(const f of FIELDS.filter(f=>f.wordsOf)){
     const node=document.getElementById('in-'+f.id);
@@ -588,7 +594,10 @@ function maybeAutoWords(){
     const english=node.dataset.language==='en';
     const currency=f.currencyFixed || state.values[f.currencyField] || (f.wordsStyle==='bare'?'EGP':'');
     const w=english ? amountInWords(state.values[f.wordsOf],currency) : f.wordsStyle==='bare' ? amountInWordsArBare(state.values[f.wordsOf]) : amountInWordsAr(state.values[f.wordsOf],currency);
-    state.values[f.id]=w; node.value=w;
+    /* some templates print فقط themselves, between the figures and the words,
+       so the wording must not repeat it */
+    const text = f.wordsStyle==='amountOnly' ? w.replace(/^\s*فقط\s+/, '') : w;
+    state.values[f.id]=text; node.value=text;
     node.parentElement.querySelectorAll('.wordsBtns button').forEach((button,index)=>button.setAttribute('aria-pressed',String(index===(english?1:0))));
   }
 }
@@ -610,10 +619,16 @@ let previewScale = 1;
 const meas = document.createElement('canvas').getContext('2d');
 function measurePreview(text, size){ meas.font = size+'px ABKForm, Helvetica, Arial, sans-serif'; return meas.measureText(text).width; }
 
+/* A form may run to more than one page — the tax deposit letters are one page
+   each. The preview stacks them, so a field on page n is drawn n page-heights
+   further down; `pdfPage` on a field says which sheet it belongs to. */
+const pageCount = () => (CURRENT_FORM.previews || [CURRENT_FORM.preview]).length;
+const pageOf = f => f.pdfPage || 0;
+
 function layoutOverlay(){
   previewScale = previewWrap.clientWidth / PAGE_W;
   overlayEl.style.width = (PAGE_W*previewScale)+'px';
-  overlayEl.style.height = ((VIEW_TOP-VIEW_BOT)*previewScale)+'px';
+  overlayEl.style.height = ((VIEW_TOP-VIEW_BOT) * pageCount() * previewScale)+'px';
   render();
 }
 
@@ -640,7 +655,7 @@ function render(){
 
   for(const f of FIELDS){
     if(f.screenOnly) continue;
-    const text = displayValue(f, state.values[f.id]);
+    const text = displayValue(f, rawOf(f));
     if(!text) continue;
     const [x0,y0,x1,y1] = f.box;
     const boxW = x1-x0, boxH = y1-y0;
@@ -659,7 +674,7 @@ function render(){
       for(const { ch, cx } of previewCells){
         const d = el('div', 'ov center', ch);
         d.style.left = ((cx - boxW/f.cells/2)*S)+'px';
-        d.style.top = ((VIEW_TOP - top)*S)+'px';
+        d.style.top = ((pageOf(f)*(VIEW_TOP-VIEW_BOT) + VIEW_TOP - top)*S)+'px';
         d.style.width = (boxW/f.cells*S)+'px';
         d.style.fontSize = (size*S)+'px';
         d.style.lineHeight = (size*LINE_RATIO*S)+'px';
@@ -675,7 +690,7 @@ function render(){
     const d = el('div', 'ov center');
     d.dir = 'auto';
     d.style.left = (x0*S)+'px';
-    d.style.top = ((VIEW_TOP - topPdf)*S)+'px';
+    d.style.top = ((pageOf(f)*(VIEW_TOP-VIEW_BOT) + VIEW_TOP - topPdf)*S)+'px';
     d.style.width = (boxW*S)+'px';
     d.style.fontSize = (size*S)+'px';
     d.style.lineHeight = (size*LINE_RATIO*S)+'px';
@@ -744,7 +759,7 @@ function missingGlyphs(){
   const out = new Set();
   for(const f of FIELDS){
     if(f.screenOnly) continue;
-    for(const ch of (state.values[f.id]||'')){
+    for(const ch of (rawOf(f)||'')){
       const cp = ch.codePointAt(0);
       if(ch !== '\n' && !fkFont.hasGlyphForCodePoint(cp)) out.add(ch);
     }
@@ -771,8 +786,17 @@ async function buildFilledPdf(){
   const pdfFont = await doc.embedFont(fontBytes.slice(0), { subset: false });
   const fontKey = page.node.newFontDictionary('ABK', pdfFont.ref);
 
+  /* A template that runs to several sheets needs the font on each of them, and
+     each field drawn on the sheet it belongs to. */
+  const sheets = CURRENT_FORM.overlayOnly ? [page] : doc.getPages();
+  const keys = sheets.map((p, i) => i === 0 && !CURRENT_FORM.overlayOnly
+    ? fontKey
+    : p.node.newFontDictionary('ABK', pdfFont.ref));
+  const sheetFor = f => sheets[Math.min(f.pdfPage || 0, sheets.length - 1)] || page;
+  const keyFor   = f => keys[Math.min(f.pdfPage || 0, keys.length - 1)] || fontKey;
+
   if(printPage && printPage.contentMargins) page.chequeInkBounds={right:-Infinity,top:-Infinity,bottom:Infinity};
-  page.pushOperators(op('q'));
+  sheets.forEach(p => p.pushOperators(op('q')));
   // Translate only the PDF output; preview geometry and field sizing stay intact.
   if(printPage){
     const box = printPage.sourceBox;
@@ -783,8 +807,10 @@ async function buildFilledPdf(){
     page.pushOperators(op('cm', [sx, 0, 0, sy, x, y].map(num)));
   }
   for(const f of FIELDS){
+    // the sheet this field belongs to; one-page forms always get the first
+    const page = sheetFor(f), fontKey = keyFor(f);
     if(f.screenOnly) continue;
-    const text = displayValue(f, state.values[f.id]);
+    const text = displayValue(f, rawOf(f));
     if(!text) continue;
     const [x0,y0,x1,y1] = f.box;
     const boxW = x1-x0, boxH = y1-y0;
@@ -855,7 +881,7 @@ async function buildFilledPdf(){
       op('l',[num(x0+w*0.82), num(y0+h*0.78)]), op('S')];
     page.pushOperators(...stroke);
   }
-  page.pushOperators(op('Q'));
+  sheets.forEach(p => p.pushOperators(op('Q')));
   if(page.chequeInkBounds && Number.isFinite(page.chequeInkBounds.right)){
     const box=printPage.sourceBox, sx=(printPage.contentWidth || printPage.w)/(box[2]-box[0]), sy=(printPage.contentHeight || printPage.h)/(box[3]-box[1]);
     const right=page.chequeInkBounds.right*sx-box[0]*sx+(printPage.offsetX||0);
@@ -1065,9 +1091,10 @@ function loadTransaction(id){
     if(n) n.checked = !!on;
   }
 
-  const wf=wordsField();
-  const words=wf && document.getElementById('in-'+wf.id);
-  if(words) words.dataset.language=/[A-Za-z]/.test(state.values[wf.id] || '')?'en':'ar';
+  for(const wf of wordsFields()){
+    const words = document.getElementById('in-'+wf.id);
+    if(words) words.dataset.language=/[A-Za-z]/.test(state.values[wf.id] || '')?'en':'ar';
+  }
   maybeAutoWords();
 
   document.body.classList.add('editing');
@@ -1146,8 +1173,7 @@ function applyDefaults(){
     state.flags[f.id] = false;
     const n = document.getElementById('in-'+f.id); if(n) n.checked = false;
   }
-  const words = wordsField();
-  if(words){
+  for(const words of wordsFields()){
     const node = document.getElementById('in-'+words.id);
     if(node) node.dataset.touched = saved.values && saved.values[words.id] ? '1' : '';
     if(!saved.values || !saved.values[words.id]) maybeAutoWords();
@@ -1273,7 +1299,18 @@ async function boot(){
   BASE_SIZE = loadSize(preset);
   FIELDS = preset.fields; CHECKS = preset.checks || []; FLAGS = preset.flags || [];
   GROUPS = preset.groups;
-  document.getElementById('pageImg').src = preset.preview;
+  /* One image per sheet, stacked, so a two-page letter previews as two pages */
+  const previews = preset.previews || [preset.preview];
+  const firstImg = document.getElementById('pageImg');
+  firstImg.src = previews[0];
+  previewWrap.querySelectorAll('.pageImgExtra').forEach(n => n.remove());
+  previews.slice(1).forEach(src => {
+    const img = document.createElement('img');
+    img.className = 'pageImgExtra';
+    img.alt = ''; img.src = src;
+    img.addEventListener('load', layoutOverlay);
+    previewWrap.insertBefore(img, overlayEl);
+  });
 
   // an overlay-only form has no template to stamp, just a page size to print on
   const [pdfRes, fontRes] = await Promise.all([

@@ -25,8 +25,7 @@ const pending = (title, note) => ({
 window.FORM_DEFS['social-insurance'] = pending('Social Insurance Payment',
   'Payment of social insurance contributions. Waiting on the blank PDF from the bank.');
 
-window.FORM_DEFS['salary-taxes'] = pending('Salary Taxes Payment',
-  'Payment of payroll tax. Waiting on the blank PDF from the bank.');
+/* Salary Taxes Payment is done — see forms/abk-salary-taxes.js */
 
 /* The sheet of employees the Payroll Debit Order letter refers to as
    "كما بالكشف المرفق". Not a bank form to stamp but two spreadsheets to build
