@@ -23,5 +23,14 @@
   },
   "payroll-debit-order": {
     "values": {}
+  },
+  "bank-deposit": {
+    "values": {
+      "accountNo": {
+        "value": "9229017"
+      }
+    },
+    "checks": {},
+    "flags": {}
   }
 }
