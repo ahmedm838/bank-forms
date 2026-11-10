@@ -1,6 +1,10 @@
 {
   "transfer": {
-    "values": {},
+    "values": {
+      "debitAccount": {
+        "value": "9229017\t"
+      }
+    },
     "checks": {},
     "flags": {}
   },
@@ -9,9 +13,7 @@
       "name": {
         "value": "احمد مصطفي محمد حسن                                                                           دعاء رمضان محمد أحمد"
       }
-    },
-    "checks": {},
-    "flags": {}
+    }
   },
   "payroll-debit-order": {
     "values": {}
