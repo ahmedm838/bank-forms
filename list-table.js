@@ -2,9 +2,16 @@
    and reorder, with an order column you edit directly.
 
    A column is { key, label, width, type }. `type` may be 'order', 'select'
-   (with `options()` and an optional `onChange`), or left out for plain text. */
+   (with `options()` and an optional `onChange`), or left out for plain text.
+
+   `width` is a number of pixels. Give the table a `widthKey` as well and every
+   heading gets a grip you can drag, with the widths you set remembered under
+   that key — the same behaviour as the Transactions table. */
 window.ListTable = function ListTable(opts){
-  const { mount, columns, onChange } = opts;
+  const { mount, columns, onChange, widthKey } = opts;
+  const cols = widthKey && window.ColumnWidths
+    ? window.ColumnWidths({ key: widthKey, onReset: () => render() })
+    : null;
   let rows = opts.rows || [];
   const filters = {};
 
@@ -54,6 +61,8 @@ window.ListTable = function ListTable(opts){
     const inp = document.createElement('input');
     inp.type = 'text';
     inp.dir = col.dir || 'auto';
+    /* a column filled from somewhere else is shown, not typed into */
+    if (col.readOnly){ inp.readOnly = true; inp.tabIndex = -1; }
     inp.value = row[col.key] == null ? '' : row[col.key];
     if (col.placeholder) inp.placeholder = col.placeholder;
     if (col.type === 'order'){
@@ -75,10 +84,14 @@ window.ListTable = function ListTable(opts){
 
   function render(){
     mount.innerHTML = '';
-    const table = el('table', 'listtable');
+    const table = el('table', 'listtable' + (cols ? ' resizable' : ''));
 
     const thead = el('thead'), hr = el('tr');
-    for (const c of columns) hr.appendChild(el('th', null, c.label));
+    for (const c of columns){
+      const th = el('th', null, c.label);
+      if(cols) cols.head(th, c);
+      hr.appendChild(th);
+    }
     hr.appendChild(el('th', null, ''));
     thead.appendChild(hr);
     const filterRow = el('tr', 'filterrow');
@@ -103,7 +116,7 @@ window.ListTable = function ListTable(opts){
       const tr = el('tr');
       for (const c of columns){
         const td = el('td');
-        if (c.width) td.style.width = c.width;
+        if (!cols && c.width) td.style.width = c.width;
         td.appendChild(cellInput(row, c));
         tr.appendChild(td);
       }

@@ -29,21 +29,49 @@ const bankOptions = () => LISTS.banks().map(b => ({
   label: [b.en || b.ar, b.acronym && `(${b.acronym})`].filter(Boolean).join(' '),
 }));
 
-/* Selecting a bank replaces the previous bank SWIFT. */
+/* The SWIFT belongs to the bank, not to the supplier: it is set on the Banks
+   page and read here, so one correction there fixes every supplier that banks
+   in the same place. That is why the column cannot be typed into. */
+const swiftOfBank = name => {
+  const b = LISTS.banks().find(x => (x.en || x.ar) === name);
+  return b ? b.swift || '' : '';
+};
+
+/* Selecting a bank brings its SWIFT with it. */
 function onBankPicked(row, value){
-  const b = LISTS.banks().find(x => (x.en || x.ar) === value);
-  row.swift = b ? b.swift || '' : '';
+  row.swift = swiftOfBank(value);
 }
 
+/* A row whose SWIFT no longer matches its bank — the bank's code was corrected
+   after the supplier was entered — is brought back into line, and the page is
+   marked unsaved so the correction is yours to keep. */
+function refreshSwiftCodes(rows){
+  const fixed = [];
+  for(const row of rows){
+    if(!row.bank) continue;
+    const swift = swiftOfBank(row.bank);
+    if(swift && swift !== (row.swift || '')){
+      row.swift = swift;
+      fixed.push(row.nameEn || row.nameAr || ('row ' + row.order));
+    }
+  }
+  return fixed;
+}
+
+/* Widths are in pixels and add up to about 1220, so every column lands on an
+   ordinary laptop without scrolling sideways. Drag a heading's right edge to
+   change one; what you set is remembered, and double-clicking a grip puts that
+   column back. */
 const COLUMNS = [
-  { key:'order',   label:'#',                   width:'54px', type:'order' },
-  { key:'nameAr',  label:'اسم المورد (عربي)',    width:'19%',  dir:'rtl' },
-  { key:'nameEn',  label:'Supplier (English)',   width:'13%',  dir:'ltr' },
-  { key:'iban',    label:'IBAN',                 width:'19%',  dir:'ltr', upper:true, live:true },
-  { key:'account', label:'Account no.',          width:'11%',  dir:'ltr' },
-  { key:'bank',    label:'Bank',                 width:'15%',  type:'select', options:bankOptions, onChange:onBankPicked },
-  { key:'swift',   label:'SWIFT',                width:'10%',  dir:'ltr', upper:true, live:true },
-  { key:'reason',  label:'سبب التحويل — Reason', width:'13%',  dir:'auto' },
+  { key:'order',   label:'#',                   width:54,  type:'order' },
+  { key:'nameAr',  label:'اسم المورد (عربي)',    width:230, dir:'rtl' },
+  { key:'nameEn',  label:'Supplier (English)',   width:150, dir:'ltr' },
+  { key:'iban',    label:'IBAN',                 width:230, dir:'ltr', upper:true, live:true },
+  { key:'account', label:'Account no.',          width:120, dir:'ltr' },
+  { key:'bank',    label:'Bank',                 width:186, type:'select', options:bankOptions, onChange:onBankPicked },
+  /* filled by the bank you pick; to change one, edit it on the Banks page */
+  { key:'swift',   label:'SWIFT',                width:110, dir:'ltr', readOnly:true },
+  { key:'reason',  label:'سبب التحويل — Reason', width:150, dir:'auto' },
 ];
 
 function refreshState(){
@@ -68,7 +96,8 @@ function exportBook(){
 async function boot(){
   await setupGate();
   await LISTS.loadRepository();
-  table = ListTable({ mount: $('table'), columns: COLUMNS, rows: LISTS.suppliers(), onChange: touched });
+  table = ListTable({ mount: $('table'), columns: COLUMNS, rows: LISTS.suppliers(), onChange: touched,
+                    widthKey: 'abk-suppliers-widths' });
   unsaved = Unsaved({
     badge: $('dirty'), saveBtn: $('btnSave'),
     commit: async () => {
@@ -78,8 +107,15 @@ async function boot(){
     },
     onSaved: () => flashMsg(table.rows.length + ' suppliers saved.'),
   });
+  const fixed = refreshSwiftCodes(table.rows);
   table.render();
   refreshState();
+  if(fixed.length){
+    unsaved.touch();
+    flashMsg(fixed.length === 1
+      ? 'SWIFT code updated from the Banks list for ' + fixed[0] + '. Save to keep it.'
+      : fixed.length + ' SWIFT codes updated from the Banks list. Save to keep them.');
+  }
 
   $('btnAdd').addEventListener('click', () =>
     table.add({ nameAr:'', nameEn:'', iban:'', account:'', bank:'', swift:'', reason:'' }));

@@ -334,14 +334,14 @@ body.sheetpage{display:flex; flex-direction:column}
 }
 .filterrow input:focus{outline:none; border-color:var(--brand); box-shadow:0 0 0 2px #dbe8f8}
 
-/* ---------- transactions table ---------- */
-.txtable{table-layout:fixed}
-.txtable th{position:relative; user-select:none}
-.txtable .resizer{
+/* ---------- tables with draggable column widths ---------- */
+.resizable{table-layout:fixed}
+.resizable th{position:relative; user-select:none}
+.resizable .resizer{
   position:absolute; top:0; right:-3px; width:7px; height:100%;
   cursor:col-resize; z-index:2;
 }
-.txtable .resizer:hover::after, body.resizing .txtable .resizer::after{
+.resizable .resizer:hover::after, body.resizing .resizable .resizer::after{
   content:''; position:absolute; top:4px; bottom:4px; left:3px;
   width:2px; background:var(--brand); border-radius:1px;
 }
@@ -395,6 +395,10 @@ body.editing #btnSave{background:var(--brand); border-color:var(--brand); color:
 .row input:disabled, .row select:disabled, .row textarea:disabled{
   background:#f3f5f9; color:#9aa3b2; cursor:not-allowed}
 .lbl.optional.off .req{visibility:hidden}
+
+/* a list column that is filled from elsewhere rather than typed into */
+.listtable input[readonly]{background:#f3f5f9; color:#5b6472; cursor:default}
+.listtable input[readonly]:hover{border-color:transparent; background:#f3f5f9}
 
 </style>
 </head>
@@ -545,7 +549,7 @@ window.BANKS_SEED = [
     "en": "Suez Canal Bank",
     "ar": "بنك قناة السويس",
     "swift": "SUCAEGCX",
-    "acronym": ""
+    "acronym": "SCB"
   },
   {
     "order": 13,
@@ -573,7 +577,7 @@ window.BANKS_SEED = [
     "en": "Emirates NBD Egypt",
     "ar": "بنك الإمارات دبي الوطني مصر",
     "swift": "EBILEGCX",
-    "acronym": "Emirates NBD"
+    "acronym": "NBD"
   },
   {
     "order": 17,
@@ -587,7 +591,7 @@ window.BANKS_SEED = [
     "en": "Al Baraka Bank Egypt",
     "ar": "بنك البركة مصر",
     "swift": "ABRKEGCA",
-    "acronym": ""
+    "acronym": "BB"
   },
   {
     "order": 19,
@@ -615,14 +619,14 @@ window.BANKS_SEED = [
     "en": "Arab Bank",
     "ar": "البنك العربي",
     "swift": "ARABEGCX",
-    "acronym": ""
+    "acronym": "AB"
   },
   {
     "order": 23,
     "en": "Mashreq Bank",
     "ar": "بنك المشرق",
     "swift": "MSHQEGCA",
-    "acronym": ""
+    "acronym": "MB"
   },
   {
     "order": 24,
@@ -636,7 +640,91 @@ window.BANKS_SEED = [
     "en": "Attijariwafa Bank Egypt",
     "ar": "بنك التجاري وفا مصر",
     "swift": "BCBIEGCX",
-    "acronym": "AWB Egypt"
+    "acronym": "AWB"
+  },
+  {
+    "order": 26,
+    "en": "Central Bank of Egypt",
+    "ar": "البنك المركزي المصري",
+    "swift": "CBEGEGCX",
+    "acronym": "CBE"
+  },
+  {
+    "order": 27,
+    "en": "Egyptian Arab Land Bank",
+    "ar": "البنك العقاري المصري العربي",
+    "swift": "ARLBEGCA",
+    "acronym": "EALB"
+  },
+  {
+    "order": 28,
+    "en": "Industrial Development Bank",
+    "ar": "بنك التنمية الصناعية",
+    "swift": "DIBBEGCA",
+    "acronym": "IDB"
+  },
+  {
+    "order": 29,
+    "en": "Export Development Bank of Egypt",
+    "ar": "البنك المصري لتنمية الصادرات",
+    "swift": "EXDEEGCX",
+    "acronym": "EBE"
+  },
+  {
+    "order": 30,
+    "en": "The United Bank",
+    "ar": "المصرف المتحد",
+    "swift": "UBOEEGCX",
+    "acronym": "UB"
+  },
+  {
+    "order": 31,
+    "en": "Arab Investment Bank – Bank NXT",
+    "ar": "المصرف العربي للاستثمار والتجارة الخارجية (بنك إن إكس تي)",
+    "swift": "AINBEGCA",
+    "acronym": "NXT"
+  },
+  {
+    "order": 32,
+    "en": "Citibank N.A. Egypt",
+    "ar": "سيتي بنك مصر",
+    "swift": "CITIEGCX",
+    "acronym": "CITI"
+  },
+  {
+    "order": 33,
+    "en": "SAIB Bank",
+    "ar": "بنك سايب",
+    "swift": "SBNKEGCX",
+    "acronym": "SAIB"
+  },
+  {
+    "order": 34,
+    "en": "Kuwait Finance House – Egypt",
+    "ar": "بيت التمويل الكويتي – مصر",
+    "swift": "DEIBEGCX",
+    "acronym": "KFH"
+  },
+  {
+    "order": 35,
+    "en": "Bank ABC Egypt",
+    "ar": "بنك إيه بي سي مصر",
+    "swift": "EAABEGCX",
+    "acronym": "ABC"
+  },
+  {
+    "order": 36,
+    "en": "onebank",
+    "ar": "ون بنك",
+    "swift": "ONBKEGCC",
+    "acronym": "ONEBANK"
+  },
+  {
+    "order": 37,
+    "en": "American Express Egypt",
+    "ar": "أمريكان إكسبريس مصر",
+    "swift": "",
+    "acronym": "AMEX"
   }
 ];
 </script>
@@ -1242,8 +1330,8 @@ window.depositLetterHtml = function(values, size = 14, flags = {}){
   <p class="center">تحية طيبة وبعد،،،</p>
   <p>برجاء التكرم بعمل ايداع بنكي في حساب ${field('account')}</p>
   <p>بمبلغ قدره (${field('amount')}) فقط (${field('amountWords')})</p>
-  ${optional('showClaimNo', `رقم المطالبة: (${field('claimNo')})`)}
   <p>اسم المنشأة : أي انيرجي لصناعة العدادات</p>
+  ${optional('showClaimNo', `رقم المطالبة: (${field('claimNo')})`)}
   ${optional('showEstNo', `رقم المنشأة: (${field('estNo')})`)}
   ${optional('showTaxNo', `الرقم الضريبي: (${field('taxNo')})`)}
   <p>رقم الحساب البنكي : (${field('accountNo')})</p>

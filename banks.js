@@ -23,12 +23,15 @@ function refreshState(){
     + (bad ? ` · ${bad} with a SWIFT code that is not the usual 8 or 11 characters` : '');
 }
 
+/* Widths are in pixels and add up to about 1150, so the table lands on an
+   ordinary laptop. Drag a heading's right edge to change one; what you set is
+   remembered, and double-clicking a grip puts that column back. */
 const COLUMNS = [
-  { key:'order', label:'#',                  width:'62px',  type:'order' },
-  { key:'en',    label:'Bank name (English)', width:'32%',  dir:'ltr' },
-  { key:'acronym', label:'Acronym', width:'140px', dir:'ltr' },
-  { key:'ar',    label:'اسم البنك (عربي)',    width:'32%',  dir:'rtl' },
-  { key:'swift', label:'SWIFT code',          width:'150px', dir:'ltr', upper:true, live:true },
+  { key:'order',   label:'#',                   width:62,  type:'order' },
+  { key:'en',      label:'Bank name (English)', width:330, dir:'ltr' },
+  { key:'acronym', label:'Acronym',             width:120, dir:'ltr' },
+  { key:'ar',      label:'اسم البنك (عربي)',     width:330, dir:'rtl' },
+  { key:'swift',   label:'SWIFT code',          width:130, dir:'ltr', upper:true, live:true },
 ];
 
 function exportBook(){
@@ -60,7 +63,8 @@ async function boot(){
   await setupGate();
   await ensureBankStorage();
   if(!window.BANK_FORMS_STANDALONE) window.BankFormsMemory['abk-banks']=await RepoStore.load('banks');
-  table = ListTable({ mount: $('table'), columns: COLUMNS, rows: LISTS.banks(), onChange: touched });
+  table = ListTable({ mount: $('table'), columns: COLUMNS, rows: LISTS.banks(), onChange: touched,
+                    widthKey: 'abk-banks-widths' });
   unsaved = Unsaved({
     badge: $('dirty'), saveBtn: $('btnSave'),
     commit: async () => {

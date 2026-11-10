@@ -291,14 +291,14 @@ body.sheetpage{display:flex; flex-direction:column}
 }
 .filterrow input:focus{outline:none; border-color:var(--brand); box-shadow:0 0 0 2px #dbe8f8}
 
-/* ---------- transactions table ---------- */
-.txtable{table-layout:fixed}
-.txtable th{position:relative; user-select:none}
-.txtable .resizer{
+/* ---------- tables with draggable column widths ---------- */
+.resizable{table-layout:fixed}
+.resizable th{position:relative; user-select:none}
+.resizable .resizer{
   position:absolute; top:0; right:-3px; width:7px; height:100%;
   cursor:col-resize; z-index:2;
 }
-.txtable .resizer:hover::after, body.resizing .txtable .resizer::after{
+.resizable .resizer:hover::after, body.resizing .resizable .resizer::after{
   content:''; position:absolute; top:4px; bottom:4px; left:3px;
   width:2px; background:var(--brand); border-radius:1px;
 }
@@ -352,3 +352,7 @@ body.editing #btnSave{background:var(--brand); border-color:var(--brand); color:
 .row input:disabled, .row select:disabled, .row textarea:disabled{
   background:#f3f5f9; color:#9aa3b2; cursor:not-allowed}
 .lbl.optional.off .req{visibility:hidden}
+
+/* a list column that is filled from elsewhere rather than typed into */
+.listtable input[readonly]{background:#f3f5f9; color:#5b6472; cursor:default}
+.listtable input[readonly]:hover{border-color:transparent; background:#f3f5f9}

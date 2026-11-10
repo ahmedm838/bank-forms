@@ -47,45 +47,7 @@ const cellText = (row, col) => String(col.get ? col.get(row) : (row[col.key] == 
 /* ---------- column widths ----------
    The defaults add up to a laptop screen. Drag the right edge of a heading to
    change one, and the widths are remembered for next time. */
-const ACTS_W = 124;
-const WIDTH_KEY = 'abk-tx-widths-v2'; // start with the compact layout on existing browsers too
-let widths = (() => {
-  try { return window.BankFormsMemory[WIDTH_KEY] || {}; }
-  catch(e){ return {}; }
-})();
-const widthOf = c => Math.max(44, Number(widths[c.key]) || c.width);
-function saveWidths(){
-  try { window.BankFormsMemory[WIDTH_KEY] = Object.assign({},widths); } catch(e){}
-}
-
-function makeResizer(col){
-  const grip = el('span', 'resizer');
-  grip.title = 'Drag to resize · double-click to reset';
-  grip.addEventListener('mousedown', e => {
-    e.preventDefault(); e.stopPropagation();
-    const startX = e.clientX, startW = widthOf(col);
-    const th = grip.parentElement;
-    document.body.classList.add('resizing');
-    const move = ev => {
-      const w = Math.max(44, startW + ev.clientX - startX);
-      widths[col.key] = w;
-      th.style.width = w + 'px';          // live, without rebuilding the table
-    };
-    const up = () => {
-      document.removeEventListener('mousemove', move);
-      document.removeEventListener('mouseup', up);
-      document.body.classList.remove('resizing');
-      saveWidths();
-    };
-    document.addEventListener('mousemove', move);
-    document.addEventListener('mouseup', up);
-  });
-  grip.addEventListener('dblclick', e => {
-    e.preventDefault(); e.stopPropagation();
-    delete widths[col.key]; saveWidths(); render();
-  });
-  return grip;
-}
+const cols = ColumnWidths({ key:'abk-tx-widths-v2', onReset: () => render() });
 
 function visibleRows(){
   return rows.filter(r => COLUMNS.every(c => {
@@ -98,14 +60,12 @@ function render(){
   const mount = $('table');
   mount.innerHTML = '';
 
-  const table = el('table', 'listtable txtable');
+  const table = el('table', 'listtable txtable resizable');
   const thead = el('thead');
 
   const hr = el('tr');
   for (const c of COLUMNS){
-    const th = el('th', null, c.label);
-    th.style.width = widthOf(c) + 'px';
-    th.appendChild(makeResizer(c));
+    const th = cols.head(el('th', null, c.label), c);
     hr.appendChild(th);
   }
   hr.appendChild(el('th', 'rowacts-head', ''));
