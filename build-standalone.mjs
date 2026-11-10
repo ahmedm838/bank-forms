@@ -20,9 +20,8 @@ const FORM_FILES = [
   'forms/abk-cheques.js',
   'forms/abk-cheque-egp.js',
   'forms/abk-payroll.js',
-  'forms/abk-tax.js',
   'forms/abk-payroll-transfer.js',
-  'forms/abk-salary-taxes.js',
+  'forms/abk-deposit.js',
 ];
 
 const MIME = { '.pdf':'application/pdf', '.png':'image/png', '.jpg':'image/jpeg', '.ttf':'font/ttf' };

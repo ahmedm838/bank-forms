@@ -96,10 +96,6 @@ const LATIN_LETTERS_G = /[A-Za-z]/g;
 function toArabicOnly(s){ return String(s).replace(LATIN_LETTERS_G, ''); }
 
 /* what actually goes on the page for a field */
-/* A value printed in more than one place — the same date heads both sheets of
-   the salary-taxes letter — is declared once and mirrored with `sameAs`, so the
-   form shows one input and the copy can sit in its own box. */
-const rawOf = f => state.values[f.sameAs || f.id];
 
 function displayValue(f, raw){
   let v = (raw || '').trim();
@@ -473,7 +469,7 @@ function buildForm(){
       sec.appendChild(row);
     }
 
-    for(const f of FIELDS.filter(f=>f.group===g.id && !f.sameAs)){
+    for(const f of FIELDS.filter(f=>f.group===g.id)){
       const row = el('div','row');
       const lab = labelFor(f); lab.htmlFor = 'in-'+f.id;
       row.appendChild(lab);
@@ -505,7 +501,7 @@ function buildForm(){
       inp.addEventListener('change', onEdit(f, inp));
       row.appendChild(inp);
 
-      if(f.wordsOf){
+      if(f.wordsOf && !f.arabicOnly){
         const bar = el('div','wordsBtns');
         const gen = (fn, label) => {
           const b = el('button','mini',label); b.type='button';
@@ -619,18 +615,19 @@ let previewScale = 1;
 const meas = document.createElement('canvas').getContext('2d');
 function measurePreview(text, size){ meas.font = size+'px ABKForm, Helvetica, Arial, sans-serif'; return meas.measureText(text).width; }
 
-/* A form may run to more than one page — the tax deposit letters are one page
-   each. The preview stacks them, so a field on page n is drawn n page-heights
-   further down; `pdfPage` on a field says which sheet it belongs to. */
-const pageCount = () => (CURRENT_FORM.previews || [CURRENT_FORM.preview]).length;
-const pageOf = f => f.pdfPage || 0;
 
 function layoutOverlay(){
   previewScale = previewWrap.clientWidth / PAGE_W;
   overlayEl.style.width = (PAGE_W*previewScale)+'px';
-  overlayEl.style.height = ((VIEW_TOP-VIEW_BOT) * pageCount() * previewScale)+'px';
+  overlayEl.style.height = ((VIEW_TOP-VIEW_BOT)*previewScale)+'px';
   render();
 }
+
+/* A letter that flows as text rather than filling boxes builds its own HTML.
+   The form names the builder with `letterHtml`; the payroll order, which came
+   first, is the default. */
+const letterHtml = () =>
+  (window[CURRENT_FORM.letterHtml] || payrollLetterHtml)(state.values, BASE_SIZE, state.flags);
 
 function render(){
   if(CURRENT_FORM.flowingLetter){
@@ -639,14 +636,15 @@ function render(){
     let frame = document.getElementById('letterPreview');
     if(!frame){
       frame = document.createElement('iframe'); frame.id = 'letterPreview';
-      frame.title = 'Payroll Debit Order preview'; previewWrap.appendChild(frame);
+      frame.title = CURRENT_FORM.title + ' preview';
+      previewWrap.appendChild(frame);
     }
     const width = CURRENT_FORM.page.w * 4 / 3;
     const height = CURRENT_FORM.page.h * 4 / 3;
     const scale = previewWrap.clientWidth / width;
     frame.style.cssText = `position:absolute;left:0;top:0;width:${width}px;height:${height}px;border:0;display:block;transform:scale(${scale});transform-origin:top left`;
     previewWrap.style.height = (height*scale)+'px';
-    const html = payrollLetterHtml(state.values, BASE_SIZE);
+    const html = letterHtml();
     if(frame.srcdoc !== html) frame.srcdoc = html;
     return;
   }
@@ -655,7 +653,7 @@ function render(){
 
   for(const f of FIELDS){
     if(f.screenOnly) continue;
-    const text = displayValue(f, rawOf(f));
+    const text = displayValue(f, state.values[f.id]);
     if(!text) continue;
     const [x0,y0,x1,y1] = f.box;
     const boxW = x1-x0, boxH = y1-y0;
@@ -674,7 +672,7 @@ function render(){
       for(const { ch, cx } of previewCells){
         const d = el('div', 'ov center', ch);
         d.style.left = ((cx - boxW/f.cells/2)*S)+'px';
-        d.style.top = ((pageOf(f)*(VIEW_TOP-VIEW_BOT) + VIEW_TOP - top)*S)+'px';
+        d.style.top = ((VIEW_TOP - top)*S)+'px';
         d.style.width = (boxW/f.cells*S)+'px';
         d.style.fontSize = (size*S)+'px';
         d.style.lineHeight = (size*LINE_RATIO*S)+'px';
@@ -690,7 +688,7 @@ function render(){
     const d = el('div', 'ov center');
     d.dir = 'auto';
     d.style.left = (x0*S)+'px';
-    d.style.top = ((pageOf(f)*(VIEW_TOP-VIEW_BOT) + VIEW_TOP - topPdf)*S)+'px';
+    d.style.top = ((VIEW_TOP - topPdf)*S)+'px';
     d.style.width = (boxW*S)+'px';
     d.style.fontSize = (size*S)+'px';
     d.style.lineHeight = (size*LINE_RATIO*S)+'px';
@@ -759,7 +757,7 @@ function missingGlyphs(){
   const out = new Set();
   for(const f of FIELDS){
     if(f.screenOnly) continue;
-    for(const ch of (rawOf(f)||'')){
+    for(const ch of (state.values[f.id]||'')){
       const cp = ch.codePointAt(0);
       if(ch !== '\n' && !fkFont.hasGlyphForCodePoint(cp)) out.add(ch);
     }
@@ -786,17 +784,9 @@ async function buildFilledPdf(){
   const pdfFont = await doc.embedFont(fontBytes.slice(0), { subset: false });
   const fontKey = page.node.newFontDictionary('ABK', pdfFont.ref);
 
-  /* A template that runs to several sheets needs the font on each of them, and
-     each field drawn on the sheet it belongs to. */
-  const sheets = CURRENT_FORM.overlayOnly ? [page] : doc.getPages();
-  const keys = sheets.map((p, i) => i === 0 && !CURRENT_FORM.overlayOnly
-    ? fontKey
-    : p.node.newFontDictionary('ABK', pdfFont.ref));
-  const sheetFor = f => sheets[Math.min(f.pdfPage || 0, sheets.length - 1)] || page;
-  const keyFor   = f => keys[Math.min(f.pdfPage || 0, keys.length - 1)] || fontKey;
 
   if(printPage && printPage.contentMargins) page.chequeInkBounds={right:-Infinity,top:-Infinity,bottom:Infinity};
-  sheets.forEach(p => p.pushOperators(op('q')));
+  page.pushOperators(op('q'));
   // Translate only the PDF output; preview geometry and field sizing stay intact.
   if(printPage){
     const box = printPage.sourceBox;
@@ -807,10 +797,8 @@ async function buildFilledPdf(){
     page.pushOperators(op('cm', [sx, 0, 0, sy, x, y].map(num)));
   }
   for(const f of FIELDS){
-    // the sheet this field belongs to; one-page forms always get the first
-    const page = sheetFor(f), fontKey = keyFor(f);
     if(f.screenOnly) continue;
-    const text = displayValue(f, rawOf(f));
+    const text = displayValue(f, state.values[f.id]);
     if(!text) continue;
     const [x0,y0,x1,y1] = f.box;
     const boxW = x1-x0, boxH = y1-y0;
@@ -881,7 +869,7 @@ async function buildFilledPdf(){
       op('l',[num(x0+w*0.82), num(y0+h*0.78)]), op('S')];
     page.pushOperators(...stroke);
   }
-  sheets.forEach(p => p.pushOperators(op('Q')));
+  page.pushOperators(op('Q'));
   if(page.chequeInkBounds && Number.isFinite(page.chequeInkBounds.right)){
     const box=printPage.sourceBox, sx=(printPage.contentWidth || printPage.w)/(box[2]-box[0]), sy=(printPage.contentHeight || printPage.h)/(box[3]-box[1]);
     const right=page.chequeInkBounds.right*sx-box[0]*sx+(printPage.offsetX||0);
@@ -906,7 +894,9 @@ function checkRequired(){
 
   for(const f of FIELDS){
     const inp = document.getElementById('in-'+f.id);
-    if(f.required && !(state.values[f.id]||'').trim()){
+    // a field whose line the form has dropped is not missing, it is not there
+    const needed = f.required && !(f.unless && state.flags[f.unless]);
+    if(needed && !(state.values[f.id]||'').trim()){
       problems.push(f.label); inp.classList.add('bad');
     } else if(inp && !validate(f, inp)){
       problems.push(f.label + ' — check the format');
@@ -960,7 +950,7 @@ async function doPrint(){
       frame.contentWindow.focus(); frame.contentWindow.print();
     };
     frame.removeAttribute('src');
-    frame.srcdoc = payrollLetterHtml(state.values, BASE_SIZE);
+    frame.srcdoc = letterHtml();
     return;
   }
   busy(true);
@@ -1299,18 +1289,7 @@ async function boot(){
   BASE_SIZE = loadSize(preset);
   FIELDS = preset.fields; CHECKS = preset.checks || []; FLAGS = preset.flags || [];
   GROUPS = preset.groups;
-  /* One image per sheet, stacked, so a two-page letter previews as two pages */
-  const previews = preset.previews || [preset.preview];
-  const firstImg = document.getElementById('pageImg');
-  firstImg.src = previews[0];
-  previewWrap.querySelectorAll('.pageImgExtra').forEach(n => n.remove());
-  previews.slice(1).forEach(src => {
-    const img = document.createElement('img');
-    img.className = 'pageImgExtra';
-    img.alt = ''; img.src = src;
-    img.addEventListener('load', layoutOverlay);
-    previewWrap.insertBefore(img, overlayEl);
-  });
+  document.getElementById('pageImg').src = preset.preview;
 
   // an overlay-only form has no template to stamp, just a page size to print on
   const [pdfRes, fontRes] = await Promise.all([
