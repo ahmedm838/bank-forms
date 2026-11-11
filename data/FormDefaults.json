@@ -8,7 +8,7 @@
         "value": "9229017\t"
       },
       "ordName": {
-        "value": ""
+        "value": "I Energy Meters Manufacturing\t \t"
       }
     },
     "checks": {},
@@ -29,8 +29,6 @@
       "accountNo": {
         "value": "9229017"
       }
-    },
-    "checks": {},
-    "flags": {}
+    }
   }
 }
