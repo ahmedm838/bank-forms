@@ -1793,6 +1793,11 @@ function labelFor(f){
    Suppliers list: the IBAN where there is one, otherwise the account number.
    Everything it writes stays editable — the reason especially, since one
    supplier is paid for different things. */
+/* The beneficiary goes on the form in Arabic — that is the name the bank pays
+   against. A supplier with no Arabic name on the list falls back to the English
+   one, so no payee disappears from the picker. */
+const payeeName = s => String(s.nameAr || '').trim() || String(s.nameEn || '').trim();
+
 function buildSupplierPicker(){
   const bar = el('div','payeebar');
   const sel = document.createElement('select');
@@ -1802,8 +1807,9 @@ function buildSupplierPicker(){
     ? '— fill from a supplier —'
     : '— no suppliers yet —', ''));
   suppliers.forEach((s, i) => {
-    const name = s.nameEn || s.nameAr || ('supplier ' + (i+1));
-    sel.appendChild(new Option(name, String(i)));
+    const option = new Option(payeeName(s) || ('supplier ' + (i+1)), String(i));
+    option.dir = 'auto';   // an Arabic name reads right to left in the list
+    sel.appendChild(option);
   });
   sel.disabled = !suppliers.length;
 
@@ -1817,7 +1823,7 @@ function buildSupplierPicker(){
       const n = document.getElementById('in-'+id);
       if(n){ n.value = v; n.classList.remove('bad'); }
     };
-    put('benName', s.nameEn || s.nameAr);
+    put('benName', payeeName(s));
     put('benAccount', LISTS.payTo(s));
     put('benBank', s.bank);
     // a SWIFT that is not a real BIC would only trip the form's own check
@@ -1825,7 +1831,7 @@ function buildSupplierPicker(){
     else if(bank && LISTS.isBic(bank.swift)) put('benBankSwift', bank.swift);
     put('purpose', s.reason);
     render();
-    flash('Filled from ' + (s.nameEn || s.nameAr) + '. Change anything you need to.');
+    flash('Filled from ' + payeeName(s) + '. Change anything you need to.');
   });
 
   const link = document.createElement('a');
