@@ -24,7 +24,8 @@ Default values exclude amounts in figures, amounts in words, dropdowns, radio
 choices and checkboxes. These always start blank/unselected on a new or cleared
 form. Text defaults are saved to GitHub; dates can use Today.
 
-Payroll uploads show filenames and employee counts. Employee mismatches are
+Payroll takes two uploads: the employee list (first eight columns only) and the
+monthly report. Uploads show filenames and employee counts. Employee mismatches are
 listed separately and excluded from the transfer output. The transfer salary is
 the payroll Paid Salary value, including salary advances and cents, rather than
 Net Salary. Monetary cells in exported payroll, transfer and transaction sheets
@@ -200,14 +201,22 @@ change.
 ## Payroll Transfer Sheet
 
 Not a bank form to stamp but two spreadsheets to build, so it has a page of its
-own (`payroll-sheet.html`). Drop in the month's attendance export and it produces
-the payroll sheet and the bank transfer sheet, each exportable as `.xlsx`.
+own (`payroll-sheet.html`). It takes exactly two uploads — the employee list and
+the month's attendance export — and produces the payroll sheet and the bank
+transfer sheet, each exportable as `.xlsx`.
+
+The employee list holds everything standing. Only its first eight columns are
+read, by position: Code, Employee Name, Title, S.I. No., Bank Acc. No., Basic
+Gross Salary, S.I. Basic Wage and S.I. Gross Wage. Columns after these are
+ignored, and rows without a numeric code and a name (header and total rows) are
+skipped. It is uploaded again for each new workspace.
 
 The monthly report carries only what changes each month — allowances, incentive,
-bonus, adjustments, overtime, deducted hours, salary advances. Everything standing
-(basic salary, insured wages, bank account, Arabic name) is read once from a past
-payroll sheet and transfer sheet, uploaded again for each new workspace. People are matched on employee code, and the S.I. number is checked
-against it; a disagreement is reported rather than quietly accepted.
+bonus, adjustments, overtime, deducted hours, salary advances. People are matched
+on employee code, and the S.I. number and name are checked against it; a
+disagreement is reported rather than quietly accepted.
+
+The transfer sheet's Full Name is the employee list's Employee Name.
 
 ### The arithmetic
 
@@ -226,7 +235,7 @@ transfer sheet (430,282).
 
 Two things worth knowing:
 
-- Both outputs follow the **payroll sheet's own row order**, kept when the employee
+- Both outputs follow the **employee list's own row order**, kept when the
   list is read. Salary alone cannot reproduce it, because people on equal salaries
   have a settled order. The issued October transfer sheet differs from its payroll
   sheet in a few places, which looks like hand-sorting.

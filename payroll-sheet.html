@@ -1,13 +1,13 @@
 <!doctype html>
 <html lang="en">
 <head>
-<script src="workspace.js?v=55"></script>
+<script src="workspace.js?v=56"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Payroll Transfer Sheet</title>
 <meta name="description" content="Builds the payroll sheet and the bank transfer sheet from the monthly report.">
-<link rel="icon" type="image/png" href="favicon.png?v=55">
-<link rel="stylesheet" href="styles.css?v=55">
+<link rel="icon" type="image/png" href="favicon.png?v=56">
+<link rel="stylesheet" href="styles.css?v=56">
 </head>
 <body class="sheetpage">
 <div id="gate">
@@ -21,7 +21,7 @@
 </div>
 
 <header>
-  <img class="page-bar-logo" src="assets/logo-mark.png?v=55" alt="iEnergy">
+  <img class="page-bar-logo" src="assets/logo-mark.png?v=56" alt="iEnergy">
   <a class="back" href="index.html" title="All forms">&#8592;</a>
   <div class="brand">
     <div class="title">Payroll Transfer Sheet</div>
@@ -42,20 +42,14 @@
 <main class="sheetMain">
 
   <section class="step-block">
-    <h2 class="step">1 &middot; Upload reference files</h2>
+    <h2 class="step">1 &middot; Employee list</h2>
     <p class="hint" id="masterState">No employees yet.</p>
     <div class="droprow">
-      <label class="drop" id="dropMaster">
+      <label class="drop wide" id="dropMaster">
         <input type="file" id="fileMaster" accept=".xlsx,.xls" hidden>
-        <b>Payroll sheet</b>
-        <span>Upload a <i>Payroll Sheet</i> for each person's basic salary, insured wages, bank account and S.I. number.</span>
+        <b>Employee list</b>
+        <span>Only the first eight columns are read: Code, Employee Name, Title, S.I. No., Bank Acc. No., Basic Gross Salary, S.I. Basic Wage and S.I. Gross Wage.</span>
         <span id="masterFileState" role="status"></span>
-      </label>
-      <label class="drop" id="dropNames">
-        <input type="file" id="fileNames" accept=".xlsx,.xls" hidden>
-        <b>Transfer sheet</b>
-        <span>Any past <i>Transfer Sheet</i>, for the Arabic names. Matched to people by bank account.</span>
-        <span id="namesFileState" role="status"></span>
       </label>
     </div>
     <div class="masterTools" hidden id="masterTools">
@@ -93,8 +87,8 @@
 <div id="toast"></div>
 
 <script src="vendor/xlsx-js-style.min.js"></script>
-<script src="gate.js?v=55"></script>
-<script src="payroll-calc.js?v=55"></script>
-<script src="payroll-sheet.js?v=55"></script>
+<script src="gate.js?v=56"></script>
+<script src="payroll-calc.js?v=56"></script>
+<script src="payroll-sheet.js?v=56"></script>
 </body>
 </html>
