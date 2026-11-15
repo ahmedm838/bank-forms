@@ -218,6 +218,11 @@ disagreement is reported rather than quietly accepted.
 
 The transfer sheet's Full Name is the employee list's Employee Name.
 
+Mismatch reasons are stated plainly: *Not in the monthly report*, *Not in the
+employee list*, *Code is different* (a report row whose code is unknown but whose
+S.I. number or name matches a list employee), *S.I. number is different* and
+*Name is different*, each showing both values.
+
 ### The arithmetic
 
 `payroll-calc.js` holds the formulas, taken from the company workbook rather than
@@ -235,10 +240,8 @@ transfer sheet (430,282).
 
 Two things worth knowing:
 
-- Both outputs follow the **employee list's own row order**, kept when the
-  list is read. Salary alone cannot reproduce it, because people on equal salaries
-  have a settled order. The issued October transfer sheet differs from its payroll
-  sheet in a few places, which looks like hand-sorting.
+- Both tables are sorted by **Paid Salary, highest first**. Employees on equal
+  salaries keep the employee list's own row order.
 - The workbook computes overtime as `basic / 240 × hours`, with no 1.5 multiplier,
   although its own notes say "Overtime = Hour Rate × overtime hours × 1.5". This
   follows the formula, not the note. No one had overtime in October, so the two

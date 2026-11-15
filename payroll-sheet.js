@@ -119,31 +119,46 @@ function readMonthlyReport(wb){
 function build(){
   state.rows = []; state.mismatches = [];
   const mismatch = (source,emp,reason) => state.mismatches.push({source,code:emp.code||'',name:emp.nameEn||'',bank:emp.bank||'',reason});
+  const clean = value=>String(value||'').trim().toLowerCase().replace(/\s+/g,' ');
   const bankCounts = {};
   Object.values(state.master).forEach(emp => {if(emp.bank)bankCounts[emp.bank]=(bankCounts[emp.bank]||0)+1;});
   if(!state.month) return;
-  const counts = {}, seen = new Set();
+  const counts = {}, seen = new Set(), reportCodes = new Set(state.month.people.map(mv=>mv.code));
   state.month.people.forEach(emp=>{counts[emp.code]=(counts[emp.code]||0)+1;});
+  // list employees whose code is not in the report: a report row with an unknown
+  // code may still be one of them under a different code, matched by S.I. or name
+  const unmatched = Object.values(state.master).filter(emp=>!reportCodes.has(emp.code));
+  const claimed = new Set();
   for(const mv of state.month.people){
     if(seen.has(mv.code))continue;
     seen.add(mv.code);
     const emp = state.master[mv.code];
-    if(!emp){mismatch('Monthly report',mv,'Employee code is not in the uploaded employee list');continue;}
+    if(!emp){
+      const other = unmatched.find(e=>!claimed.has(e.code) && ((e.si && e.si===mv.si) || (e.nameEn && clean(e.nameEn)===clean(mv.nameEn))));
+      if(other){
+        claimed.add(other.code);
+        const reasons=[`Code is different: employee list ${other.code}, monthly report ${mv.code}`];
+        if(other.si!==mv.si)reasons.push(`S.I. number is different: employee list ${other.si || 'missing'}, monthly report ${mv.si || 'missing'}`);
+        if(clean(other.nameEn)!==clean(mv.nameEn))reasons.push(`Name is different: employee list "${other.nameEn}", monthly report "${mv.nameEn}"`);
+        mismatch('Employee list & monthly report',other,reasons.join('; '));
+      } else mismatch('Monthly report',mv,'Not in the employee list');
+      continue;
+    }
     const reasons=[];
-    if(counts[mv.code]>1) reasons.push('Duplicate employee code in monthly report');
-    if(state.payrollDuplicates.includes(mv.code))reasons.push('Duplicate employee code in employee list');
-    if((emp.si || mv.si) && emp.si !== mv.si)reasons.push(`S.I. number differs: employee list ${emp.si || 'missing'}; report ${mv.si || 'missing'}`);
-    const clean = value=>String(value||'').trim().toLowerCase().replace(/\s+/g,' ');
-    if(emp.nameEn && mv.nameEn && clean(emp.nameEn)!==clean(mv.nameEn))reasons.push('Employee name differs between employee list and monthly report');
-    if(!emp.bank)reasons.push('Missing bank account');
-    if(bankCounts[emp.bank]>1)reasons.push('Bank account belongs to multiple employees in the list');
-    if(reasons.length)mismatch('Employee list / monthly report',emp,reasons.join('; '));
+    if(counts[mv.code]>1) reasons.push('Code appears more than once in the monthly report');
+    if(state.payrollDuplicates.includes(mv.code))reasons.push('Code appears more than once in the employee list');
+    if((emp.si || mv.si) && emp.si !== mv.si)reasons.push(`S.I. number is different: employee list ${emp.si || 'missing'}, monthly report ${mv.si || 'missing'}`);
+    if(emp.nameEn && mv.nameEn && clean(emp.nameEn)!==clean(mv.nameEn))reasons.push(`Name is different: employee list "${emp.nameEn}", monthly report "${mv.nameEn}"`);
+    if(!emp.bank)reasons.push('Bank account is missing in the employee list');
+    if(bankCounts[emp.bank]>1)reasons.push('Same bank account is used by more than one employee in the list');
+    if(reasons.length)mismatch('Employee list & monthly report',emp,reasons.join('; '));
     state.rows.push(Object.assign({emp,mv,transferEligible:reasons.length===0},computeRow(emp,mv)));
   }
-  Object.values(state.master).forEach(emp=>{
-    if(!seen.has(emp.code))mismatch('Employee list',emp,'Employee is not in the uploaded monthly report');
+  unmatched.forEach(emp=>{
+    if(!claimed.has(emp.code))mismatch('Employee list',emp,'Not in the monthly report');
   });
-  state.rows.sort((a,b)=>(a.emp.seq??1e9)-(b.emp.seq??1e9));
+  // both tables: highest paid salary first; equal salaries keep the list's order
+  state.rows.sort((a,b)=>(b.paid-a.paid) || ((a.emp.seq??1e9)-(b.emp.seq??1e9)));
 }
 
 /* ---------- tables ---------- */
@@ -361,7 +376,7 @@ function refresh(){
   if(ready){renderPayroll();renderTransfer();}
   const table=$('tblMismatch');table.replaceChildren();
   const head=el('thead'),hr=el('tr');
-  ['Source','Employee code','Employee name','Account','Mismatch — excluded from transfer'].forEach(label=>hr.appendChild(el('th',null,label)));
+  ['Source','Employee code','Employee name','Account','Reason — excluded from transfer'].forEach(label=>hr.appendChild(el('th',null,label)));
   head.appendChild(hr);table.appendChild(head);
   const body=el('tbody');
   state.mismatches.forEach(row=>{const tr=el('tr');['source','code','name','bank','reason'].forEach(key=>tr.appendChild(el('td',null,row[key])));body.appendChild(tr);});
