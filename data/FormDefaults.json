@@ -8,7 +8,7 @@
         "value": "9229017\t"
       },
       "ordName": {
-        "value": "I Energy Meters Manufacturing\t \t"
+        "value": "IEnergy Meters Manufacturing\t \t"
       }
     },
     "checks": {},
@@ -19,7 +19,9 @@
       "name": {
         "value": "احمد مصطفي محمد حسن                                                                           دعاء رمضان محمد أحمد"
       }
-    }
+    },
+    "checks": {},
+    "flags": {}
   },
   "payroll-debit-order": {
     "values": {}
