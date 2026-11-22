@@ -94,8 +94,11 @@ function exportBook(){
 }
 
 async function boot(){
+  // fetch the lists while the password gate is up, not after it
+  const loading = LISTS.loadRepository();
+  loading.catch(() => {});
   await setupGate();
-  await LISTS.loadRepository();
+  await loading;
   table = ListTable({ mount: $('table'), columns: COLUMNS, rows: LISTS.suppliers(), onChange: touched,
                     widthKey: 'abk-suppliers-widths' });
   unsaved = Unsaved({

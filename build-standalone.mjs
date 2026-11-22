@@ -54,6 +54,8 @@ const inlineScript = (file, body) =>
   [new RegExp(`<script src="${file.replace('.','\\.')}(\\?v=\\d+)?"></script>`), () => `<script>${body}</script>`];
 
 html = html
+  // preloads point at files on disk; the offline copy has everything inlined
+  .replace(/<link rel="preload"[^>]*>\s*/g, '')
   .replace(...inlineScript('workspace.js', 'window.BANK_FORMS_STANDALONE=true;\n' + text('workspace.js')))
   .replace(/<link rel="stylesheet" href="styles\.css(\?v=\d+)?">/, () => `<style>\n${css}\n</style>`)
   .replace(/<img id="pageImg"([^>]*?)src="assets\/[^"]+">/,
@@ -63,12 +65,13 @@ html = html
            (m, attrs) => `<link rel="icon"${attrs}href="${dataUrl('favicon.png')}">`)
   .replace(/<img class="page-bar-logo"([^>]*?)src="assets\/logo-mark\.png(\?v=\d+)?"([^>]*)>/,
            (m, before, v, after) => `<img class="page-bar-logo"${before}src="${dataUrl('assets/logo-mark.png')}"${after}>`)
-  .replace(...inlineScript('vendor/pdf-lib.min.js',     text('vendor/pdf-lib.min.js')))
-  .replace(...inlineScript('vendor/fontkit.umd.min.js', text('vendor/fontkit.umd.min.js')))
+  // the hosted page loads pdf-lib on demand; the offline file carries it up front
+  .replace(inlineScript('vendor/fontkit.umd.min.js', '')[0],
+           () => `<script>${text('vendor/pdf-lib.min.js')}</script>\n<script>${text('vendor/fontkit.umd.min.js')}</script>`)
   .replace(...inlineScript('vendor/bidi.min.js',        text('vendor/bidi.min.js')))
   .replace(...inlineScript('banks-seed.js',             text('banks-seed.js')))
   .replace(...inlineScript('data-lists.js',             text('data-lists.js')))
-  .replace(...inlineScript('vendor/xlsx.full.min.js', ''))
+  .replace(...inlineScript('vendor/xlsx-js-style.min.js', ''))
   .replace(...inlineScript('list-files.js', ''))
   .replace(...inlineScript('repo-workbooks.js', ''))
   .replace(...inlineScript('repo-store.js', "window.RepoStore={load:async kind=>window.BankFormsMemory['abk-'+kind]||[],save:async()=>{}};"))

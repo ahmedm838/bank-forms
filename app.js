@@ -756,8 +756,22 @@ function markedBoxes(){
 }
 
 /* ---------- PDF output ---------- */
-const { PDFDocument, PDFOperator } = PDFLib;
-const op = (n,a) => PDFOperator.of(n,a);
+/* pdf-lib is only needed to print, so it is not part of the page load. It is
+   fetched once the form is on screen (see boot) and awaited here in case Print is
+   pressed before that finishes. */
+let pdfLibLoading = null;
+function ensurePdfLib(){
+  if(window.PDFLib) return Promise.resolve(window.PDFLib);
+  if(!pdfLibLoading) pdfLibLoading = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'vendor/pdf-lib.min.js';
+    s.onload = () => window.PDFLib ? resolve(window.PDFLib) : reject(new Error('pdf-lib did not load'));
+    s.onerror = () => { pdfLibLoading = null; s.remove(); reject(new Error('Could not load the PDF engine. Check your connection and try again.')); };
+    document.head.appendChild(s);
+  });
+  return pdfLibLoading;
+}
+const op = (n,a) => PDFLib.PDFOperator.of(n,a);
 const num = n => String(Math.round(n*1000)/1000);
 const hex4 = n => n.toString(16).padStart(4,'0').toUpperCase();
 
@@ -806,6 +820,7 @@ async function buildFilledPdf(){
      the values and nothing else, or the printer would lay a picture of a cheque
      over the real one. Those forms get a blank page of the same size instead of
      the template. */
+  const { PDFDocument } = await ensurePdfLib();
   const doc = CURRENT_FORM.overlayOnly
     ? await PDFDocument.create()
     : await PDFDocument.load(pdfBytes.slice(0));
@@ -1313,10 +1328,22 @@ function buildFormSwitch(preset){
 
 /* ---------- boot ---------- */
 async function boot(){
-  await setupGate();
-  await LISTS.loadRepository();
+  // fetch the lists while the password gate is up, not after it
+  const loading = LISTS.loadRepository();
+  loading.catch(() => {});
 
+  // the blank PDF and the font download alongside the lists, not after them
   const preset = currentPreset();
+  const assets = preset.ready === false ? null : Promise.all([
+    preset.overlayOnly ? Promise.resolve(null) : fetch(preset.pdf),
+    fetch('assets/IBMPlexSansArabic-Regular.ttf'),
+  ]);
+  if(assets) assets.catch(() => {});
+  if(preset.ready !== false && preset.preview) document.getElementById('pageImg').src = preset.preview;
+
+  await setupGate();
+  await loading;
+
   if(preset.ready === false){ refuseUnavailable(preset); return; }
 
   /* bind this form's definition before anything reads it */
@@ -1331,10 +1358,7 @@ async function boot(){
   document.getElementById('pageImg').src = preset.preview;
 
   // an overlay-only form has no template to stamp, just a page size to print on
-  const [pdfRes, fontRes] = await Promise.all([
-    preset.overlayOnly ? Promise.resolve(null) : fetch(preset.pdf),
-    fetch('assets/IBMPlexSansArabic-Regular.ttf'),
-  ]);
+  const [pdfRes, fontRes] = await assets;
   if((pdfRes && !pdfRes.ok) || !fontRes.ok) throw new Error('could not load the form or the font');
   pdfBytes  = pdfRes ? new Uint8Array(await pdfRes.arrayBuffer()) : null;
   fontBytes = new Uint8Array(await fontRes.arrayBuffer());
@@ -1362,6 +1386,10 @@ async function boot(){
   }
   layoutOverlay();
   document.getElementById('loading').classList.add('done');
+
+  // warm up the PDF engine in the background so Print is instant
+  const idle = window.requestIdleCallback || (fn => setTimeout(fn, 300));
+  idle(() => ensurePdfLib().catch(() => {}));
 }
 
 boot().catch(err => {

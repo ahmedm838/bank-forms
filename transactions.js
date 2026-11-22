@@ -177,8 +177,11 @@ function exportBook(){
 }
 
 async function boot(){
+  // fetch the lists while the password gate is up, not after it
+  const loading = LISTS.loadRepository();
+  loading.catch(() => {});
   await setupGate();
-  await LISTS.loadRepository();
+  await loading;
   rows = LISTS.transactions();
   unsaved = Unsaved({
     badge: $('dirty'), saveBtn: $('btnSave'),

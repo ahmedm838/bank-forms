@@ -42,7 +42,7 @@ function exportBook(){
 // Older cached page markup may not include the repository scripts yet.
 async function ensureBankStorage(){
   const dependencies = [
-    ['XLSX', 'vendor/xlsx.full.min.js'],
+    ['XLSX', 'vendor/xlsx-js-style.min.js'],
     ['ListFiles', 'list-files.js'],
     ['RepoWorkbooks', 'repo-workbooks.js'],
     ['RepoStore', 'repo-store.js'],
@@ -60,9 +60,12 @@ async function ensureBankStorage(){
 }
 
 async function boot(){
+  // start the download while the password gate is up
+  let loading = !window.BANK_FORMS_STANDALONE && window.RepoStore ? RepoStore.load('banks') : null;
+  if(loading) loading.catch(() => {});
   await setupGate();
   await ensureBankStorage();
-  if(!window.BANK_FORMS_STANDALONE) window.BankFormsMemory['abk-banks']=await RepoStore.load('banks');
+  if(!window.BANK_FORMS_STANDALONE) window.BankFormsMemory['abk-banks']=await (loading || RepoStore.load('banks'));
   table = ListTable({ mount: $('table'), columns: COLUMNS, rows: LISTS.banks(), onChange: touched,
                     widthKey: 'abk-banks-widths' });
   unsaved = Unsaved({

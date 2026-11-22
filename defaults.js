@@ -1,7 +1,9 @@
 /* Shared form defaults persisted in the repository. */
 (async function(){
+  const loading = LISTS.loadFormDefaults();
+  loading.catch(() => {});
   await setupGate();
-  await LISTS.loadFormDefaults();
+  await loading;
   const $ = id => document.getElementById(id);
   const forms = Object.entries(window.FORM_DEFS).filter(([,f]) => f.ready && !f.alias && f.fields);
   const drafts = Object.fromEntries(forms.map(([id]) => [id,LISTS.formDefaults(id)]));

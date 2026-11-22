@@ -74,7 +74,7 @@ function alreadyRecorded(rows, entry){
   return rows.some(row => transactionKey(row) === transactionKey(entry));
 }
 async function addTransaction(entry){
-  const rows=await RepoStore.load('transactions'); write(TX_KEY,rows);
+  const rows=await RepoStore.load('transactions',{fresh:true}); write(TX_KEY,rows);
   if(alreadyRecorded(rows, entry)) return 'duplicate';
   rows.push(Object.assign({
     id: 'tx' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
@@ -88,7 +88,7 @@ async function addTransaction(entry){
    changed is noted beside it. */
 async function updateTransaction(id, entry){
   const previous=getTransaction(id);
-  const rows=await RepoStore.load('transactions');
+  const rows=await RepoStore.load('transactions',{fresh:true});
   const current=rows.find(row=>row.id===id);
   if(JSON.stringify(previous)!==JSON.stringify(current)) throw new Error('This transaction changed in GitHub. Reload before editing it.');
   write(TX_KEY,rows);
@@ -169,10 +169,10 @@ function payTo(supplier){
 
 async function loadRepository(){
   if(window.BANK_FORMS_STANDALONE) return;
-  write(BANKS_KEY,await RepoStore.load('banks'));
-  await loadFormDefaults();
-  const suppliers=await RepoStore.load('suppliers');
-  const transactions=await RepoStore.load('transactions');
+  // the four files are independent, so fetch them side by side
+  const [banks,defaults,suppliers,transactions]=await Promise.all(
+    ['banks','defaults','suppliers','transactions'].map(kind=>RepoStore.load(kind)));
+  write(BANKS_KEY,banks);write('abk-form-defaults',defaults);
   write(SUPPLIERS_KEY,suppliers);write(TX_KEY,transactions);
 }
 return {
