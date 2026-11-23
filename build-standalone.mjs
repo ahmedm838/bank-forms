@@ -22,6 +22,7 @@ const FORM_FILES = [
   'forms/abk-payroll.js',
   'forms/abk-payroll-transfer.js',
   'forms/abk-deposit.js',
+  'forms/other-asset-disposal.js',
 ];
 
 const MIME = { '.pdf':'application/pdf', '.png':'image/png', '.jpg':'image/jpeg', '.ttf':'font/ttf' };

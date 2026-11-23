@@ -1252,8 +1252,15 @@ function refuseUnavailable(preset){
 
 function applyPreset(preset){
   document.getElementById('formTitle').textContent = preset.title;
-  document.getElementById('formSub').textContent = preset.bank + '  ·  fills the original form';
+  document.getElementById('formSub').textContent = preset.sub || (preset.bank + '  ·  fills the original form');
   document.title = preset.title + ' — Bank Forms';
+  /* a form from the Other forms page goes back there, and that tab is the lit one */
+  if(preset.section === 'other'){
+    const back = document.querySelector('header .back');
+    if(back){ back.href = 'other-forms.html'; back.title = 'Other forms'; }
+    document.querySelectorAll('.pagenav a').forEach(a =>
+      a.classList.toggle('on', a.getAttribute('href') === 'other-forms.html'));
+  }
 
   for(const [id, v] of Object.entries(preset.set || {})){
     state.values[id] = v;

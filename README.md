@@ -65,6 +65,18 @@ The page asks for a password, remembered only while the temporary workspace rema
 | ABK, awaiting their blank PDFs | Cheque USD · Cheque EUR · Social Insurance Payment · Salary Taxes Payment · VAT Payment · Withholding Payment |
 | CIB, NBE, QNB, NBK | none yet — the blank PDFs are needed |
 
+**Other forms** is its own tab in the page bar, for company forms that are not
+addressed to a bank. It holds the **Asset Disposal Decision** (قرار إداري —
+استبعاد أصل من الأصول الثابتة), following the supplied Word file: A4, half-inch
+margins, a page border, Arial 12pt with 1.5 line spacing. The fields are the
+date, decision number, what the decision rests on (the report or the
+investigation results) and its date, what was established (the asset could not
+be used, was lost or was damaged), and the asset's name, brand and model, serial
+number, register code, purchase date, historical cost, accumulated depreciation
+and net book value. Figures and dates print in Arabic-Indic digits; the serial
+number and register code print exactly as typed. The signature blocks are left
+blank. Print opens the completed decision, as with the other letters.
+
 **Payroll Debit Order** follows the supplied `Payroll Debit Order.docx` letter
 (خصم مرتبات). Its fields follow the document order: amount, amount in words,
 account, branch, month, signatory and date. Values flow inside the Arabic
@@ -100,6 +112,10 @@ gives no baseline and is centred in the cell as before.
 2. Work out the field boxes from the PDF's table grid and add them to `FIELDS`.
 3. Add a definition in `forms/` (copy the shape of `forms/abk-transfer.js`) and
    list it under its bank in `hub.js`. Nothing in `app.js` needs to change.
+
+A form that is not a bank form sets `section: 'other'` and is listed in
+`other-forms.js` instead of `hub.js`; load its file on `other-forms.html`,
+`form.html` and `defaults.html`, and add it to `build-standalone.mjs`.
 
 > **The password is a doormat, not a lock.** This is a static site: everything it
 > holds is sent to the browser, and this repository is public, so the check is
