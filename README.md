@@ -26,7 +26,11 @@ form. Text defaults are saved to GitHub; dates can use Today.
 
 Payroll takes two uploads: the employee list (first eight columns only) and the
 monthly report. Uploads show filenames and employee counts. Employee mismatches are
-listed separately and excluded from the transfer output. The transfer salary is
+listed separately with Payroll and Bank transfer checkboxes; by default a
+mismatched employee is left out of both sheets, and each ticked box adds them to
+that sheet. Employees missing from the monthly report are calculated on basic
+salary alone; those missing from the employee list cannot be added. The app
+always opens on the Forms page. The transfer salary is
 the payroll Paid Salary value, including salary advances and cents, rather than
 Net Salary. Monetary cells in exported payroll, transfer and transaction sheets
 remain numeric and use thousands separators. Both payroll export buttons use

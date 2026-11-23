@@ -28,6 +28,6 @@
     }
   }catch(e){}
   window.BankFormsMemory=Object.create(null);
-  const view=location.pathname.split('/').pop() || 'index.html';
-  location.replace('workspace.html?view='+encodeURIComponent(view+location.search+location.hash));
+  // every entry point opens the app on the Forms page
+  location.replace('workspace.html');
 })();

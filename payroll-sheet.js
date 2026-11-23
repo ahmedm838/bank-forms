@@ -15,6 +15,9 @@
 const { num, computeRow, DEFAULTS } = window.PAYROLL;
 const state = window.BankFormsMemory.payroll || (window.BankFormsMemory.payroll =
   { master: {}, month: null, rows: [], mismatches: [], uploads: {}, payrollDuplicates: [] });
+/* What the user ticked for each mismatched employee: { key: {payroll, transfer} }.
+   Nothing ticked means the employee is left out of both sheets. */
+if (!state.choices) state.choices = {};
 
 const $ = id => document.getElementById(id);
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c; if (x != null) n.textContent = x; return n; };
@@ -116,9 +119,26 @@ function readMonthlyReport(wb){
 }
 
 /* ---------- putting a month together ---------- */
+const NO_MONTH = {nameEn:'',si:'',allowances:0,incentive:0,bonus:0,adjustments:0,overtimeHrs:0,deductedHrs:0,advance:0,union:0,medical:0};
+
+/* Matched employees go into both sheets. A mismatched employee goes into a sheet
+   only when it is ticked for it in the mismatch table; nothing ticked, neither. */
 function build(){
   state.rows = []; state.mismatches = [];
-  const mismatch = (source,emp,reason) => state.mismatches.push({source,code:emp.code||'',name:emp.nameEn||'',bank:emp.bank||'',reason});
+  const choice = key => state.choices[key] || {payroll:false, transfer:false};
+  // emp/mv are what a row can be computed from; without an employee-list record
+  // there is no salary or account, so the row cannot go into either sheet
+  const mismatch = (source,emp,reason,calc) => {
+    const key = source+'|'+(emp.code||'')+'|'+(calc && calc.mv && calc.mv.code || '');
+    const m = {key,source,code:emp.code||'',name:emp.nameEn||'',bank:emp.bank||'',reason,
+      canPayroll:!!calc, canTransfer:!!(calc && calc.emp.bank)};
+    state.mismatches.push(m);
+    if(calc){
+      const c = choice(key);
+      const inPayroll = c.payroll, inTransfer = c.transfer && m.canTransfer;
+      if(inPayroll || inTransfer) state.rows.push(Object.assign({emp:calc.emp,mv:calc.mv,inPayroll,inTransfer},computeRow(calc.emp,calc.mv)));
+    }
+  };
   const clean = value=>String(value||'').trim().toLowerCase().replace(/\s+/g,' ');
   const bankCounts = {};
   Object.values(state.master).forEach(emp => {if(emp.bank)bankCounts[emp.bank]=(bankCounts[emp.bank]||0)+1;});
@@ -140,7 +160,7 @@ function build(){
         const reasons=[`Code is different: employee list ${other.code}, monthly report ${mv.code}`];
         if(other.si!==mv.si)reasons.push(`S.I. number is different: employee list ${other.si || 'missing'}, monthly report ${mv.si || 'missing'}`);
         if(clean(other.nameEn)!==clean(mv.nameEn))reasons.push(`Name is different: employee list "${other.nameEn}", monthly report "${mv.nameEn}"`);
-        mismatch('Employee list & monthly report',other,reasons.join('; '));
+        mismatch('Employee list & monthly report',other,reasons.join('; '),{emp:other,mv});
       } else mismatch('Monthly report',mv,'Not in the employee list');
       continue;
     }
@@ -151,15 +171,18 @@ function build(){
     if(emp.nameEn && mv.nameEn && clean(emp.nameEn)!==clean(mv.nameEn))reasons.push(`Name is different: employee list "${emp.nameEn}", monthly report "${mv.nameEn}"`);
     if(!emp.bank)reasons.push('Bank account is missing in the employee list');
     if(bankCounts[emp.bank]>1)reasons.push('Same bank account is used by more than one employee in the list');
-    if(reasons.length)mismatch('Employee list & monthly report',emp,reasons.join('; '));
-    state.rows.push(Object.assign({emp,mv,transferEligible:reasons.length===0},computeRow(emp,mv)));
+    if(reasons.length){mismatch('Employee list & monthly report',emp,reasons.join('; '),{emp,mv});continue;}
+    state.rows.push(Object.assign({emp,mv,inPayroll:true,inTransfer:true},computeRow(emp,mv)));
   }
   unmatched.forEach(emp=>{
-    if(!claimed.has(emp.code))mismatch('Employee list',emp,'Not in the monthly report');
+    // not in this month's report: computed on the basic salary with no monthly figures
+    if(!claimed.has(emp.code))mismatch('Employee list',emp,'Not in the monthly report (no monthly figures)',{emp,mv:Object.assign({},NO_MONTH,{code:emp.code})});
   });
   // both tables: highest paid salary first; equal salaries keep the list's order
   state.rows.sort((a,b)=>(b.paid-a.paid) || ((a.emp.seq??1e9)-(b.emp.seq??1e9)));
 }
+
+const payrollRows = () => state.rows.filter(r=>r.inPayroll);
 
 /* ---------- tables ---------- */
 const PAYROLL_COLS = [
@@ -214,8 +237,9 @@ function renderPayroll(){
   thead.appendChild(hr);
   t.appendChild(thead);
 
+  const rows = payrollRows();
   const tb = el('tbody');
-  for (const r of state.rows){
+  for (const r of rows){
     const tr = el('tr');
     PAYROLL_COLS.forEach(([, head, get, kind]) => {
       const v = get(r);
@@ -231,20 +255,20 @@ function renderPayroll(){
   PAYROLL_COLS.forEach(([, head, get, kind], i) => {
     if (i === 0){ fr.appendChild(el('td', null, '')); return; }
     if (i === 1){ fr.appendChild(el('td', null, 'Number of Employees')); return; }
-    if (i === 2){ fr.appendChild(el('td', 'n', String(state.rows.length))); return; }
+    if (i === 2){ fr.appendChild(el('td', 'n', String(rows.length))); return; }
     if (kind === 'num' && SUMMED.has(i)){
-      const total = state.rows.reduce((s, r) => s + (get(r) || 0), 0);
+      const total = rows.reduce((s, r) => s + (get(r) || 0), 0);
       fr.appendChild(el('td', 'n', total ? payrollNumber(total, head) : '–'));
     } else fr.appendChild(el('td', null, ''));
   });
   tf.appendChild(fr);
   t.appendChild(tf);
 
-  $('payrollCount').textContent = state.rows.length + ' employees';
+  $('payrollCount').textContent = rows.length + ' employees';
 }
 
 function transferRows(){
-  return state.rows.filter(r=>r.transferEligible).map((r, i) => ({
+  return state.rows.filter(r=>r.inTransfer).map((r, i) => ({
     serial: String(i + 1).padStart(2, '0'),
     name: r.emp.nameEn,
     bank: r.emp.bank,
@@ -311,11 +335,12 @@ function styleExport(ws, rowCount, columnCount, headerRows, centered){
 }
 
 function exportPayroll(){
+  const rows = payrollRows();
   const aoa = [
     PAYROLL_COLS.map(c => c[0]),
     PAYROLL_COLS.map(c => c[1]),
   ];
-  for (const r of state.rows){
+  for (const r of rows){
     aoa.push(PAYROLL_COLS.map(([, , get, kind]) => {
       const v = get(r);
       return kind === 'num' ? Number((v || 0).toFixed(2)) : v;
@@ -323,9 +348,9 @@ function exportPayroll(){
   }
   const foot = PAYROLL_COLS.map(([, , get, kind], i) => {
     if (i === 1) return 'Number of Employees';
-    if (i === 2) return state.rows.length;
+    if (i === 2) return rows.length;
     if (kind === 'num' && SUMMED.has(i))
-      return Number(state.rows.reduce((s, r) => s + (get(r) || 0), 0).toFixed(2));
+      return Number(rows.reduce((s, r) => s + (get(r) || 0), 0).toFixed(2));
     return '';
   });
   aoa.push(foot);
@@ -371,15 +396,32 @@ function refresh(){
   }
   build();
   const ready=state.rows.length>0;
-  $('results').hidden=!ready; $('btnPayroll').disabled=!ready;
+  $('results').hidden=!ready; $('btnPayroll').disabled=!payrollRows().length;
   $('btnTransfer').disabled=!transferRows().length;
   if(ready){renderPayroll();renderTransfer();}
   const table=$('tblMismatch');table.replaceChildren();
   const head=el('thead'),hr=el('tr');
-  ['Source','Employee code','Employee name','Account','Reason — excluded from transfer'].forEach(label=>hr.appendChild(el('th',null,label)));
+  ['Payroll','Bank transfer','Source','Employee code','Employee name','Account','Reason'].forEach(label=>hr.appendChild(el('th',null,label)));
   head.appendChild(hr);table.appendChild(head);
   const body=el('tbody');
-  state.mismatches.forEach(row=>{const tr=el('tr');['source','code','name','bank','reason'].forEach(key=>tr.appendChild(el('td',null,row[key])));body.appendChild(tr);});
+  state.mismatches.forEach(row=>{
+    const tr=el('tr'), picked=state.choices[row.key] || {payroll:false,transfer:false};
+    for(const [kind,allowed,why] of [
+      ['payroll',row.canPayroll,'Not in the employee list, so there is no salary to calculate'],
+      ['transfer',row.canTransfer,row.canPayroll?'No bank account in the employee list':'Not in the employee list, so there is no salary or account']]){
+      const td=el('td','pick'), box=el('input');
+      box.type='checkbox'; box.checked=allowed && !!picked[kind]; box.disabled=!allowed;
+      box.setAttribute('aria-label',(kind==='payroll'?'Add to payroll sheet: ':'Add to transfer sheet: ')+(row.name||row.code));
+      if(!allowed)td.title=why;
+      box.addEventListener('change',()=>{
+        state.choices[row.key]=Object.assign({payroll:false,transfer:false},state.choices[row.key],{[kind]:box.checked});
+        refresh();
+      });
+      td.appendChild(box);tr.appendChild(td);
+    }
+    ['source','code','name','bank','reason'].forEach(key=>tr.appendChild(el('td',null,row[key])));
+    body.appendChild(tr);
+  });
   table.appendChild(body);$('mismatchSection').hidden=!state.mismatches.length;
   $('mismatchCount').textContent=state.mismatches.length+' mismatches';
 }
@@ -416,17 +458,17 @@ async function boot(){
     const parsed=readEmployeeList(await readBook(file));
     if(!parsed.count)throw new Error(`No employees found in ${file.name}`);
     state.master=parsed.found;state.payrollDuplicates=parsed.duplicates;
-    state.uploads.payroll={name:file.name,count:parsed.count};refresh();
+    state.uploads.payroll={name:file.name,count:parsed.count};state.choices={};refresh();
   });
   hookDrop('dropReport','fileReport',async file=>{
     const parsed=readMonthlyReport(await readBook(file));state.month=parsed;
-    state.uploads.report={name:file.name,count:parsed.people.length};refresh();
+    state.uploads.report={name:file.name,count:parsed.people.length};state.choices={};refresh();
   });
 
   $('btnPayroll').addEventListener('click', exportPayroll);
   $('btnTransfer').addEventListener('click', exportTransfer);
   $('btnForget').addEventListener('click',()=>{
-    state.master={};state.month=null;state.uploads={};state.payrollDuplicates=[];refresh();flash('Uploaded files cleared.');
+    state.master={};state.month=null;state.uploads={};state.payrollDuplicates=[];state.choices={};refresh();flash('Uploaded files cleared.');
   });
 
   refresh();

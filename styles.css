@@ -229,6 +229,9 @@ body.sheetpage{display:flex; flex-direction:column}
 .tablewrap th .ar{display:block; font-family:var(--ui-font); color:var(--brand); font-weight:500}
 .tablewrap th .en{display:block; color:var(--ink)}
 .tablewrap td.n{text-align:right; font-variant-numeric:tabular-nums}
+.tablewrap td.pick{text-align:center}
+.tablewrap td.pick input{width:16px; height:16px; cursor:pointer}
+.tablewrap td.pick input:disabled{cursor:not-allowed}
 .tablewrap td.ar-cell{font-family:var(--ui-font); text-align:right}
 .tablewrap tbody tr:nth-child(even){background:#fafcff}
 .tablewrap tbody tr:hover{background:#eef4fc}
