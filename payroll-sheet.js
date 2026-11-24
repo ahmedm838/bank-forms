@@ -5,7 +5,7 @@
 
    The monthly report carries only what changes each month. Everything standing —
    basic salary, insured wages, bank account — is read once from the employee
-   list (its first eight columns) and held only in temporary memory. People are matched on employee
+   list (columns found by header) and held only in temporary memory. People are matched on employee
    code, and the S.I. number is checked against it; a disagreement is reported
    rather than quietly accepted.
 
@@ -38,37 +38,68 @@ const readBook = file => new Promise((resolve, reject) => {
 const grid = ws => XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '' });
 const isCode = v => /^\d{4,}$/.test(String(v).trim());
 
-/* The employee list gives every standing figure. Only its first eight columns
-   are read, by position, as the company workbook lays them out: code, employee
-   name, title, S.I. no., bank account, basic gross salary, S.I. basic wage and
-   S.I. gross wage. Any columns after these are ignored. */
+/* The employee list gives every standing figure. Columns are found by their
+   header, so their order does not matter and extra columns are ignored. The
+   company template (sheet "Payroll 2026") has: Code, Employee Name, Title,
+   Arabic Name, S.I. No., Bank Acc. No., Gross Salary, S.I. Basic Wage and
+   S.I. Gross Wage. The Arabic name is what the transfer sheet shows. */
+const LIST_COLUMNS = {
+  code:   ['Code','Employee Code','الكود'],
+  nameEn: ['Employee Name','Name','English Name'],
+  title:  ['Title','Job Title','الوظيفة'],
+  nameAr: ['Arabic Name','Name (Arabic)','الاسم بالعربي','الاسم بالعربية','الاسم'],
+  si:     ['S.I. No.','SI','SI No','S.I. Number','SI Number','الرقم التأميني'],
+  bank:   ['Bank Acc. No.','Bank Account','Bank Account No.','Account Number','Account No.','رقم الحساب البنكي','رقم الحساب'],
+  basic:  ['Gross Salary','Basic Gross Salary','الأجر الشامل الأساسي'],
+  siBasic:['S.I. Basic Wage','SI Basic Wage'],
+  siGross:['S.I. Gross Wage','SI Gross Wage'],
+};
+const label = v => String(v || '').toLowerCase().replace(/[^a-z0-9\u0621-\u064a]/g, '');
+
 function readEmployeeList(wb){
-  const name = wb.SheetNames.find(n => /payroll|employee/i.test(n)) || wb.SheetNames[0];
-  const rows = grid(wb.Sheets[name]);
-  const found = {};
+  let found = null;
+  for (const sheet of wb.SheetNames){
+    const rows = grid(wb.Sheets[sheet]);
+    const head = rows.slice(0, 30).findIndex(row => {
+      const labels = row.map(label);
+      return LIST_COLUMNS.code.some(n => labels.includes(label(n)))
+          && LIST_COLUMNS.bank.some(n => labels.includes(label(n)));
+    });
+    if (head !== -1){ found = { sheet, rows, head }; break; }
+  }
+  if (!found) throw new Error('No header row with Code and Bank Acc. No. was found in the employee list.');
+  const { sheet: name, rows, head } = found;
+  const labels = rows[head].map(label), col = {};
+  for (const [key, names] of Object.entries(LIST_COLUMNS)){
+    col[key] = labels.findIndex(l => names.some(n => label(n) === l));
+    if (col[key] === -1) throw new Error('Employee list is missing column: ' + names[0]);
+  }
+  const text = (r, key) => String(r[col[key]] ?? '').trim();
+  const people = {};
   let seq = 0;
   const duplicates = [];
-  for (const r of rows){
-    const code = String(r[0] || '').trim();
+  for (const r of rows.slice(head + 1)){
+    const code = text(r, 'code');
     if (!isCode(code)) continue;
-    if (!String(r[1] || '').trim()) continue;    // totals and blank rows
-    if(found[code]) duplicates.push(code);
-    found[code] = {
+    if (!text(r, 'nameEn') && !text(r, 'nameAr')) continue;    // totals and blank rows
+    if(people[code]) duplicates.push(code);
+    people[code] = {
       code,
       // the list's own row order, which is what both outputs follow: salary
       // alone cannot reproduce it, since people on equal salaries have a settled
       // order of their own
       seq: seq++,
-      nameEn: String(r[1] || '').trim(),
-      title:  String(r[2] || '').trim(),
-      si:     String(r[3] || '').trim(),
-      bank:   String(r[4] || '').trim(),
-      basic:  num(r[5]),
-      siBasic: num(r[6]),
-      siGross: num(r[7]),
+      nameEn: text(r, 'nameEn'),
+      nameAr: text(r, 'nameAr'),
+      title:  text(r, 'title'),
+      si:     text(r, 'si'),
+      bank:   text(r, 'bank'),
+      basic:  num(r[col.basic]),
+      siBasic: num(r[col.siBasic]),
+      siGross: num(r[col.siGross]),
     };
   }
-  return { found, sheet: name, count: seq, duplicates };
+  return { found: people, sheet: name, count: seq, duplicates };
 }
 
 /* The monthly report: this month's variable figures. */
@@ -136,7 +167,7 @@ function build(){
   const mismatch = (source,emp,reason,calc) => {
     const key = source+'|'+(emp.code||'')+'|'+(calc && calc.mv && calc.mv.code || '');
     const m = {key,source,code:emp.code||'',name:emp.nameEn||'',bank:emp.bank||'',reason,
-      canPayroll:!!calc, canTransfer:!!(calc && hasAccount(calc.emp.bank))};
+      canPayroll:!!calc, canTransfer:!!(calc && hasAccount(calc.emp.bank) && calc.emp.nameAr)};
     state.mismatches.push(m);
     if(calc){
       const c = choice(key);
@@ -176,6 +207,7 @@ function build(){
     if(emp.nameEn && mv.nameEn && clean(emp.nameEn)!==clean(mv.nameEn))reasons.push(`Name is different: employee list "${emp.nameEn}", monthly report "${mv.nameEn}"`);
     if(!hasAccount(emp.bank))reasons.push(emp.bank ? `Bank account is not valid in the employee list: "${emp.bank}"` : 'Bank account is missing in the employee list');
     else if(bankCounts[emp.bank]>1)reasons.push('Same bank account is used by more than one employee in the list');
+    if(!emp.nameAr)reasons.push('Arabic name is missing in the employee list');
     if(reasons.length){mismatch('Employee list & monthly report',emp,reasons.join('; '),{emp,mv});continue;}
     state.rows.push(Object.assign({emp,mv,inPayroll:true,inTransfer:true},computeRow(emp,mv)));
   }
@@ -273,9 +305,9 @@ function renderPayroll(){
 }
 
 function transferRows(){
-  return state.rows.filter(r=>r.inTransfer && hasAccount(r.emp.bank)).map((r, i) => ({
+  return state.rows.filter(r=>r.inTransfer && hasAccount(r.emp.bank) && r.emp.nameAr).map((r, i) => ({
     serial: String(i + 1).padStart(2, '0'),
-    name: r.emp.nameEn,
+    name: r.emp.nameAr,    // the transfer sheet uses Arabic names only
     bank: r.emp.bank,
     salary: r.paid,
   }));
@@ -413,7 +445,7 @@ function refresh(){
     const tr=el('tr'), picked=state.choices[row.key] || {payroll:false,transfer:false};
     for(const [kind,allowed,why] of [
       ['payroll',row.canPayroll,'Not in the employee list, so there is no salary to calculate'],
-      ['transfer',row.canTransfer,row.canPayroll?'No valid bank account in the employee list':'Not in the employee list, so there is no salary or account']]){
+      ['transfer',row.canTransfer,row.canPayroll?'No valid bank account or Arabic name in the employee list':'Not in the employee list, so there is no salary or account']]){
       const td=el('td','pick'), box=el('input');
       box.type='checkbox'; box.checked=allowed && !!picked[kind]; box.disabled=!allowed;
       box.setAttribute('aria-label',(kind==='payroll'?'Add to payroll sheet: ':'Add to transfer sheet: ')+(row.name||row.code));

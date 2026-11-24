@@ -1,13 +1,13 @@
 <!doctype html>
 <html lang="en">
 <head>
-<script src="workspace.js?v=61"></script>
+<script src="workspace.js?v=62"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Payroll Transfer Sheet</title>
 <meta name="description" content="Builds the payroll sheet and the bank transfer sheet from the monthly report.">
-<link rel="icon" type="image/png" href="favicon.png?v=61">
-<link rel="stylesheet" href="styles.css?v=61">
+<link rel="icon" type="image/png" href="favicon.png?v=62">
+<link rel="stylesheet" href="styles.css?v=62">
 </head>
 <body class="sheetpage">
 <div id="gate">
@@ -21,7 +21,7 @@
 </div>
 
 <header>
-  <img class="page-bar-logo" src="assets/logo-mark.png?v=61" alt="iEnergy">
+  <img class="page-bar-logo" src="assets/logo-mark.png?v=62" alt="iEnergy">
   <a class="back" href="index.html" title="All forms">&#8592;</a>
   <div class="brand">
     <div class="title">Payroll Transfer Sheet</div>
@@ -49,7 +49,7 @@
       <label class="drop wide" id="dropMaster">
         <input type="file" id="fileMaster" accept=".xlsx,.xls" hidden>
         <b>Employee list</b>
-        <span>Only the first eight columns are read: Code, Employee Name, Title, S.I. No., Bank Acc. No., Basic Gross Salary, S.I. Basic Wage and S.I. Gross Wage.</span>
+        <span>Columns are read by header: Code, Employee Name, Title, Arabic Name, S.I. No., Bank Acc. No., Gross Salary, S.I. Basic Wage and S.I. Gross Wage. The transfer sheet uses the Arabic name.</span>
         <span id="masterFileState" role="status"></span>
       </label>
     </div>
@@ -88,8 +88,8 @@
 <div id="toast"></div>
 
 <script src="vendor/xlsx-js-style.min.js"></script>
-<script src="gate.js?v=61"></script>
-<script src="payroll-calc.js?v=61"></script>
-<script src="payroll-sheet.js?v=61"></script>
+<script src="gate.js?v=62"></script>
+<script src="payroll-calc.js?v=62"></script>
+<script src="payroll-sheet.js?v=62"></script>
 </body>
 </html>

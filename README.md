@@ -24,7 +24,7 @@ Default values exclude amounts in figures, amounts in words, dropdowns, radio
 choices and checkboxes. These always start blank/unselected on a new or cleared
 form. Text defaults are saved to GitHub; dates can use Today.
 
-Payroll takes two uploads: the employee list (first eight columns only) and the
+Payroll takes two uploads: the employee list (columns read by header) and the
 monthly report. Uploads show filenames and employee counts. Employee mismatches are
 listed separately with Payroll and Bank transfer checkboxes; by default a
 mismatched employee is left out of both sheets, and each ticked box adds them to
@@ -228,10 +228,11 @@ own (`payroll-sheet.html`). It takes exactly two uploads — the employee list a
 the month's attendance export — and produces the payroll sheet and the bank
 transfer sheet, each exportable as `.xlsx`.
 
-The employee list holds everything standing. Only its first eight columns are
-read, by position: Code, Employee Name, Title, S.I. No., Bank Acc. No., Basic
-Gross Salary, S.I. Basic Wage and S.I. Gross Wage. Columns after these are
-ignored, and rows without a numeric code and a name (header and total rows) are
+The employee list holds everything standing. Its columns are found by header,
+following the company template (sheet "Payroll 2026"): Code, Employee Name,
+Title, Arabic Name, S.I. No., Bank Acc. No., Gross Salary, S.I. Basic Wage and
+S.I. Gross Wage. Other columns and sheets are ignored. The bank transfer sheet
+uses the Arabic name only; an employee without one cannot be added to it, and rows without a numeric code and a name (header and total rows) are
 skipped. It is uploaded again for each new workspace.
 
 The monthly report carries only what changes each month — allowances, incentive,
