@@ -119,6 +119,11 @@ function readMonthlyReport(wb){
 }
 
 /* ---------- putting a month together ---------- */
+/* A usable bank account has at least one non-zero digit. Blank cells and
+   placeholders such as "-", "0", "N/A", "None" or "لا يوجد" do not count, so an
+   employee with one of those cannot be ticked into the transfer sheet. */
+const hasAccount = bank => /[1-9\u0661-\u0669]/.test(String(bank || ''));
+
 const NO_MONTH = {nameEn:'',si:'',allowances:0,incentive:0,bonus:0,adjustments:0,overtimeHrs:0,deductedHrs:0,advance:0,union:0,medical:0};
 
 /* Matched employees go into both sheets. A mismatched employee goes into a sheet
@@ -131,7 +136,7 @@ function build(){
   const mismatch = (source,emp,reason,calc) => {
     const key = source+'|'+(emp.code||'')+'|'+(calc && calc.mv && calc.mv.code || '');
     const m = {key,source,code:emp.code||'',name:emp.nameEn||'',bank:emp.bank||'',reason,
-      canPayroll:!!calc, canTransfer:!!(calc && calc.emp.bank)};
+      canPayroll:!!calc, canTransfer:!!(calc && hasAccount(calc.emp.bank))};
     state.mismatches.push(m);
     if(calc){
       const c = choice(key);
@@ -141,7 +146,7 @@ function build(){
   };
   const clean = value=>String(value||'').trim().toLowerCase().replace(/\s+/g,' ');
   const bankCounts = {};
-  Object.values(state.master).forEach(emp => {if(emp.bank)bankCounts[emp.bank]=(bankCounts[emp.bank]||0)+1;});
+  Object.values(state.master).forEach(emp => {if(hasAccount(emp.bank))bankCounts[emp.bank]=(bankCounts[emp.bank]||0)+1;});
   if(!state.month) return;
   const counts = {}, seen = new Set(), reportCodes = new Set(state.month.people.map(mv=>mv.code));
   state.month.people.forEach(emp=>{counts[emp.code]=(counts[emp.code]||0)+1;});
@@ -169,8 +174,8 @@ function build(){
     if(state.payrollDuplicates.includes(mv.code))reasons.push('Code appears more than once in the employee list');
     if((emp.si || mv.si) && emp.si !== mv.si)reasons.push(`S.I. number is different: employee list ${emp.si || 'missing'}, monthly report ${mv.si || 'missing'}`);
     if(emp.nameEn && mv.nameEn && clean(emp.nameEn)!==clean(mv.nameEn))reasons.push(`Name is different: employee list "${emp.nameEn}", monthly report "${mv.nameEn}"`);
-    if(!emp.bank)reasons.push('Bank account is missing in the employee list');
-    if(bankCounts[emp.bank]>1)reasons.push('Same bank account is used by more than one employee in the list');
+    if(!hasAccount(emp.bank))reasons.push(emp.bank ? `Bank account is not valid in the employee list: "${emp.bank}"` : 'Bank account is missing in the employee list');
+    else if(bankCounts[emp.bank]>1)reasons.push('Same bank account is used by more than one employee in the list');
     if(reasons.length){mismatch('Employee list & monthly report',emp,reasons.join('; '),{emp,mv});continue;}
     state.rows.push(Object.assign({emp,mv,inPayroll:true,inTransfer:true},computeRow(emp,mv)));
   }
@@ -268,7 +273,7 @@ function renderPayroll(){
 }
 
 function transferRows(){
-  return state.rows.filter(r=>r.inTransfer).map((r, i) => ({
+  return state.rows.filter(r=>r.inTransfer && hasAccount(r.emp.bank)).map((r, i) => ({
     serial: String(i + 1).padStart(2, '0'),
     name: r.emp.nameEn,
     bank: r.emp.bank,
@@ -408,7 +413,7 @@ function refresh(){
     const tr=el('tr'), picked=state.choices[row.key] || {payroll:false,transfer:false};
     for(const [kind,allowed,why] of [
       ['payroll',row.canPayroll,'Not in the employee list, so there is no salary to calculate'],
-      ['transfer',row.canTransfer,row.canPayroll?'No bank account in the employee list':'Not in the employee list, so there is no salary or account']]){
+      ['transfer',row.canTransfer,row.canPayroll?'No valid bank account in the employee list':'Not in the employee list, so there is no salary or account']]){
       const td=el('td','pick'), box=el('input');
       box.type='checkbox'; box.checked=allowed && !!picked[kind]; box.disabled=!allowed;
       box.setAttribute('aria-label',(kind==='payroll'?'Add to payroll sheet: ':'Add to transfer sheet: ')+(row.name||row.code));

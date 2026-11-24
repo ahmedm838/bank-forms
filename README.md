@@ -29,7 +29,10 @@ monthly report. Uploads show filenames and employee counts. Employee mismatches 
 listed separately with Payroll and Bank transfer checkboxes; by default a
 mismatched employee is left out of both sheets, and each ticked box adds them to
 that sheet. Employees missing from the monthly report are calculated on basic
-salary alone; those missing from the employee list cannot be added. The app
+salary alone; those missing from the employee list cannot be added. The Bank
+transfer box is disabled for anyone without a usable account number (blank, or
+a placeholder such as "-", "0", "N/A" or "لا يوجد"), so they can only go on the
+payroll sheet. The app
 always opens on the Forms page. The transfer salary is
 the payroll Paid Salary value, including salary advances and cents, rather than
 Net Salary. Monetary cells in exported payroll, transfer and transaction sheets
